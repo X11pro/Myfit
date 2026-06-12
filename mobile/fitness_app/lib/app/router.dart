@@ -14,11 +14,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/splash',
     routes: [
-      GoRoute(path: '/splash', builder: (_, _) => const SplashScreen()),
-      GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
-      GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingScreen()),
-      GoRoute(path: '/dashboard', builder: (_, _) => const DashboardScreen()),
-      GoRoute(path: '/', builder: (_, _) => const AuthGate()),
+      GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
+      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+      GoRoute(path: '/onboarding', builder: (context, state) => const OnboardingScreen()),
+      GoRoute(path: '/dashboard', builder: (context, state) => const DashboardScreen()),
+      GoRoute(path: '/', builder: (context, state) => const AuthGate()),
     ],
     redirect: (_, state) {
       final isSplash = state.matchedLocation == '/splash';

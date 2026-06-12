@@ -9,6 +9,6 @@ Future<void> bootstrapApp() async {
 
   await Supabase.initialize(
     url: AppEnv.supabaseUrl,
-    anonKey: AppEnv.supabaseAnonKey,
+    publishableKey: AppEnv.supabaseAnonKey,
   );
 }
