@@ -1,45 +1,62 @@
 # Myfit
 
-Proyecto inicial para una app de nutrición, entrenamiento, balance energético y coach inteligente.
+Base inicial del producto `Myfit`: app mobile de nutricion, entrenamiento y balance energetico con soporte de IA.
 
-## Punto de partida
+## Estado actual
 
-El documento principal está en:
+Este repositorio ya incluye:
 
-- `docs/product/fitness_product_plan.md`
+- Vision de producto y MVP.
+- Arquitectura inicial mobile/backend/IA.
+- Modelo de datos y contratos API de referencia.
+- Estructura de carpetas para monorepo.
+- Script de sincronizacion con GitHub.
 
-## Objetivo del producto
+## Documentacion principal
 
-Crear una app Android/iOS para:
+- `docs/product/fitness_product_plan.md`: plan maestro completo.
+- `docs/product/vision.md`: resumen ejecutivo y diferenciacion.
+- `docs/product/mvp.md`: alcance del MVP.
+- `docs/product/roadmap.md`: fases y entregables.
+- `docs/product/user_stories.md`: historias de usuario iniciales.
+- `docs/architecture/system_architecture.md`: arquitectura funcional.
+- `docs/architecture/data_model.md`: modelo de datos inicial.
+- `docs/architecture/api_contracts.md`: endpoints base.
+- `docs/architecture/ai_architecture.md`: flujo y limites de IA.
+- `docs/architecture/privacy_security.md`: privacidad, seguridad y cumplimiento.
 
-- Registrar alimentos consumidos.
-- Estimar calorías, proteína, azúcar y otros macros.
-- Analizar fotos de comida con IA, siempre con confirmación del usuario.
-- Leer entrenamientos desde Health Connect / Apple Health y, si corresponde, Strava como integración secundaria.
-- Estimar gasto diario incluyendo entrenamiento, trabajo físico y vida diaria.
-- Recomendar suplementación de forma educativa y segura.
+## Estructura del repo
 
-## Stack recomendado inicial
-
-- Flutter
-- Supabase
-- PostgreSQL
-- Supabase Edge Functions
-- Health Connect para Android
-- HealthKit para iOS
-- Open Food Facts + USDA FoodData Central
-- Modelos IA separados para visión, normalización nutricional y coach
-
-## Sincronizar con GitHub
-
-Repositorio remoto previsto:
-
-```bash
-git remote add origin https://github.com/X11pro/Myfit.git
+```text
+Myfit/
+  docs/
+  mobile/
+    fitness_app/
+  backend/
+    supabase/
+      migrations/
+      functions/
+  prompts/
+  scripts/
 ```
 
-Si el remoto ya existe:
+## Siguientes pasos tecnicos
+
+1. Crear proyecto Flutter dentro de `mobile/fitness_app`.
+2. Crear proyecto Supabase y alinear variables de `.env.example`.
+3. Implementar auth + onboarding.
+4. Modelar tablas iniciales y primera migracion.
+
+## GitHub
+
+Remoto actual:
 
 ```bash
 git remote set-url origin https://github.com/X11pro/Myfit.git
+```
+
+Script principal de sync:
+
+```powershell
+.\scripts\git\sync_to_github.ps1
 ```
