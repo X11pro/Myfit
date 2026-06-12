@@ -11,6 +11,10 @@ Este repositorio ya incluye:
 - Modelo de datos y contratos API de referencia.
 - Estructura de carpetas para monorepo.
 - Script de sincronizacion con GitHub.
+- App Flutter real generada en `mobile/fitness_app`.
+- Scaffold inicial de `login`, `onboarding` y `dashboard`.
+- Primera migracion SQL de Supabase con tablas y RLS base.
+- `flutter analyze` y `flutter test` en verde en el ultimo entorno Windows.
 
 ## Documentacion principal
 
@@ -42,10 +46,19 @@ Myfit/
 
 ## Siguientes pasos tecnicos
 
-1. Crear proyecto Flutter dentro de `mobile/fitness_app`.
-2. Crear proyecto Supabase y alinear variables de `.env.example`.
-3. Implementar auth + onboarding.
-4. Modelar tablas iniciales y primera migracion.
+1. Conectar `Supabase Auth` real en `mobile/fitness_app`.
+2. Persistir onboarding en `profiles`.
+3. Crear el flujo de registro manual de comida.
+4. Calcular `daily_energy_summary` local/base.
+5. Preparar primera `Edge Function` para `food/parse-text`.
+
+## Retomar en otro sistema
+
+- `docs/setup/cachyos_resume.md`: pasos exactos para retomar en CachyOS.
+- `docs/handoff/current_status.md`: estado actual y pendientes.
+- `AGENTS.md`: instrucciones persistentes para el agente en la raiz del repo.
+- `.agent/PLANS.md`: plantilla para planes de ejecucion largos.
+- `prompts/codex_start_prompt.md`: prompt inicial recomendado para abrir el repo con un agente.
 
 ## GitHub
 
