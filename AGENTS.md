@@ -26,6 +26,20 @@ Read that document before making architecture or implementation decisions.
 - Explain important decisions without overcomplicating them.
 - If something depends on platform policy, API limits, health/privacy risk, or missing setup, say so clearly.
 
+## Keyword workflow
+
+If the user writes the keyword `AMARILLO` in uppercase, treat it as an instruction to create or refresh a continuity package before the session ends or the user changes environment.
+
+That continuity package must include, at minimum:
+
+- updated project state in `docs/handoff/current_status.md`,
+- setup or resume notes for the current target OS in `docs/setup/`,
+- any new agent instructions needed in `AGENTS.md` or `.agent/`,
+- any useful resume prompt updates in `prompts/codex_start_prompt.md`,
+- commit and push to GitHub if Git is available and the repo is configured.
+
+Do not wait for the user to restate the workflow once `AMARILLO` appears.
+
 ## Current repository state
 
 - Flutter project exists at `mobile/fitness_app`.

@@ -15,4 +15,6 @@ Objetivo inmediato:
 5. Ejecutar cuando esten disponibles: flutter pub get, dart format ., flutter analyze y flutter test.
 
 No reinicies el proyecto desde cero. Continua desde la estructura y commits ya existentes.
+
+Si el usuario escribe AMARILLO, actualiza el paquete de continuidad del repo antes de terminar la sesion.
 ```

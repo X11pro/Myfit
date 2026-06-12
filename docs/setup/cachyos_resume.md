@@ -100,3 +100,9 @@ systemctl --user status myfit-git-sync.timer
 ```
 
 Esto crea un timer de `systemd --user` que ejecuta sync cada 20 minutos.
+
+## 12. Regla de continuidad
+
+La palabra clave del usuario es `AMARILLO`.
+
+Cuando aparezca en una sesion futura, el agente debe actualizar el paquete de continuidad antes de terminar, para que el cambio de OS o entorno no corte el progreso.

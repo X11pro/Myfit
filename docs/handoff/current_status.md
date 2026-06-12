@@ -51,3 +51,15 @@ flutter test
 - Falta definir bundle identifier iOS real.
 - El login actual es placeholder y no usa backend.
 - No hay claves reales ni `.env` comprometidos en el repo.
+
+## Regla persistente del usuario
+
+Si el usuario escribe `AMARILLO` en mayusculas, el agente debe generar o actualizar el paquete de continuidad antes de cerrar la sesion o cambiar de sistema operativo.
+
+Ese paquete debe dejar como minimo:
+
+- estado actualizado del proyecto,
+- pasos de setup o resume del OS destino,
+- instrucciones persistentes de agente si hicieron falta,
+- prompt de reanudacion actualizado,
+- commit y push si Git esta disponible.
