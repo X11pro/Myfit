@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/config/app_env.dart';
 import '../../../shared/app_state.dart';
 
 final authControllerProvider = Provider<AuthController>((ref) {
@@ -11,16 +13,55 @@ class AuthController {
 
   final Ref _ref;
 
-  Future<void> signInAnonymouslyForPrototype() async {
+  Future<void> sendSignInCode(String email) async {
+    if (!AppEnv.hasSupabaseConfig) {
+      throw StateError('Faltan SUPABASE_URL y SUPABASE_ANON_KEY.');
+    }
+
     final notifier = _ref.read(appStateProvider.notifier);
     notifier.setLoading(true);
-    await Future<void>.delayed(const Duration(milliseconds: 600));
-    notifier.setAuthenticated(true);
-    notifier.setLoading(false);
+
+    try {
+      await Supabase.instance.client.auth.signInWithOtp(
+        email: email,
+        shouldCreateUser: true,
+      );
+      notifier.setLoading(false);
+    } catch (_) {
+      notifier.setLoading(false);
+      rethrow;
+    }
   }
 
-  void signOut() {
+  Future<void> verifySignInCode({
+    required String email,
+    required String token,
+  }) async {
+    if (!AppEnv.hasSupabaseConfig) {
+      throw StateError('Faltan SUPABASE_URL y SUPABASE_ANON_KEY.');
+    }
+
     final notifier = _ref.read(appStateProvider.notifier);
-    notifier.reset();
+    notifier.setLoading(true);
+
+    try {
+      await Supabase.instance.client.auth.verifyOTP(
+        email: email,
+        token: token,
+        type: OtpType.email,
+      );
+    } catch (_) {
+      notifier.setLoading(false);
+      rethrow;
+    }
+  }
+
+  Future<void> signOut() async {
+    if (!AppEnv.hasSupabaseConfig) {
+      _ref.read(appStateProvider.notifier).reset();
+      return;
+    }
+
+    await Supabase.instance.client.auth.signOut();
   }
 }

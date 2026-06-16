@@ -20,36 +20,77 @@ Abrir estos archivos antes de seguir:
 En CachyOS, instalar como minimo:
 
 ```bash
-sudo pacman -S --needed git base-devel curl unzip xz zip cmake ninja jdk17-openjdk android-tools
+sudo pacman -S --needed git base-devel curl unzip xz zip cmake ninja android-tools flatpak
 ```
 
 Si vas a desarrollar Android tambien necesitaras Android Studio o command line tools del SDK.
 
 ## 4. Flutter
 
-Si Flutter no esta instalado globalmente, ejemplo manual:
+En este equipo ya quedo funcionando desde:
 
 ```bash
-mkdir -p "$HOME/tools"
-cd "$HOME/tools"
+$HOME/flutter
+```
+
+Si Flutter no esta instalado, ejemplo manual:
+
+```bash
+mkdir -p "$HOME"
+cd "$HOME"
 git clone https://github.com/flutter/flutter.git -b stable
-echo 'export PATH="$HOME/tools/flutter/bin:$PATH"' >> ~/.bashrc
+echo 'export PATH="$HOME/flutter/bin:$PATH"' >> ~/.bashrc
 source ~/.bashrc
 flutter --version
 ```
 
 Si usas `zsh`, cambia `~/.bashrc` por `~/.zshrc`.
 
+Variables utiles para login shells:
+
+```bash
+export PATH="$HOME/flutter/bin:$PATH"
+export JAVA_HOME="$HOME/.local/share/JetBrains/Toolbox/apps/android-studio/jbr"
+export PATH="$JAVA_HOME/bin:$PATH"
+export ANDROID_HOME="$HOME/Android/Sdk"
+export ANDROID_SDK_ROOT="$ANDROID_HOME"
+export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
+export PATH="$HOME/.local/share/flatpak/exports/bin:$PATH"
+export CHROME_EXECUTABLE="$HOME/.local/share/flatpak/exports/bin/org.chromium.Chromium"
+```
+
 ## 5. Android toolchain
 
-- Instalar Android Studio, o
-- instalar Android command line tools y aceptar licencias.
+- Android Studio ya esta instalado en este equipo via JetBrains Toolbox.
+- Tambien ya quedaron instalados `cmdline-tools` en `~/Android/Sdk/cmdline-tools/latest`.
+- Las licencias Android ya fueron aceptadas en este entorno.
 
 Comandos utiles:
 
 ```bash
 flutter doctor
 flutter doctor --android-licenses
+```
+
+Si necesitas reinstalar `cmdline-tools` manualmente:
+
+```bash
+curl -fLo /tmp/commandlinetools.zip https://dl.google.com/android/repository/commandlinetools-linux-14742923_latest.zip
+mkdir -p "$HOME/Android/Sdk/cmdline-tools/latest"
+unzip -oq /tmp/commandlinetools.zip -d /tmp/android-cmdline-tools
+cp -r /tmp/android-cmdline-tools/cmdline-tools/. "$HOME/Android/Sdk/cmdline-tools/latest/"
+```
+
+Para aceptar licencias si hiciera falta:
+
+```bash
+yes | sdkmanager --licenses
+```
+
+Para web, en este equipo se uso Chromium via Flatpak:
+
+```bash
+flatpak --user install -y flathub org.chromium.Chromium
 ```
 
 ## 6. Verificar el proyecto
@@ -75,15 +116,21 @@ Variables esperadas:
 
 ## 8. Supabase
 
-Pendiente conectar proyecto real. Cuando lo hagas:
+La app ya tiene el flujo de auth y onboarding integrado, pero falta el proyecto real. Cuando lo hagas:
 
 1. Crear proyecto.
 2. Aplicar migracion `backend/supabase/migrations/20260612_000001_initial_schema.sql`.
 3. Configurar `SUPABASE_URL` y `SUPABASE_ANON_KEY` para la app.
+4. Probar login OTP.
+5. Confirmar escritura de `profiles` y `body_metrics`.
 
 ## 9. Primer objetivo al volver
 
-Implementar autenticacion real y guardar el onboarding en `profiles`.
+Conectar el proyecto real de Supabase y validar end-to-end el flujo ya implementado de:
+
+- login OTP,
+- guardado de `profiles`,
+- guardado del peso inicial en `body_metrics`.
 
 ## 10. Prompt recomendado para agente
 

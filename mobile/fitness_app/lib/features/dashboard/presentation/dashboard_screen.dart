@@ -17,7 +17,7 @@ class DashboardScreen extends ConsumerWidget {
         title: const Text('Dashboard'),
         actions: [
           IconButton(
-            onPressed: authController.signOut,
+            onPressed: () => authController.signOut(),
             icon: const Icon(Icons.logout),
           ),
         ],
@@ -25,15 +25,27 @@ class DashboardScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          Text('Hola, ${state.displayName ?? 'usuario'}', style: Theme.of(context).textTheme.headlineSmall),
+          Text('Hola, ${state.displayName ?? 'usuario'}',
+              style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 16),
-          const _MetricCard(title: 'Calorias consumidas', value: '0 kcal', subtitle: 'Pendiente de conectar meals'),
+          const _MetricCard(
+              title: 'Calorias consumidas',
+              value: '0 kcal',
+              subtitle: 'Pendiente de conectar meals'),
           const SizedBox(height: 12),
-          const _MetricCard(title: 'Proteina', value: '0 g', subtitle: 'Objetivo pendiente de perfil'),
+          const _MetricCard(
+              title: 'Proteina',
+              value: '0 g',
+              subtitle: 'Objetivo pendiente de perfil'),
           const SizedBox(height: 12),
-          const _MetricCard(title: 'Balance estimado', value: '0 kcal', subtitle: 'Sin actividad importada aun'),
+          const _MetricCard(
+              title: 'Balance estimado',
+              value: '0 kcal',
+              subtitle: 'Sin actividad importada aun'),
           const SizedBox(height: 24),
-          Text('Siguiente integracion: meals + daily summary + Health Connect/HealthKit.', style: Theme.of(context).textTheme.bodyLarge),
+          Text(
+              'Siguiente integracion: meals + daily summary + Health Connect/HealthKit.',
+              style: Theme.of(context).textTheme.bodyLarge),
         ],
       ),
     );
