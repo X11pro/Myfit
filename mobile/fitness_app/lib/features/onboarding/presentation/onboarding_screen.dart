@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../shared/app_language.dart';
 import '../../../shared/app_state.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
@@ -40,55 +42,62 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final appState = ref.watch(appStateProvider);
+    final strings = stringsFor(ref);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Onboarding')),
+      appBar: AppBar(title: Text(strings.setupProfile)),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          Text('Configura tu punto de partida',
+          Text(strings.onboardingTitle,
               style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 24),
           TextField(
             controller: _nameController,
-            decoration: const InputDecoration(labelText: 'Nombre'),
+            decoration: InputDecoration(labelText: strings.nameLabel),
           ),
           const SizedBox(height: 16),
           TextField(
             controller: _heightController,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'Altura (cm)'),
+            decoration: InputDecoration(labelText: strings.heightLabel),
           ),
           const SizedBox(height: 16),
           TextField(
             controller: _weightController,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'Peso actual (kg)'),
+            decoration: InputDecoration(labelText: strings.weightLabel),
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             value: _goal,
-            decoration: const InputDecoration(labelText: 'Objetivo'),
-            items: const [
-              DropdownMenuItem(value: 'lose_fat', child: Text('Perder grasa')),
+            decoration: InputDecoration(labelText: strings.goalLabel),
+            items: [
               DropdownMenuItem(
-                  value: 'gain_muscle', child: Text('Ganar musculo')),
-              DropdownMenuItem(value: 'maintain', child: Text('Mantener peso')),
-              DropdownMenuItem(value: 'recomp', child: Text('Recomposicion')),
+                  value: 'lose_fat', child: Text(strings.goalLoseFat)),
+              DropdownMenuItem(
+                  value: 'gain_muscle', child: Text(strings.goalGainMuscle)),
+              DropdownMenuItem(
+                  value: 'maintain', child: Text(strings.goalMaintain)),
+              DropdownMenuItem(
+                  value: 'recomp', child: Text(strings.goalRecomp)),
             ],
             onChanged: (value) => setState(() => _goal = value ?? _goal),
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             value: _jobActivity,
-            decoration: const InputDecoration(labelText: 'Trabajo'),
-            items: const [
-              DropdownMenuItem(value: 'sedentary', child: Text('Sedentario')),
-              DropdownMenuItem(value: 'standing', child: Text('De pie')),
-              DropdownMenuItem(value: 'light', child: Text('Fisico ligero')),
+            decoration: InputDecoration(labelText: strings.workLabel),
+            items: [
               DropdownMenuItem(
-                  value: 'moderate', child: Text('Fisico moderado')),
-              DropdownMenuItem(value: 'intense', child: Text('Fisico intenso')),
+                  value: 'sedentary', child: Text(strings.jobSedentary)),
+              DropdownMenuItem(
+                  value: 'standing', child: Text(strings.jobStanding)),
+              DropdownMenuItem(value: 'light', child: Text(strings.jobLight)),
+              DropdownMenuItem(
+                  value: 'moderate', child: Text(strings.jobModerate)),
+              DropdownMenuItem(
+                  value: 'intense', child: Text(strings.jobIntense)),
             ],
             onChanged: (value) =>
                 setState(() => _jobActivity = value ?? _jobActivity),
@@ -98,7 +107,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             width: double.infinity,
             child: FilledButton(
               onPressed: appState.isLoading ? null : _save,
-              child: const Text('Guardar perfil inicial'),
+              child: Text(strings.saveProfile),
             ),
           ),
         ],
@@ -107,23 +116,31 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Future<void> _save() async {
+    final strings = stringsFor(ref);
+
     try {
       await ref.read(appStateProvider.notifier).completeOnboarding(
             displayName: _nameController.text.trim().isEmpty
-                ? 'Usuario'
+                ? strings.defaultUserName
                 : _nameController.text.trim(),
             goal: _goal,
             jobActivityLevel: _jobActivity,
             heightCm: double.tryParse(_heightController.text.trim()),
             currentWeightKg: double.tryParse(_weightController.text.trim()),
           );
+
+      if (!mounted) {
+        return;
+      }
+
+      context.go('/dashboard');
     } catch (error) {
       if (!mounted) {
         return;
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo guardar el onboarding: $error')),
+        SnackBar(content: Text('${strings.saveOnboardingError}: $error')),
       );
     }
   }

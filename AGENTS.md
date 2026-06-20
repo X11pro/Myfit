@@ -43,11 +43,11 @@ Do not wait for the user to restate the workflow once `AMARILLO` appears.
 ## Current repository state
 
 - Flutter project exists at `mobile/fitness_app`.
-- Base screens implemented: `login`, `onboarding`, `dashboard`, `splash`.
-- App state is local placeholder state using `Riverpod`.
-- Supabase bootstrap exists but auth is not connected yet.
-- Initial SQL migration exists at `backend/supabase/migrations/20260612_000001_initial_schema.sql`.
-- Latest known checks passed in Windows: `flutter analyze`, `flutter test`.
+- Current main flow is guest-first: `welcome/splash`, `onboarding`, `dashboard`, `manual food entry`.
+- App state uses `Riverpod` with guest profile persisted locally via `shared_preferences`.
+- Supabase project is connected and initial migrations were already applied remotely.
+- Shared catalog backend exists via `backend/supabase/functions/food-catalog-upsert`.
+- Latest known local checks passed in CachyOS: `flutter analyze`, `flutter test`.
 
 ## Product priorities
 
@@ -168,4 +168,4 @@ For backend or Supabase changes, document manual setup steps.
 
 The next milestone is:
 
-> Connect real Supabase auth and persist onboarding/profile data to `profiles`.
+> Keep shipping product value in guest mode, then reintroduce authentication without Auth0 and connect local-first food flows to remote persistence.

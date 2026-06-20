@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/config/app_env.dart';
@@ -59,12 +60,24 @@ class AppState {
 }
 
 class AppStateNotifier extends Notifier<AppState> {
+  static const _displayNameKey = 'guest_display_name';
+  static const _goalKey = 'guest_goal';
+  static const _jobActivityLevelKey = 'guest_job_activity_level';
+  static const _heightCmKey = 'guest_height_cm';
+  static const _currentWeightKgKey = 'guest_current_weight_kg';
+
   StreamSubscription<AuthState>? _authSubscription;
 
   @override
   AppState build() {
     if (!AppEnv.hasSupabaseConfig) {
-      return AppState.initial;
+      Future<void>.microtask(_loadLocalState);
+
+      return const AppState(
+        isLoading: true,
+        isAuthenticated: false,
+        isOnboardingComplete: false,
+      );
     }
 
     final client = Supabase.instance.client;
@@ -102,8 +115,23 @@ class AppStateNotifier extends Notifier<AppState> {
     double? heightCm,
     double? currentWeightKg,
   }) async {
-    if (!AppEnv.hasSupabaseConfig) {
+    final session = AppEnv.hasSupabaseConfig
+        ? Supabase.instance.client.auth.currentSession
+        : null;
+    final user = session?.user;
+
+    if (!AppEnv.hasSupabaseConfig || user == null) {
+      await _saveLocalState(
+        displayName: displayName,
+        goal: goal,
+        jobActivityLevel: jobActivityLevel,
+        heightCm: heightCm,
+        currentWeightKg: currentWeightKg,
+      );
+
       state = state.copyWith(
+        isLoading: false,
+        isAuthenticated: user != null,
         displayName: displayName,
         goal: goal,
         jobActivityLevel: jobActivityLevel,
@@ -112,13 +140,6 @@ class AppStateNotifier extends Notifier<AppState> {
         isOnboardingComplete: true,
       );
       return;
-    }
-
-    final session = Supabase.instance.client.auth.currentSession;
-    final user = session?.user;
-
-    if (user == null) {
-      throw StateError('No hay una sesion activa para guardar el onboarding.');
     }
 
     setLoading(true);
@@ -163,6 +184,53 @@ class AppStateNotifier extends Notifier<AppState> {
     state = AppState.initial;
   }
 
+  Future<void> _loadLocalState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final displayName = prefs.getString(_displayNameKey);
+    final goal = prefs.getString(_goalKey);
+    final jobActivityLevel = prefs.getString(_jobActivityLevelKey);
+    final heightCm = prefs.getDouble(_heightCmKey);
+    final currentWeightKg = prefs.getDouble(_currentWeightKgKey);
+
+    state = AppState(
+      isLoading: false,
+      isAuthenticated: false,
+      isOnboardingComplete:
+          displayName != null && goal != null && jobActivityLevel != null,
+      displayName: displayName,
+      goal: goal,
+      jobActivityLevel: jobActivityLevel,
+      heightCm: heightCm,
+      currentWeightKg: currentWeightKg,
+    );
+  }
+
+  Future<void> _saveLocalState({
+    required String displayName,
+    required String goal,
+    required String jobActivityLevel,
+    required double? heightCm,
+    required double? currentWeightKg,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString(_displayNameKey, displayName);
+    await prefs.setString(_goalKey, goal);
+    await prefs.setString(_jobActivityLevelKey, jobActivityLevel);
+
+    if (heightCm != null) {
+      await prefs.setDouble(_heightCmKey, heightCm);
+    } else {
+      await prefs.remove(_heightCmKey);
+    }
+
+    if (currentWeightKg != null) {
+      await prefs.setDouble(_currentWeightKgKey, currentWeightKg);
+    } else {
+      await prefs.remove(_currentWeightKgKey);
+    }
+  }
+
   Future<void> _syncFromSession(Session? session) async {
     if (!AppEnv.hasSupabaseConfig) {
       state = AppState.initial;
@@ -172,7 +240,7 @@ class AppStateNotifier extends Notifier<AppState> {
     final user = session?.user;
 
     if (user == null) {
-      state = AppState.initial;
+      await _loadLocalState();
       return;
     }
 

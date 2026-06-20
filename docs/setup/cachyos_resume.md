@@ -116,27 +116,62 @@ Variables esperadas:
 
 ## 8. Supabase
 
-La app ya tiene el flujo de auth y onboarding integrado, pero falta el proyecto real. Cuando lo hagas:
+El proyecto real de Supabase ya esta conectado y tiene aplicadas estas migraciones:
 
-1. Crear proyecto.
-2. Aplicar migracion `backend/supabase/migrations/20260612_000001_initial_schema.sql`.
-3. Configurar `SUPABASE_URL` y `SUPABASE_ANON_KEY` para la app.
-4. Probar login OTP.
-5. Confirmar escritura de `profiles` y `body_metrics`.
+- `backend/supabase/migrations/20260612_000001_initial_schema.sql`
+- `backend/supabase/migrations/20260620_000002_food_items_shared_catalog.sql`
+
+Tambien ya esta desplegada la Edge Function:
+
+- `food-catalog-upsert`
+
+Pendiente importante para OCR/AI real desde imagen:
+
+1. Configurar secret `OPENAI_API_KEY` en Supabase.
+2. Probar la pantalla Flutter de catalogo compartido contra la funcion desplegada.
 
 ## 9. Primer objetivo al volver
 
-Conectar el proyecto real de Supabase y validar end-to-end el flujo ya implementado de:
+Seguir el guest flow actual y avanzar estas piezas en orden:
 
-- login OTP,
-- guardado de `profiles`,
-- guardado del peso inicial en `body_metrics`.
+- persistencia local durable de comidas manuales,
+- prueba real del catalogo compartido con OCR/AI,
+- reintroduccion de autenticacion sin Auth0,
+- conexion de comidas y catalogo a persistencia remota multiusuario.
 
-## 10. Prompt recomendado para agente
+## 10. Guest flow actual
+
+Estado funcional actual de la app:
+
+- dark mode fijo,
+- ingles por defecto,
+- selector `EN / ESP` en welcome,
+- onboarding guest con perfil local persistido,
+- dashboard con acciones rapidas,
+- manual food entry local,
+- pantalla para aportar productos al catalogo compartido.
+
+## 11. Comandos utiles para Supabase
+
+Desde la raiz del repo:
+
+```bash
+npx supabase link --project-ref cyecalxewqcyxxglxloa --workdir backend --yes
+npx supabase db push --linked --workdir backend
+npx supabase functions deploy food-catalog-upsert --project-ref cyecalxewqcyxxglxloa --workdir backend
+```
+
+Para habilitar AI real en la Edge Function:
+
+```bash
+npx supabase secrets set OPENAI_API_KEY=tu_key --project-ref cyecalxewqcyxxglxloa
+```
+
+## 12. Prompt recomendado para agente
 
 Usar `prompts/codex_start_prompt.md`.
 
-## 11. Auto-sync opcional cada 20 minutos en Linux
+## 13. Auto-sync opcional cada 20 minutos en Linux
 
 Desde la raiz del repo:
 
@@ -148,7 +183,7 @@ systemctl --user status myfit-git-sync.timer
 
 Esto crea un timer de `systemd --user` que ejecuta sync cada 20 minutos.
 
-## 12. Regla de continuidad
+## 14. Regla de continuidad
 
 La palabra clave del usuario es `AMARILLO`.
 

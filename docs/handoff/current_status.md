@@ -2,7 +2,7 @@
 
 ## Resumen
 
-El repo ya esta listo para continuar en CachyOS sin depender del contexto de esta sesion y con el entorno Flutter validado localmente.
+El repo quedo listo para continuar en CachyOS con una app Flutter usable sin login obligatorio, idioma ingles por defecto, dark mode activo y primer flujo funcional de registro manual de comidas.
 
 ## Estado de codigo
 
@@ -10,31 +10,57 @@ El repo ya esta listo para continuar en CachyOS sin depender del contexto de est
 - App Flutter real creada en `mobile/fitness_app`.
 - Plataformas generadas: `android`, `ios`, `linux`, `macos`, `web`, `windows`.
 - Scaffold actual:
-  - `login` con email OTP via Supabase
+  - `welcome/splash` con selector `EN / ESP`
   - `onboarding`
   - `dashboard`
-  - `splash`
+  - `manual food entry`
   - router con `go_router`
-  - estado con `Riverpod` sincronizado con sesion/perfil
+  - estado con `Riverpod`
+  - perfil guest persistido localmente con `shared_preferences`
 - Bootstrap de Supabase preparado en `lib/core/bootstrap.dart`.
 - Migracion inicial SQL creada en `backend/supabase/migrations/20260612_000001_initial_schema.sql`.
-- ExecPlan de esta iteracion: `.agent/plans/20260612_supabase_auth_profiles_execplan.md`.
+- Segunda migracion creada y aplicada en remoto: `backend/supabase/migrations/20260620_000002_food_items_shared_catalog.sql`.
+- ExecPlans relevantes:
+  - `.agent/plans/20260612_supabase_auth_profiles_execplan.md`
+  - `.agent/plans/20260620_manual_food_entry_execplan.md`
 
 ## Cambios implementados en esta sesion
 
-- `mobile/fitness_app/lib/features/auth/presentation/login_screen.dart`
-  - login real por email OTP.
-- `mobile/fitness_app/lib/features/auth/application/auth_controller.dart`
-  - envio y verificacion de OTP con `supabase_flutter`.
+- `mobile/fitness_app/lib/features/splash/presentation/splash_screen.dart`
+  - bienvenida en dark mode,
+  - ingles por defecto,
+  - selector `EN / ESP`,
+  - entrada directa sin auth.
 - `mobile/fitness_app/lib/shared/app_state.dart`
-  - carga de sesion actual,
-  - escucha de cambios de auth,
-  - lectura de `profiles` y ultimo `body_metrics`,
-  - persistencia del onboarding a Supabase.
+  - carga de sesion actual si existe,
+  - fallback a perfil guest local,
+  - persistencia local de onboarding con `shared_preferences`.
 - `mobile/fitness_app/lib/features/onboarding/presentation/onboarding_screen.dart`
-  - precarga de datos existentes y guardado async.
+  - textos bilingues,
+  - guardado local en guest mode,
+  - redireccion al dashboard.
+- `mobile/fitness_app/lib/features/dashboard/presentation/dashboard_screen.dart`
+  - dark mode base,
+  - acciones rapidas,
+  - lectura de comidas manuales locales,
+  - lista de comidas del dia,
+  - acceso a catalogo compartido.
+- `mobile/fitness_app/lib/features/food/`
+  - primer flujo local-first de `manual food entry`,
+  - pantalla para aportar productos al catalogo compartido,
+  - soporte para OCR/AI de etiquetas y score nutricional `0-5`.
+- `backend/supabase/functions/food-catalog-upsert/index.ts`
+  - edge function para extraer datos desde OCR/AI y guardar `food_items` compartidos.
+- `backend/supabase/migrations/20260620_000002_food_items_shared_catalog.sql`
+  - indice unico para catalogo compartido por `source + source_id`,
+  - columnas `nutrition_quality_score` y `nutrition_quality_reason`.
+- `mobile/fitness_app/lib/features/food/presentation/shared_food_catalog_screen.dart`
+  - alta de productos compartidos,
+  - foto de etiqueta,
+  - OCR/manual input,
+  - score nutricional `0-5`.
 - `mobile/fitness_app/test/widget_test.dart`
-  - test actualizado al nuevo entry point de auth.
+  - test actualizado al welcome screen en ingles por defecto.
 
 ## Estado del entorno CachyOS
 
@@ -72,21 +98,23 @@ flutter doctor -v
 
 ## Pendientes inmediatos
 
-1. Crear o conectar el proyecto real de Supabase.
-2. Configurar `SUPABASE_URL` y `SUPABASE_ANON_KEY` para probar auth real en la app.
-3. Aplicar la migracion `backend/supabase/migrations/20260612_000001_initial_schema.sql` en el proyecto Supabase.
-4. Validar end-to-end:
-   - login OTP,
-   - lectura/escritura de `profiles`,
-   - insercion inicial en `body_metrics`.
-5. Empezar `manual food entry` como siguiente feature del producto.
+1. Seguir iterando la UX real cuando llegue el Figma.
+2. Reintroducir autenticacion en una proxima iteracion sin Auth0, probablemente sobre Supabase o guest identity persistente.
+3. Conectar `manual food entry` a persistencia remota cuando quede definido el modelo final de identidad.
+4. Agregar edicion/borrado y persistencia local de comidas manuales.
+5. Configurar `OPENAI_API_KEY` en Supabase para habilitar extraccion AI real desde imagen.
+6. Probar end-to-end la pantalla Flutter del catalogo compartido contra la funcion ya desplegada.
 
 ## Riesgos o notas
 
 - El package name Android sigue siendo el default de Flutter: `com.example.fitness_app`.
 - Falta definir bundle identifier iOS real.
 - No hay claves reales ni `.env` comprometidos en el repo.
-- Sin variables reales de Supabase no se puede probar el flujo contra backend aunque el codigo ya esta integrado.
+- La app esta temporalmente en guest mode para destrabar UX y desarrollo de producto.
+- El perfil del invitado ya persiste localmente, pero las comidas manuales aun viven solo en memoria.
+- La migracion y la edge function del catalogo compartido ya quedaron desplegadas.
+- La extraccion AI desde imagen aun depende de configurar `OPENAI_API_KEY` como secret en Supabase.
+- Recordatorio explicito para la proxima sesion: reimplementar autenticacion sin Auth0 antes de conectar persistencia remota multiusuario.
 - `currentWeightKg` del onboarding se guarda en `body_metrics`, no en `profiles`, porque el esquema actual ya separa ese dato historico.
 - El worktree del repo contiene muchos cambios previos y/o de entorno no relacionados; revisar cuidadosamente antes de hacer commits amplios.
 

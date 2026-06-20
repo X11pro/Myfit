@@ -9,11 +9,11 @@ Quiero continuar el proyecto Myfit desde el estado actual del repo.
 
 Objetivo inmediato:
 1. Revisar el estado real de mobile/fitness_app, backend/supabase/migrations y docs/setup/cachyos_resume.md.
-2. Confirmar que el flujo actual ya implementa auth OTP y persistencia de onboarding en `profiles` + `body_metrics`.
-3. Conectar el proyecto real de Supabase o pedir las variables faltantes si no estan disponibles.
-4. Validar end-to-end login OTP, carga de perfil y guardado de onboarding.
+2. Confirmar que el flujo actual es guest-first, con ingles por defecto, dark mode, onboarding local persistido y manual food entry local.
+3. Confirmar que Supabase remoto ya tiene la migracion del catalogo compartido y la Edge Function `food-catalog-upsert`.
+4. Seguir desarrollando valor de producto sin Auth0 y reintroducir autenticacion solo cuando haga falta para persistencia multiusuario.
 5. Mantener respuestas en espanol.
-6. Ejecutar cuando esten disponibles: flutter pub get, dart format ., flutter analyze, flutter test y flutter doctor -v.
+6. Ejecutar cuando esten disponibles: flutter pub get, dart format ., flutter analyze y flutter test.
 
 No reinicies el proyecto desde cero. Continua desde la estructura y commits ya existentes.
 
