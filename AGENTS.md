@@ -43,10 +43,10 @@ Do not wait for the user to restate the workflow once `AMARILLO` appears.
 ## Current repository state
 
 - Flutter project exists at `mobile/fitness_app`.
-- Current main flow is guest-first: `welcome/splash`, `onboarding`, `dashboard`, `manual food entry`.
+- Current main flow is guest-first: `welcome/splash`, `onboarding`, `dashboard`, `manual food entry`, `daily summary`, and `daily weight`.
 - App state uses `Riverpod` with guest profile persisted locally via `shared_preferences`.
 - Supabase project is connected and initial migrations were already applied remotely.
-- Shared catalog backend exists via `backend/supabase/functions/food-catalog-upsert`.
+- Shared catalog and meal-photo AI backends exist via `backend/supabase/functions/food-catalog-upsert` and `backend/supabase/functions/meal-photo-analyze`.
 - Latest known local checks passed in CachyOS: `flutter analyze`, `flutter test`.
 
 ## Product priorities

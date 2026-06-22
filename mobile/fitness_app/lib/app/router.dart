@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/dashboard/presentation/dashboard_screen.dart';
+import '../features/food/domain/manual_food_entry.dart';
 import '../features/food/presentation/manual_food_entry_screen.dart';
 import '../features/food/presentation/shared_food_catalog_screen.dart';
 import '../features/onboarding/presentation/onboarding_screen.dart';
@@ -23,8 +24,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           path: '/dashboard',
           builder: (context, state) => const DashboardScreen()),
       GoRoute(
-          path: '/food/manual',
-          builder: (context, state) => const ManualFoodEntryScreen()),
+        path: '/food/manual',
+        builder: (context, state) => ManualFoodEntryScreen(
+          entry: state.extra is ManualFoodEntry
+              ? state.extra as ManualFoodEntry
+              : null,
+        ),
+      ),
       GoRoute(
           path: '/food/shared-catalog',
           builder: (context, state) => const SharedFoodCatalogScreen()),

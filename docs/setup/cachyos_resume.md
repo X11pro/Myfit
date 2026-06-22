@@ -124,11 +124,13 @@ El proyecto real de Supabase ya esta conectado y tiene aplicadas estas migracion
 Tambien ya esta desplegada la Edge Function:
 
 - `food-catalog-upsert`
+- `meal-photo-analyze`
 
 Pendiente importante para OCR/AI real desde imagen:
 
 1. Configurar secret `OPENAI_API_KEY` en Supabase.
 2. Probar la pantalla Flutter de catalogo compartido contra la funcion desplegada.
+3. Probar el boton `Analyze with AI` de comidas manuales contra `meal-photo-analyze`.
 
 ## 9. Primer objetivo al volver
 
@@ -149,7 +151,10 @@ Estado funcional actual de la app:
 - onboarding guest con perfil local persistido,
 - dashboard con acciones rapidas,
 - manual food entry local,
-- pantalla para aportar productos al catalogo compartido.
+- pantalla para aportar productos al catalogo compartido,
+- fotos locales por comida,
+- resumen diario y peso diario local,
+- boton `Analyze with AI` conectado a backend.
 
 ## 11. Comandos utiles para Supabase
 
@@ -159,6 +164,7 @@ Desde la raiz del repo:
 npx supabase link --project-ref cyecalxewqcyxxglxloa --workdir backend --yes
 npx supabase db push --linked --workdir backend
 npx supabase functions deploy food-catalog-upsert --project-ref cyecalxewqcyxxglxloa --workdir backend
+npx supabase functions deploy meal-photo-analyze --project-ref cyecalxewqcyxxglxloa --workdir backend
 ```
 
 Para habilitar AI real en la Edge Function:

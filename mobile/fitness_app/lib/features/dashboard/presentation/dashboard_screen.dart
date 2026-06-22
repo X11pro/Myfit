@@ -1,7 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../application/daily_weight_controller.dart';
+import '../domain/daily_weight_entry.dart';
 import '../../food/application/manual_food_entries_controller.dart';
 import '../../food/domain/manual_food_entry.dart';
 import '../../../shared/app_language.dart';
@@ -17,6 +21,9 @@ class DashboardScreen extends ConsumerWidget {
     final displayName = state.displayName ?? strings.defaultUserName;
     final summary = ref.watch(manualFoodSummaryProvider);
     final entries = ref.watch(manualFoodEntriesProvider);
+    final todaySummary = ref.watch(todayNutritionSummaryProvider);
+    final dailySummaries = ref.watch(dailyNutritionSummariesProvider);
+    final todayWeight = ref.watch(todayWeightEntryProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -40,6 +47,13 @@ class DashboardScreen extends ConsumerWidget {
             onPrimaryPressed: () => context.go('/food/manual'),
             secondaryLabel: strings.addSharedFoodTitle,
             onSecondaryPressed: () => context.go('/food/shared-catalog'),
+          ),
+          const SizedBox(height: 16),
+          _DailySummaryCard(
+            strings: strings,
+            summary: todaySummary,
+            todayWeight: todayWeight,
+            onLogWeightPressed: () => _showWeightDialog(context, ref, strings),
           ),
           const SizedBox(height: 16),
           _MetricCard(
@@ -75,7 +89,196 @@ class DashboardScreen extends ConsumerWidget {
                   padding: const EdgeInsets.only(bottom: 12),
                   child: _MealEntryCard(entry: entry, strings: strings),
                 )),
+          const SizedBox(height: 24),
+          Text(strings.dailyHistoryTitle,
+              style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 12),
+          if (dailySummaries.isEmpty)
+            _EmptyMealsCard(message: strings.noDailySummaryYet)
+          else
+            ...dailySummaries.take(7).map(
+                  (summary) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _DailyHistoryCard(
+                      strings: strings,
+                      summary: summary,
+                    ),
+                  ),
+                ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _showWeightDialog(
+    BuildContext context,
+    WidgetRef ref,
+    AppStrings strings,
+  ) async {
+    final todayWeight = ref.read(todayWeightEntryProvider);
+    final controller = TextEditingController(
+      text: todayWeight?.weightKg.toString() ?? '',
+    );
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(strings.logWeightTitle),
+          content: TextField(
+            controller: controller,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(labelText: strings.weightInputLabel),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(strings.saveWeightButton),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (saved != true) {
+      return;
+    }
+
+    final weight = double.tryParse(controller.text.trim().replaceAll(',', '.'));
+    if (weight == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(strings.invalidWeightMessage)),
+        );
+      }
+      return;
+    }
+
+    await ref
+        .read(dailyWeightEntriesProvider.notifier)
+        .upsertTodayWeight(weight);
+
+    if (!context.mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(strings.weightSavedMessage)),
+    );
+  }
+}
+
+class _DailySummaryCard extends StatelessWidget {
+  const _DailySummaryCard({
+    required this.strings,
+    required this.summary,
+    required this.todayWeight,
+    required this.onLogWeightPressed,
+  });
+
+  final AppStrings strings;
+  final DailyNutritionSummary? summary;
+  final DailyWeightEntry? todayWeight;
+  final VoidCallback onLogWeightPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(strings.todaySummaryTitle,
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _MiniMetric(
+                    label: strings.caloriesConsumed,
+                    value: '${summary?.totalCalories ?? 0} kcal',
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _MiniMetric(
+                    label: strings.protein,
+                    value: '${summary?.totalProteinGrams ?? 0} g',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _MiniMetric(
+                    label: strings.todayWeightTitle,
+                    value: todayWeight == null
+                        ? strings.noWeightLogged
+                        : '${todayWeight!.weightKg} kg',
+                  ),
+                ),
+                const SizedBox(width: 12),
+                FilledButton(
+                  onPressed: onLogWeightPressed,
+                  child: Text(strings.logWeightTitle),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniMetric extends StatelessWidget {
+  const _MiniMetric({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: Theme.of(context).textTheme.bodySmall),
+        const SizedBox(height: 6),
+        Text(value, style: Theme.of(context).textTheme.titleMedium),
+      ],
+    );
+  }
+}
+
+class _DailyHistoryCard extends StatelessWidget {
+  const _DailyHistoryCard({required this.strings, required this.summary});
+
+  final AppStrings strings;
+  final DailyNutritionSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ListTile(
+        title: Text(summary.dateKey),
+        subtitle: Text(
+            strings.dateSummarySubtitle(summary.dateKey, summary.entryCount)),
+        trailing: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text('${summary.totalCalories} kcal'),
+            const SizedBox(height: 4),
+            Text('${summary.totalProteinGrams} g'),
+          ],
+        ),
       ),
     );
   }
@@ -187,17 +390,96 @@ class _MealEntryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        title: Text(entry.name),
-        subtitle: Text(strings.mealTypeName(entry.mealType)),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
           children: [
-            Text('${entry.calories} kcal'),
-            const SizedBox(height: 4),
-            Text('${entry.proteinGrams} g'),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (entry.photoPath != null) ...[
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.file(
+                      File(entry.photoPath!),
+                      width: 72,
+                      height: 72,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 72,
+                          height: 72,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest,
+                          ),
+                          child: const Icon(Icons.image_not_supported_outlined),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(entry.name,
+                          style: Theme.of(context).textTheme.titleMedium),
+                      const SizedBox(height: 4),
+                      Text(strings.mealTypeName(entry.mealType)),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text('${entry.calories} kcal'),
+                    const SizedBox(height: 4),
+                    Text('${entry.proteinGrams} g'),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => context.push(
+                      '/food/manual',
+                      extra: entry,
+                    ),
+                    child: Text(strings.editMealButton),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Consumer(
+                    builder: (context, ref, child) {
+                      return OutlinedButton(
+                        onPressed: () async {
+                          await ref
+                              .read(manualFoodEntriesProvider.notifier)
+                              .deleteEntry(entry.id);
+
+                          if (!context.mounted) {
+                            return;
+                          }
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(strings.mealDeletedMessage)),
+                          );
+                        },
+                        child: Text(strings.deleteMealButton),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),

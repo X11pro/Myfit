@@ -27,7 +27,38 @@ class AppStrings {
   String get quickActionsTitle =>
       isEnglish ? 'Quick actions' : 'Acciones rapidas';
 
+  String get todaySummaryTitle =>
+      isEnglish ? 'Today summary' : 'Resumen de hoy';
+
+  String get dailyHistoryTitle =>
+      isEnglish ? 'Daily history' : 'Historial diario';
+
+  String get logWeightTitle =>
+      isEnglish ? 'Log today weight' : 'Registrar peso de hoy';
+
+  String get todayWeightTitle => isEnglish ? 'Today weight' : 'Peso de hoy';
+
+  String get noWeightLogged =>
+      isEnglish ? 'No weight logged yet' : 'Todavia no hay peso registrado';
+
+  String get saveWeightButton => isEnglish ? 'Save weight' : 'Guardar peso';
+
+  String get weightSavedMessage =>
+      isEnglish ? 'Weight saved.' : 'Peso guardado.';
+
+  String get invalidWeightMessage => isEnglish
+      ? 'Enter a valid weight in kg.'
+      : 'Ingresa un peso valido en kg.';
+
+  String get weightInputLabel => isEnglish ? 'Weight (kg)' : 'Peso (kg)';
+
+  String get noDailySummaryYet => isEnglish
+      ? 'No completed daily summary yet. Start logging meals.'
+      : 'Todavia no hay resumen diario. Empieza a registrar comidas.';
+
   String get addMealTitle => isEnglish ? 'Add meal' : 'Agregar comida';
+
+  String get editMealTitle => isEnglish ? 'Edit meal' : 'Editar comida';
 
   String get addSharedFoodTitle =>
       isEnglish ? 'Add shared food' : 'Agregar alimento compartido';
@@ -93,6 +124,43 @@ class AppStrings {
 
   String get saveMealButton => isEnglish ? 'Save meal' : 'Guardar comida';
 
+  String get addPhotoButton =>
+      isEnglish ? 'Attach meal photo' : 'Adjuntar foto de la comida';
+
+  String get choosePhotoButton =>
+      isEnglish ? 'Choose from gallery' : 'Elegir desde galeria';
+
+  String get changePhotoButton => isEnglish ? 'Change photo' : 'Cambiar foto';
+
+  String get removePhotoButton => isEnglish ? 'Remove photo' : 'Quitar foto';
+
+  String get mealPhotoLabel => isEnglish ? 'Meal photo' : 'Foto de la comida';
+
+  String get analyzeWithAiButton =>
+      isEnglish ? 'Analyze with AI' : 'Analizar con AI';
+
+  String get aiAnalysisNeedsPhoto => isEnglish
+      ? 'Attach a meal photo before running AI analysis.'
+      : 'Adjunta una foto de la comida antes de ejecutar el analisis AI.';
+
+  String get aiAnalysisSuccess => isEnglish
+      ? 'AI analysis completed. Review the estimated values.'
+      : 'Analisis AI completado. Revisa los valores estimados.';
+
+  String aiConfidenceLabel(num confidence) => isEnglish
+      ? 'Confidence: ${(confidence * 100).round()}%'
+      : 'Confianza: ${(confidence * 100).round()}%';
+
+  String get updateMealButton =>
+      isEnglish ? 'Update meal' : 'Actualizar comida';
+
+  String get editMealButton => isEnglish ? 'Edit' : 'Editar';
+
+  String get deleteMealButton => isEnglish ? 'Delete' : 'Eliminar';
+
+  String get mealDeletedMessage =>
+      isEnglish ? 'Meal deleted.' : 'Comida eliminada.';
+
   String get invalidMealMessage => isEnglish
       ? 'Enter a name, calories, and protein.'
       : 'Ingresa nombre, calorias y proteina.';
@@ -116,6 +184,9 @@ class AppStrings {
 
   String get openSharedCatalog =>
       isEnglish ? 'Open shared catalog' : 'Abrir catalogo compartido';
+
+  String dateSummarySubtitle(String dateKey, int count) =>
+      isEnglish ? '$dateKey • $count meals' : '$dateKey • $count comidas';
 
   String entriesCount(int count) =>
       isEnglish ? '$count entries today' : '$count registros hoy';

@@ -2,7 +2,7 @@
 
 ## Resumen
 
-El repo quedo listo para continuar en CachyOS con una app Flutter usable sin login obligatorio, idioma ingles por defecto, dark mode activo y primer flujo funcional de registro manual de comidas.
+El repo quedo listo para continuar en CachyOS con una app Flutter usable sin login obligatorio, idioma ingles por defecto, dark mode activo, comidas manuales persistidas localmente, resumen diario por fecha, peso diario y base de analisis AI por foto conectada a backend.
 
 ## Estado de codigo
 
@@ -14,6 +14,8 @@ El repo quedo listo para continuar en CachyOS con una app Flutter usable sin log
   - `onboarding`
   - `dashboard`
   - `manual food entry`
+  - `daily summary + daily weight` local-first
+  - `meal photo attach` y boton `Analyze with AI`
   - router con `go_router`
   - estado con `Riverpod`
   - perfil guest persistido localmente con `shared_preferences`
@@ -44,13 +46,21 @@ El repo quedo listo para continuar en CachyOS con una app Flutter usable sin log
   - acciones rapidas,
   - lectura de comidas manuales locales,
   - lista de comidas del dia,
-  - acceso a catalogo compartido.
+  - acceso a catalogo compartido,
+  - resumen diario local,
+  - peso diario local,
+  - historial diario local.
 - `mobile/fitness_app/lib/features/food/`
   - primer flujo local-first de `manual food entry`,
   - pantalla para aportar productos al catalogo compartido,
-  - soporte para OCR/AI de etiquetas y score nutricional `0-5`.
+  - soporte para OCR/AI de etiquetas y score nutricional `0-5`,
+  - fotos locales por comida,
+  - edicion/borrado,
+  - persistencia local durable.
 - `backend/supabase/functions/food-catalog-upsert/index.ts`
   - edge function para extraer datos desde OCR/AI y guardar `food_items` compartidos.
+- `backend/supabase/functions/meal-photo-analyze/index.ts`
+  - edge function para analizar foto de comida y estimar nombre, calorias, proteina, macros y confianza.
 - `backend/supabase/migrations/20260620_000002_food_items_shared_catalog.sql`
   - indice unico para catalogo compartido por `source + source_id`,
   - columnas `nutrition_quality_score` y `nutrition_quality_reason`.
@@ -102,8 +112,9 @@ flutter doctor -v
 2. Reintroducir autenticacion en una proxima iteracion sin Auth0, probablemente sobre Supabase o guest identity persistente.
 3. Conectar `manual food entry` a persistencia remota cuando quede definido el modelo final de identidad.
 4. Agregar edicion/borrado y persistencia local de comidas manuales.
-5. Configurar `OPENAI_API_KEY` en Supabase para habilitar extraccion AI real desde imagen.
-6. Probar end-to-end la pantalla Flutter del catalogo compartido contra la funcion ya desplegada.
+5. Configurar `OPENAI_API_KEY` en Supabase para habilitar AI real en `food-catalog-upsert` y `meal-photo-analyze`.
+6. Probar end-to-end la pantalla Flutter del catalogo compartido y el boton `Analyze with AI` contra las funciones ya desplegadas.
+7. Conectar los resultados AI a `meal_entries` remotos cuando se defina el modelo final de identidad.
 
 ## Riesgos o notas
 
@@ -112,7 +123,7 @@ flutter doctor -v
 - No hay claves reales ni `.env` comprometidos en el repo.
 - La app esta temporalmente en guest mode para destrabar UX y desarrollo de producto.
 - El perfil del invitado ya persiste localmente, pero las comidas manuales aun viven solo en memoria.
-- La migracion y la edge function del catalogo compartido ya quedaron desplegadas.
+- La migracion y las edge functions `food-catalog-upsert` y `meal-photo-analyze` ya quedaron desplegadas.
 - La extraccion AI desde imagen aun depende de configurar `OPENAI_API_KEY` como secret en Supabase.
 - Recordatorio explicito para la proxima sesion: reimplementar autenticacion sin Auth0 antes de conectar persistencia remota multiusuario.
 - `currentWeightKg` del onboarding se guarda en `body_metrics`, no en `profiles`, porque el esquema actual ya separa ese dato historico.
