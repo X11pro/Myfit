@@ -35,7 +35,7 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
 
     final session = widget.session;
     if (session == null) {
-      _titleController.text = 'Gym session';
+      _titleController.text = stringsFor(ref).defaultWorkoutTitle;
       return;
     }
 
@@ -317,9 +317,8 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                   ),
                 );
               },
-              child: Text(index == null
-                  ? strings.addButton
-                  : strings.updateWorkoutButton),
+              child: Text(
+                  index == null ? strings.addButton : strings.updateSetButton),
             ),
           ],
         );
@@ -456,7 +455,7 @@ class _RoutineRecommendationCard extends StatelessWidget {
   }
 }
 
-class _DraftSetTile extends StatelessWidget {
+class _DraftSetTile extends ConsumerWidget {
   const _DraftSetTile({
     required this.set,
     required this.onEdit,
@@ -468,12 +467,18 @@ class _DraftSetTile extends StatelessWidget {
   final VoidCallback onRemove;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final strings = stringsFor(ref);
+
     return Card(
       child: ListTile(
         title: Text('${set.exerciseName} • ${set.weightKg} kg'),
         subtitle: Text(
-          '${set.reps} reps • Set ${set.setNumber} • ${set.muscleGroup.isEmpty ? 'General' : set.muscleGroup}',
+          strings.draftSetSubtitle(
+            reps: set.reps,
+            setNumber: set.setNumber,
+            muscleGroup: set.muscleGroup,
+          ),
         ),
         trailing: Wrap(
           spacing: 4,
@@ -517,7 +522,10 @@ class _WorkoutHistoryCard extends ConsumerWidget {
                       Text(session.title,
                           style: Theme.of(context).textTheme.titleMedium),
                       const SizedBox(height: 4),
-                      Text('${session.dateKey} • ${session.totalSets} sets'),
+                      Text(strings.workoutDateSetsSummary(
+                        session.dateKey,
+                        session.totalSets,
+                      )),
                     ],
                   ),
                 ),
@@ -526,8 +534,7 @@ class _WorkoutHistoryCard extends ConsumerWidget {
                   children: [
                     Text('${session.estimatedActiveCalories} kcal'),
                     const SizedBox(height: 4),
-                    Text(
-                        '${session.heaviestWeightKg.toStringAsFixed(1)} kg max'),
+                    Text(strings.maxWeightLabel(session.heaviestWeightKg)),
                   ],
                 ),
               ],
@@ -537,7 +544,11 @@ class _WorkoutHistoryCard extends ConsumerWidget {
                   (set) => Padding(
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Text(
-                      '${set.exerciseName}: ${set.weightKg} kg x ${set.reps}',
+                      strings.exerciseWeightRepsLabel(
+                        exerciseName: set.exerciseName,
+                        weightKg: set.weightKg,
+                        reps: set.reps,
+                      ),
                     ),
                   ),
                 ),
@@ -548,7 +559,7 @@ class _WorkoutHistoryCard extends ConsumerWidget {
                   child: OutlinedButton(
                     onPressed: () =>
                         context.push('/workout/manual', extra: session),
-                    child: Text(strings.editMealButton),
+                    child: Text(strings.editWorkoutButton),
                   ),
                 ),
                 const SizedBox(width: 12),

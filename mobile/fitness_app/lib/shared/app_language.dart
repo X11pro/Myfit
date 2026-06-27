@@ -19,6 +19,55 @@ class AppStrings {
       ? 'Use the app directly for now. Authentication is temporarily disabled.'
       : 'Usa la app directamente por ahora. La autenticacion esta deshabilitada temporalmente.';
 
+  String get loginDescription => isEnglish
+      ? 'Enter your email to receive an access code and continue with your profile.'
+      : 'Ingresa tu email para recibir un codigo de acceso y continuar con tu perfil.';
+
+  String get loginMissingConfig => isEnglish
+      ? 'Missing `SUPABASE_URL` and `SUPABASE_ANON_KEY`. Real authentication is not available until those variables are configured.'
+      : 'Faltan `SUPABASE_URL` y `SUPABASE_ANON_KEY`. La autenticacion real no esta disponible hasta configurar esas variables.';
+
+  String get emailLabel => isEnglish ? 'Email' : 'Email';
+
+  String get emailHint => isEnglish ? 'you@email.com' : 'tu@email.com';
+
+  String get accessCodeLabel => isEnglish ? 'Access code' : 'Codigo de acceso';
+
+  String get accessCodeHint => isEnglish ? '6 digits' : '6 digitos';
+
+  String get verifyCodeButton => isEnglish ? 'Verify code' : 'Verificar codigo';
+
+  String get receiveAccessCodeButton =>
+      isEnglish ? 'Receive access code' : 'Recibir codigo de acceso';
+
+  String get changeEmailButton => isEnglish ? 'Change email' : 'Cambiar email';
+
+  String get invalidEmailMessage =>
+      isEnglish ? 'Enter a valid email.' : 'Ingresa un email valido.';
+
+  String get codeSentMessage => isEnglish
+      ? 'We sent you a code by email.'
+      : 'Te enviamos un codigo por email.';
+
+  String sendCodeErrorMessage(Object error) => isEnglish
+      ? 'Could not send the code: $error'
+      : 'No se pudo enviar el codigo: $error';
+
+  String get staleEmailMessage => isEnglish
+      ? 'The email is no longer valid. Try again.'
+      : 'El email ya no es valido. Vuelve a intentarlo.';
+
+  String get invalidAccessCodeMessage =>
+      isEnglish ? 'Enter the 6-digit code.' : 'Ingresa el codigo de 6 digitos.';
+
+  String verifyCodeErrorMessage(Object error) => isEnglish
+      ? 'Could not verify the code: $error'
+      : 'No se pudo verificar el codigo: $error';
+
+  String get missingSupabaseConfigMessage => isEnglish
+      ? 'Missing SUPABASE_URL and SUPABASE_ANON_KEY.'
+      : 'Faltan SUPABASE_URL y SUPABASE_ANON_KEY.';
+
   String get continueGuest =>
       isEnglish ? 'Continue as guest' : 'Continuar como invitado';
 
@@ -64,6 +113,8 @@ class AppStrings {
   String get noSetsAddedYet =>
       isEnglish ? 'No sets added yet.' : 'Todavia no agregaste sets.';
 
+  String get defaultWorkoutTitle => isEnglish ? 'Gym session' : 'Sesion de gym';
+
   String get saveWorkoutButton =>
       isEnglish ? 'Save workout' : 'Guardar entrenamiento';
 
@@ -87,6 +138,40 @@ class AppStrings {
   String get cancelButton => isEnglish ? 'Cancel' : 'Cancelar';
 
   String get addButton => isEnglish ? 'Add' : 'Agregar';
+
+  String setsCountLabel(int count) => isEnglish ? '$count sets' : '$count sets';
+
+  String repsCountLabel(int count) =>
+      isEnglish ? '$count reps' : '$count repeticiones';
+
+  String get generalMuscleGroup => isEnglish ? 'General' : 'General';
+
+  String maxWeightLabel(double kg) => isEnglish
+      ? '${kg.toStringAsFixed(1)} kg max'
+      : '${kg.toStringAsFixed(1)} kg max';
+
+  String setNumberLabel(int setNumber) =>
+      isEnglish ? 'Set $setNumber' : 'Set $setNumber';
+
+  String workoutDateSetsSummary(String dateKey, int count) =>
+      '$dateKey • ${setsCountLabel(count)}';
+
+  String draftSetSubtitle({
+    required int reps,
+    required int setNumber,
+    required String muscleGroup,
+  }) {
+    final group = muscleGroup.isEmpty ? generalMuscleGroup : muscleGroup;
+    return '${repsCountLabel(reps)} • ${setNumberLabel(setNumber)} • $group';
+  }
+
+  String exerciseWeightRepsLabel({
+    required String exerciseName,
+    required double weightKg,
+    required int reps,
+  }) {
+    return '$exerciseName: $weightKg kg x ${repsCountLabel(reps)}';
+  }
 
   String get workoutHistoryTitle =>
       isEnglish ? 'Workout history' : 'Historial de entrenamientos';
@@ -155,6 +240,100 @@ class AppStrings {
       isEnglish ? 'Open progress' : 'Abrir progreso';
 
   String get progressDeltaTitle => isEnglish ? 'Delta' : 'Cambio';
+
+  String get filterActiveTitle => isEnglish ? 'Active filter' : 'Filtro activo';
+
+  String filteredExerciseLabel(String exercise) => isEnglish
+      ? 'Strength filtered by $exercise'
+      : 'Fuerza filtrada por $exercise';
+
+  String get dashboardFocusTitle => isEnglish ? 'Today focus' : 'Foco de hoy';
+
+  String get nextBestActionTitle =>
+      isEnglish ? 'Next best action' : 'Siguiente mejor accion';
+
+  String get ctaLogWorkoutHeadline => isEnglish
+      ? 'You have not logged a workout today.'
+      : 'Todavia no registraste entrenamiento hoy.';
+
+  String get ctaLogWorkoutSubtitle => isEnglish
+      ? 'Save your session, sets, and lifted weight to keep your progress trend accurate.'
+      : 'Guarda tu sesion, sets y peso levantado para que la tendencia de progreso sea precisa.';
+
+  String get ctaAddMealHeadline => isEnglish
+      ? 'Your food log is still empty today.'
+      : 'Tu registro de comidas de hoy sigue vacio.';
+
+  String get ctaAddMealSubtitle => isEnglish
+      ? 'Add a meal so the dashboard can compare intake against your target.'
+      : 'Agrega una comida para que el panel compare tu ingesta contra el objetivo.';
+
+  String get ctaProteinHeadline => isEnglish
+      ? 'Protein is the main gap for today.'
+      : 'La proteina es la principal brecha de hoy.';
+
+  String ctaProteinSubtitle(int grams) => isEnglish
+      ? 'You still need about $grams g. A high-protein meal would improve the day fast.'
+      : 'Todavia te faltan unos $grams g. Una comida alta en proteina mejoraria rapido el dia.';
+
+  String get ctaReviewProgressHeadline => isEnglish
+      ? 'Today is on track. Review your trend.'
+      : 'Hoy va encaminado. Revisa tu tendencia.';
+
+  String get ctaReviewProgressSubtitle => isEnglish
+      ? 'Use the progress view to verify strength, body weight, and calorie burn changes.'
+      : 'Usa la vista de progreso para verificar cambios en fuerza, peso corporal y calorias quemadas.';
+
+  String get reviewProgressButton =>
+      isEnglish ? 'Review progress' : 'Revisar progreso';
+
+  String get collapseSectionHint => isEnglish
+      ? 'Tap to expand or collapse.'
+      : 'Toca para expandir o contraer.';
+
+  String get recentMealsSection =>
+      isEnglish ? 'Recent meals' : 'Comidas recientes';
+
+  String get recentWorkoutsSection =>
+      isEnglish ? 'Recent workouts' : 'Entrenamientos recientes';
+
+  String get dailyHistorySection =>
+      isEnglish ? 'Daily nutrition history' : 'Historial diario de nutricion';
+
+  String bodyWeightDeltaMessage(double delta) {
+    final absolute = delta.abs().toStringAsFixed(1);
+    if (isEnglish) {
+      if (delta == 0) {
+        return 'Body weight is stable.';
+      }
+      return delta < 0
+          ? 'Body weight is down $absolute kg.'
+          : 'Body weight is up $absolute kg.';
+    }
+
+    if (delta == 0) {
+      return 'El peso corporal esta estable.';
+    }
+
+    return delta < 0
+        ? 'El peso corporal bajo $absolute kg.'
+        : 'El peso corporal subio $absolute kg.';
+  }
+
+  String trendDirectionMessage(double delta) {
+    if (isEnglish) {
+      if (delta == 0) {
+        return 'Stable trend.';
+      }
+      return delta > 0 ? 'Trend is moving up.' : 'Trend is moving down.';
+    }
+
+    if (delta == 0) {
+      return 'Tendencia estable.';
+    }
+
+    return delta > 0 ? 'La tendencia va subiendo.' : 'La tendencia va bajando.';
+  }
 
   String get noProgressDataYet => isEnglish
       ? 'Not enough data yet. Log workouts or body weight to see progress.'
@@ -319,10 +498,15 @@ class AppStrings {
   String get updateWorkoutButton =>
       isEnglish ? 'Update workout' : 'Actualizar entrenamiento';
 
+  String get updateSetButton => isEnglish ? 'Update set' : 'Actualizar set';
+
   String get workoutUpdatedMessage =>
       isEnglish ? 'Workout updated.' : 'Entrenamiento actualizado.';
 
   String get editSetButton => isEnglish ? 'Edit set' : 'Editar set';
+
+  String get editWorkoutButton =>
+      isEnglish ? 'Edit workout' : 'Editar entrenamiento';
 
   String get deleteMealButton => isEnglish ? 'Delete' : 'Eliminar';
 

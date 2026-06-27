@@ -2,7 +2,7 @@
 
 ## Resumen
 
-El repo quedo listo para continuar en CachyOS con una app Flutter usable sin login obligatorio, idioma ingles por defecto, dark mode activo, comidas manuales persistidas localmente, resumen diario por fecha, peso diario, macros extendidas locales, registro manual de gym con sets/peso por fecha, edicion de entrenamientos, objetivos diarios segun goal, pantalla separada de progreso con filtro por ejercicio y base de analisis AI por foto conectada a backend.
+El repo quedo listo para continuar en CachyOS con una app Flutter usable sin login obligatorio, idioma ingles por defecto, cambio consistente a espanol desde el selector `EN / ESP`, dark mode activo, comidas manuales persistidas localmente, resumen diario por fecha, peso diario, macros extendidas locales, registro manual de gym con sets/peso por fecha, edicion de entrenamientos, objetivos diarios segun goal, pantalla separada de progreso con filtro por ejercicio y base de analisis AI por foto conectada a backend.
 
 ## Estado de codigo
 
@@ -71,7 +71,15 @@ El repo quedo listo para continuar en CachyOS con una app Flutter usable sin log
   - recomendaciones simples de rutina y foco nutricional segun objetivo,
   - diagrama de progreso para peso levantado, peso corporal, calorias quemadas y vista combinada,
   - pantalla separada de progreso,
-  - filtro por ejercicio para la vista de fuerza.
+  - filtro por ejercicio para la vista de fuerza,
+  - CTA principal del dia,
+  - secciones plegables para movil,
+  - grafico de progreso tipo linea/area.
+- `mobile/fitness_app/lib/features/auth/`
+  - login screen alineada con ingles por defecto y traduccion al espanol via `AppStrings`.
+- `mobile/fitness_app/lib/shared/app_language.dart`
+  - limpieza de textos mezclados EN/ES para dashboard, auth y workout,
+  - helpers de localizacion para labels de sets, reps y progreso.
 - `backend/supabase/functions/food-catalog-upsert/index.ts`
   - edge function para extraer datos desde OCR/AI y guardar `food_items` compartidos.
 - `backend/supabase/functions/meal-photo-analyze/index.ts`
@@ -85,7 +93,8 @@ El repo quedo listo para continuar en CachyOS con una app Flutter usable sin log
   - OCR/manual input,
   - score nutricional `0-5`.
 - `mobile/fitness_app/test/widget_test.dart`
-  - test actualizado al welcome screen en ingles por defecto.
+  - test actualizado al welcome screen en ingles por defecto,
+  - test del cambio a espanol desde el selector de idioma.
 - `mobile/fitness_app/test/features/food/manual_food_entries_controller_test.dart`
   - test de persistencia local y resumen nutricional para macros extendidas y confianza.
 - `mobile/fitness_app/test/features/dashboard/daily_targets_calculator_test.dart`
@@ -124,6 +133,7 @@ flutter build apk --debug
 APK debug mas reciente generado en:
 
 - `mobile/fitness_app/build/app/outputs/flutter-apk/app-debug.apk`
+- regenerado despues de la limpieza de idiomas y del pulido visual de dashboard/progreso.
 
 ## Commits relevantes
 
@@ -150,6 +160,7 @@ APK debug mas reciente generado en:
 - La app esta temporalmente en guest mode para destrabar UX y desarrollo de producto.
 - El perfil guest y las comidas manuales ya persisten localmente con `shared_preferences`.
 - El flujo manual actual ya muestra y guarda `carbs`, `fat`, `sugar`, `fiber` y `confidence` cuando vienen del analisis AI.
+- La UI principal quedo revisada para evitar mezcla accidental de ingles/espanol en dashboard, auth y workout; el selector `EN / ESP` cambia el copy visible del flujo principal.
 - Los workouts manuales y el progreso de gym aun son local-first; no se sincronizan con Supabase todavia.
 - La migracion y las edge functions `food-catalog-upsert` y `meal-photo-analyze` ya quedaron desplegadas.
 - La extraccion AI desde imagen aun depende de configurar `OPENAI_API_KEY` como secret en Supabase.

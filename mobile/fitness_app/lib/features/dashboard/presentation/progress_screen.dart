@@ -1,11 +1,10 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/app_language.dart';
 import '../application/daily_targets_calculator.dart';
 import '../domain/daily_targets.dart';
+import 'widgets/progress_chart_widgets.dart';
 
 class ProgressScreen extends ConsumerStatefulWidget {
   const ProgressScreen({super.key});
@@ -85,6 +84,13 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                   .read(strengthExerciseFilterProvider.notifier)
                   .state = value,
             ),
+            if (selectedExercise != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                strings.filteredExerciseLabel(selectedExercise),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
           ],
           const SizedBox(height: 20),
           Card(
@@ -106,14 +112,14 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                         padding: const EdgeInsets.only(bottom: 12),
                         child: Text(strings.bodyWeightTrendDown),
                       ),
-                    _ProgressBarChart(points: points),
+                    ProgressLineAreaChart(points: points, height: 240),
                   ],
                 ],
               ),
             ),
           ),
           const SizedBox(height: 16),
-          _ProgressSummaryCard(points: points, strings: strings),
+          _ProgressSummaryCard(points: points, strings: strings, mode: _mode),
         ],
       ),
     );
@@ -141,77 +147,16 @@ class _ModeChip extends StatelessWidget {
   }
 }
 
-class _ProgressBarChart extends StatelessWidget {
-  const _ProgressBarChart({required this.points});
-
-  final List<ProgressPoint> points;
-
-  @override
-  Widget build(BuildContext context) {
-    var maxValue = 0.0;
-    for (final point in points) {
-      maxValue = max(maxValue, point.value);
-    }
-    if (maxValue <= 0) {
-      maxValue = 1;
-    }
-
-    return SizedBox(
-      height: 220,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: points
-            .map(
-              (point) => Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text(
-                        point.value.toStringAsFixed(point.value >= 10 ? 0 : 1),
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Expanded(
-                        child: Align(
-                          alignment: Alignment.bottomCenter,
-                          child: Container(
-                            width: double.infinity,
-                            height: max(12, 150 * (point.value / maxValue)),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Theme.of(context).colorScheme.primary,
-                                  Theme.of(context).colorScheme.tertiary,
-                                ],
-                                begin: Alignment.bottomCenter,
-                                end: Alignment.topCenter,
-                              ),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(point.label,
-                          style: Theme.of(context).textTheme.bodySmall),
-                    ],
-                  ),
-                ),
-              ),
-            )
-            .toList(),
-      ),
-    );
-  }
-}
-
 class _ProgressSummaryCard extends StatelessWidget {
-  const _ProgressSummaryCard({required this.points, required this.strings});
+  const _ProgressSummaryCard({
+    required this.points,
+    required this.strings,
+    required this.mode,
+  });
 
   final List<ProgressPoint> points;
   final AppStrings strings;
+  final ProgressMode mode;
 
   @override
   Widget build(BuildContext context) {
@@ -232,12 +177,24 @@ class _ProgressSummaryCard extends StatelessWidget {
             Text(strings.progressDeltaTitle,
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
-            Text(delta >= 0
-                ? '+${delta.toStringAsFixed(1)}'
-                : delta.toStringAsFixed(1)),
+            Text(
+              delta >= 0
+                  ? '+${delta.toStringAsFixed(1)}'
+                  : delta.toStringAsFixed(1),
+            ),
+            const SizedBox(height: 8),
+            Text(_summaryText(delta)),
           ],
         ),
       ),
     );
+  }
+
+  String _summaryText(double delta) {
+    if (mode == ProgressMode.bodyWeight) {
+      return strings.bodyWeightDeltaMessage(delta);
+    }
+
+    return strings.trendDirectionMessage(delta);
   }
 }

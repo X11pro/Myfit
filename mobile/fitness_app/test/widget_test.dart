@@ -11,4 +11,15 @@ void main() {
 
     expect(find.text('Continue as guest'), findsOneWidget);
   });
+
+  testWidgets('switches splash copy to spanish when language changes',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(const ProviderScope(child: MyfitApp()));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('ESP'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Continuar como invitado'), findsOneWidget);
+  });
 }

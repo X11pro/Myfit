@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/app_env.dart';
+import '../../../shared/app_language.dart';
 import '../../../shared/app_state.dart';
 import '../application/auth_controller.dart';
 
@@ -31,6 +32,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final controller = ref.read(authControllerProvider);
     final isConfigured = AppEnv.hasSupabaseConfig;
     final isBusy = appState.isLoading;
+    final strings = stringsFor(ref);
 
     return Scaffold(
       body: SafeArea(
@@ -46,14 +48,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Nutricion, entrenamiento y balance energetico en una sola app.',
+                strings.welcomeTagline,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 24),
               Text(
                 isConfigured
-                    ? 'Ingresa tu email para recibir un codigo de acceso y continuar con tu perfil.'
-                    : 'Faltan `SUPABASE_URL` y `SUPABASE_ANON_KEY`. La autenticacion real no esta disponible hasta configurar esas variables.',
+                    ? strings.loginDescription
+                    : strings.loginMissingConfig,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 24),
@@ -62,9 +64,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 keyboardType: TextInputType.emailAddress,
                 autofillHints: const [AutofillHints.email],
                 enabled: isConfigured && !isBusy,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  hintText: 'tu@email.com',
+                decoration: InputDecoration(
+                  labelText: strings.emailLabel,
+                  hintText: strings.emailHint,
                 ),
               ),
               if (_codeSent) ...[
@@ -73,9 +75,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   controller: _codeController,
                   keyboardType: TextInputType.number,
                   enabled: !isBusy,
-                  decoration: const InputDecoration(
-                    labelText: 'Codigo de acceso',
-                    hintText: '6 digitos',
+                  decoration: InputDecoration(
+                    labelText: strings.accessCodeLabel,
+                    hintText: strings.accessCodeHint,
                   ),
                 ),
               ],
@@ -94,8 +96,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           await _sendCode(controller);
                         },
                   child: Text(_codeSent
-                      ? 'Verificar codigo'
-                      : 'Recibir codigo de acceso'),
+                      ? strings.verifyCodeButton
+                      : strings.receiveAccessCodeButton),
                 ),
               ),
               if (_codeSent) ...[
@@ -111,7 +113,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               _codeController.clear();
                             });
                           },
-                    child: const Text('Cambiar email'),
+                    child: Text(strings.changeEmailButton),
                   ),
                 ),
               ],
@@ -123,10 +125,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _sendCode(AuthController controller) async {
+    final strings = stringsFor(ref);
     final email = _emailController.text.trim();
 
     if (!_looksLikeEmail(email)) {
-      _showMessage('Ingresa un email valido.');
+      _showMessage(strings.invalidEmailMessage);
       return;
     }
 
@@ -141,30 +144,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         _codeSent = true;
         _submittedEmail = email;
       });
-      _showMessage('Te enviamos un codigo por email.');
+      _showMessage(strings.codeSentMessage);
     } catch (error) {
-      _showMessage('No se pudo enviar el codigo: $error');
+      _showMessage(strings.sendCodeErrorMessage(error));
     }
   }
 
   Future<void> _verifyCode(AuthController controller) async {
+    final strings = stringsFor(ref);
     final email = _submittedEmail ?? _emailController.text.trim();
     final token = _codeController.text.trim();
 
     if (!_looksLikeEmail(email)) {
-      _showMessage('El email ya no es valido. Vuelve a intentarlo.');
+      _showMessage(strings.staleEmailMessage);
       return;
     }
 
     if (token.length != 6) {
-      _showMessage('Ingresa el codigo de 6 digitos.');
+      _showMessage(strings.invalidAccessCodeMessage);
       return;
     }
 
     try {
       await controller.verifySignInCode(email: email, token: token);
     } catch (error) {
-      _showMessage('No se pudo verificar el codigo: $error');
+      _showMessage(strings.verifyCodeErrorMessage(error));
     }
   }
 

@@ -154,6 +154,8 @@ Estado funcional actual de la app:
 - manual food entry local,
 - manual workout local con edicion de sesiones y sets,
 - pantalla separada de progreso con filtro por ejercicio,
+- dashboard pulido con CTA principal, secciones plegables y grafico de linea/area,
+- ingles por defecto verificado y cambio consistente a espanol desde `EN / ESP`,
 - pantalla para aportar productos al catalogo compartido,
 - fotos locales por comida,
 - resumen diario y peso diario local,

@@ -15,6 +15,7 @@ import '../application/daily_targets_calculator.dart';
 import '../application/daily_weight_controller.dart';
 import '../domain/daily_targets.dart';
 import '../domain/daily_weight_entry.dart';
+import 'widgets/progress_chart_widgets.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -31,6 +32,7 @@ class DashboardScreen extends ConsumerWidget {
     final todayWeight = ref.watch(todayWeightEntryProvider);
     final dailyTargets = ref.watch(dailyTargetsProvider);
     final workoutRecommendation = ref.watch(workoutRecommendationProvider);
+    final selectedExercise = ref.watch(strengthExerciseFilterProvider);
     final todayWorkouts = ref.watch(todayWorkoutSessionsProvider);
     final todayWorkoutCalories = ref.watch(todayWorkoutCaloriesProvider);
     final totalSetsToday = todayWorkouts.fold<int>(
@@ -40,6 +42,9 @@ class DashboardScreen extends ConsumerWidget {
     final estimatedBalance = dailyTargets == null
         ? null
         : summary.totalCalories - dailyTargets.estimatedBurnCalories;
+    final proteinGap = dailyTargets == null
+        ? null
+        : max(0, dailyTargets.targetProteinGrams - summary.totalProteinGrams);
 
     return Scaffold(
       appBar: AppBar(
@@ -56,6 +61,13 @@ class DashboardScreen extends ConsumerWidget {
         children: [
           Text(strings.helloUser(displayName),
               style: Theme.of(context).textTheme.headlineSmall),
+          const SizedBox(height: 16),
+          _PrimaryActionCard(
+            strings: strings,
+            entriesCount: summary.entryCount,
+            workoutCount: todayWorkouts.length,
+            proteinGap: proteinGap,
+          ),
           const SizedBox(height: 16),
           _QuickActionCard(
             title: strings.quickActionsTitle,
@@ -97,103 +109,80 @@ class DashboardScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
           ],
-          const _ProgressCard(),
+          _ProgressCard(selectedExercise: selectedExercise),
           const SizedBox(height: 16),
-          _MetricCard(
-            title: strings.caloriesConsumed,
-            value: '${summary.totalCalories} kcal',
-            subtitle: summary.entryCount == 0
-                ? strings.mealsPending
-                : strings.entriesCount(summary.entryCount),
+          _FocusCard(
+            strings: strings,
+            summary: summary,
+            dailyTargets: dailyTargets,
+            estimatedBalance: estimatedBalance,
           ),
-          const SizedBox(height: 12),
-          _MetricCard(
-            title: strings.protein,
-            value: '${summary.totalProteinGrams} g',
-            subtitle: dailyTargets == null
-                ? strings.proteinGoalPending
-                : strings.remainingProteinMessage(
-                    max(
-                        0,
-                        dailyTargets.targetProteinGrams -
-                            summary.totalProteinGrams),
+          const SizedBox(height: 24),
+          _CollapsibleSection(
+            title: strings.recentMealsSection,
+            subtitle: strings.collapseSectionHint,
+            initiallyExpanded: true,
+            child: entries.isEmpty
+                ? _EmptyInfoCard(message: strings.noMealsYet)
+                : Column(
+                    children: entries
+                        .map((entry) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _MealEntryCard(
+                                  entry: entry, strings: strings),
+                            ))
+                        .toList(),
                   ),
           ),
-          const SizedBox(height: 12),
-          _MetricCard(
-            title: strings.carbs,
-            value: '${summary.totalCarbsGrams} g',
-            subtitle: strings.entriesCount(summary.entryCount),
-          ),
-          const SizedBox(height: 12),
-          _MetricCard(
-            title: strings.fat,
-            value: '${summary.totalFatGrams} g',
-            subtitle: strings.entriesCount(summary.entryCount),
-          ),
-          const SizedBox(height: 12),
-          _MetricCard(
-            title: strings.estimatedBalance,
-            value:
-                estimatedBalance == null ? '0 kcal' : '$estimatedBalance kcal',
-            subtitle: estimatedBalance == null
-                ? strings.activityPending
-                : strings.calorieDeltaMessage(estimatedBalance),
-          ),
-          const SizedBox(height: 24),
-          Text(strings.mealsTodayTitle,
-              style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 12),
-          if (entries.isEmpty)
-            _EmptyInfoCard(message: strings.noMealsYet)
-          else
-            ...entries.map((entry) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _MealEntryCard(entry: entry, strings: strings),
-                )),
-          const SizedBox(height: 24),
-          Text(strings.workoutHistoryTitle,
-              style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 12),
-          Consumer(
-            builder: (context, ref, child) {
-              final workouts = ref.watch(manualWorkoutSessionsProvider);
-              if (workouts.isEmpty) {
-                return _EmptyInfoCard(message: strings.noWorkoutsYet);
-              }
+          const SizedBox(height: 16),
+          _CollapsibleSection(
+            title: strings.recentWorkoutsSection,
+            subtitle: strings.collapseSectionHint,
+            child: Consumer(
+              builder: (context, ref, child) {
+                final workouts = ref.watch(manualWorkoutSessionsProvider);
+                if (workouts.isEmpty) {
+                  return _EmptyInfoCard(message: strings.noWorkoutsYet);
+                }
 
-              return Column(
-                children: workouts
-                    .take(5)
-                    .map(
-                      (session) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _WorkoutHistoryCard(
-                          strings: strings,
-                          session: session,
+                return Column(
+                  children: workouts
+                      .take(5)
+                      .map(
+                        (session) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _WorkoutHistoryCard(
+                            strings: strings,
+                            session: session,
+                          ),
                         ),
-                      ),
-                    )
-                    .toList(),
-              );
-            },
+                      )
+                      .toList(),
+                );
+              },
+            ),
           ),
-          const SizedBox(height: 24),
-          Text(strings.dailyHistoryTitle,
-              style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 12),
-          if (dailySummaries.isEmpty)
-            _EmptyInfoCard(message: strings.noDailySummaryYet)
-          else
-            ...dailySummaries.take(7).map(
-                  (summary) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _DailyHistoryCard(
-                      strings: strings,
-                      summary: summary,
-                    ),
+          const SizedBox(height: 16),
+          _CollapsibleSection(
+            title: strings.dailyHistorySection,
+            subtitle: strings.collapseSectionHint,
+            child: dailySummaries.isEmpty
+                ? _EmptyInfoCard(message: strings.noDailySummaryYet)
+                : Column(
+                    children: dailySummaries
+                        .take(7)
+                        .map(
+                          (summary) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _DailyHistoryCard(
+                              strings: strings,
+                              summary: summary,
+                            ),
+                          ),
+                        )
+                        .toList(),
                   ),
-                ),
+          ),
         ],
       ),
     );
@@ -392,7 +381,7 @@ class _WorkoutTodayCard extends StatelessWidget {
                 (session) => Padding(
                   padding: const EdgeInsets.only(bottom: 6),
                   child: Text(
-                    '• ${session.title}: ${session.heaviestWeightKg.toStringAsFixed(1)} kg max',
+                    '• ${session.title}: ${strings.maxWeightLabel(session.heaviestWeightKg)}',
                   ),
                 ),
               ),
@@ -534,7 +523,9 @@ class _WorkoutRecommendationCard extends StatelessWidget {
 }
 
 class _ProgressCard extends ConsumerStatefulWidget {
-  const _ProgressCard();
+  const _ProgressCard({this.selectedExercise});
+
+  final String? selectedExercise;
 
   @override
   ConsumerState<_ProgressCard> createState() => _ProgressCardState();
@@ -563,6 +554,21 @@ class _ProgressCardState extends ConsumerState<_ProgressCard> {
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             Text(strings.workoutProgressHint),
+            if (widget.selectedExercise != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  strings.filteredExerciseLabel(widget.selectedExercise!),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerRight,
@@ -608,8 +614,105 @@ class _ProgressCardState extends ConsumerState<_ProgressCard> {
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Text(strings.bodyWeightTrendDown),
                 ),
-              _ProgressBarChart(points: points),
+              ProgressLineAreaChart(points: points, height: 200),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PrimaryActionCard extends StatelessWidget {
+  const _PrimaryActionCard({
+    required this.strings,
+    required this.entriesCount,
+    required this.workoutCount,
+    required this.proteinGap,
+  });
+
+  final AppStrings strings;
+  final int entriesCount;
+  final int workoutCount;
+  final int? proteinGap;
+
+  @override
+  Widget build(BuildContext context) {
+    late final String headline;
+    late final String subtitle;
+    late final String buttonLabel;
+    late final VoidCallback onPressed;
+
+    if (workoutCount == 0) {
+      headline = strings.ctaLogWorkoutHeadline;
+      subtitle = strings.ctaLogWorkoutSubtitle;
+      buttonLabel = strings.quickActionWorkout;
+      onPressed = () => context.go('/workout/manual');
+    } else if (entriesCount == 0) {
+      headline = strings.ctaAddMealHeadline;
+      subtitle = strings.ctaAddMealSubtitle;
+      buttonLabel = strings.addMealTitle;
+      onPressed = () => context.go('/food/manual');
+    } else if (proteinGap != null && proteinGap! > 0) {
+      headline = strings.ctaProteinHeadline;
+      subtitle = strings.ctaProteinSubtitle(proteinGap!);
+      buttonLabel = strings.addMealTitle;
+      onPressed = () => context.go('/food/manual');
+    } else {
+      headline = strings.ctaReviewProgressHeadline;
+      subtitle = strings.ctaReviewProgressSubtitle;
+      buttonLabel = strings.reviewProgressButton;
+      onPressed = () => context.push('/dashboard/progress');
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        gradient: LinearGradient(
+          colors: [
+            Theme.of(context).colorScheme.primary.withValues(alpha: 0.85),
+            Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.65),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(strings.nextBestActionTitle,
+                style: Theme.of(context)
+                    .textTheme
+                    .labelLarge
+                    ?.copyWith(color: Colors.white70)),
+            const SizedBox(height: 10),
+            Text(
+              headline,
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineSmall
+                  ?.copyWith(color: Colors.white),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              subtitle,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: Colors.white70),
+            ),
+            const SizedBox(height: 18),
+            FilledButton.icon(
+              onPressed: onPressed,
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Theme.of(context).colorScheme.primary,
+              ),
+              icon: const Icon(Icons.arrow_forward_outlined),
+              label: Text(buttonLabel),
+            ),
           ],
         ),
       ),
@@ -634,65 +737,6 @@ class _ProgressModeChip extends StatelessWidget {
       label: Text(label),
       selected: selected,
       onSelected: (_) => onTap(),
-    );
-  }
-}
-
-class _ProgressBarChart extends StatelessWidget {
-  const _ProgressBarChart({required this.points});
-
-  final List<ProgressPoint> points;
-
-  @override
-  Widget build(BuildContext context) {
-    var maxValue = 0.0;
-    for (final point in points) {
-      maxValue = max(maxValue, point.value);
-    }
-    if (maxValue <= 0) {
-      maxValue = 1;
-    }
-
-    return SizedBox(
-      height: 180,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: points
-            .map(
-              (point) => Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text(
-                        point.value.toStringAsFixed(point.value >= 10 ? 0 : 1),
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Expanded(
-                        child: Align(
-                          alignment: Alignment.bottomCenter,
-                          child: Container(
-                            width: double.infinity,
-                            height: max(12, 120 * (point.value / maxValue)),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.primary,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(point.label,
-                          style: Theme.of(context).textTheme.bodySmall),
-                    ],
-                  ),
-                ),
-              ),
-            )
-            .toList(),
-      ),
     );
   }
 }
@@ -804,16 +848,18 @@ class _QuickActionCard extends StatelessWidget {
   }
 }
 
-class _MetricCard extends StatelessWidget {
-  const _MetricCard({
-    required this.title,
-    required this.value,
-    required this.subtitle,
+class _FocusCard extends StatelessWidget {
+  const _FocusCard({
+    required this.strings,
+    required this.summary,
+    required this.dailyTargets,
+    required this.estimatedBalance,
   });
 
-  final String title;
-  final String value;
-  final String subtitle;
+  final AppStrings strings;
+  final ManualFoodSummary summary;
+  final DailyTargets? dailyTargets;
+  final int? estimatedBalance;
 
   @override
   Widget build(BuildContext context) {
@@ -823,11 +869,29 @@ class _MetricCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: Theme.of(context).textTheme.titleMedium),
+            Text(strings.dashboardFocusTitle,
+                style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
-            Text(value, style: Theme.of(context).textTheme.headlineMedium),
+            Text(
+                '${summary.totalCalories} kcal • ${summary.totalProteinGrams} g ${strings.protein}'),
             const SizedBox(height: 8),
-            Text(subtitle),
+            Text(
+              dailyTargets == null
+                  ? strings.proteinGoalPending
+                  : strings.remainingProteinMessage(
+                      max(
+                        0,
+                        dailyTargets!.targetProteinGrams -
+                            summary.totalProteinGrams,
+                      ),
+                    ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              estimatedBalance == null
+                  ? strings.activityPending
+                  : strings.calorieDeltaMessage(estimatedBalance!),
+            ),
           ],
         ),
       ),
@@ -846,6 +910,34 @@ class _EmptyInfoCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Text(message),
+      ),
+    );
+  }
+}
+
+class _CollapsibleSection extends StatelessWidget {
+  const _CollapsibleSection({
+    required this.title,
+    required this.subtitle,
+    required this.child,
+    this.initiallyExpanded = false,
+  });
+
+  final String title;
+  final String subtitle;
+  final Widget child;
+  final bool initiallyExpanded;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ExpansionTile(
+        initiallyExpanded: initiallyExpanded,
+        tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        title: Text(title, style: Theme.of(context).textTheme.titleMedium),
+        subtitle: Text(subtitle),
+        children: [child],
       ),
     );
   }
@@ -874,7 +966,12 @@ class _WorkoutHistoryCard extends ConsumerWidget {
                       Text(session.title,
                           style: Theme.of(context).textTheme.titleMedium),
                       const SizedBox(height: 4),
-                      Text('${session.dateKey} • ${session.totalSets} sets'),
+                      Text(
+                        strings.workoutDateSetsSummary(
+                          session.dateKey,
+                          session.totalSets,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -883,8 +980,7 @@ class _WorkoutHistoryCard extends ConsumerWidget {
                   children: [
                     Text('${session.estimatedActiveCalories} kcal'),
                     const SizedBox(height: 4),
-                    Text(
-                        '${session.heaviestWeightKg.toStringAsFixed(1)} kg max'),
+                    Text(strings.maxWeightLabel(session.heaviestWeightKg)),
                   ],
                 ),
               ],
@@ -894,7 +990,12 @@ class _WorkoutHistoryCard extends ConsumerWidget {
                   (set) => Padding(
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Text(
-                        '${set.exerciseName}: ${set.weightKg} kg x ${set.reps}'),
+                      strings.exerciseWeightRepsLabel(
+                        exerciseName: set.exerciseName,
+                        weightKg: set.weightKg,
+                        reps: set.reps,
+                      ),
+                    ),
                   ),
                 ),
             const SizedBox(height: 12),

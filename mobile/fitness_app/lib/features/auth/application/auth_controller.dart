@@ -15,7 +15,7 @@ class AuthController {
 
   Future<void> sendSignInCode(String email) async {
     if (!AppEnv.hasSupabaseConfig) {
-      throw StateError('Faltan SUPABASE_URL y SUPABASE_ANON_KEY.');
+      throw StateError('Missing SUPABASE_URL and SUPABASE_ANON_KEY.');
     }
 
     final notifier = _ref.read(appStateProvider.notifier);
@@ -38,7 +38,7 @@ class AuthController {
     required String token,
   }) async {
     if (!AppEnv.hasSupabaseConfig) {
-      throw StateError('Faltan SUPABASE_URL y SUPABASE_ANON_KEY.');
+      throw StateError('Missing SUPABASE_URL and SUPABASE_ANON_KEY.');
     }
 
     final notifier = _ref.read(appStateProvider.notifier);
