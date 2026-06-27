@@ -1,15 +1,20 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../application/daily_weight_controller.dart';
-import '../domain/daily_weight_entry.dart';
-import '../../food/application/manual_food_entries_controller.dart';
-import '../../food/domain/manual_food_entry.dart';
 import '../../../shared/app_language.dart';
 import '../../../shared/app_state.dart';
+import '../../food/application/manual_food_entries_controller.dart';
+import '../../food/domain/manual_food_entry.dart';
+import '../../workout/application/manual_workout_controller.dart';
+import '../../workout/domain/manual_workout_session.dart';
+import '../application/daily_targets_calculator.dart';
+import '../application/daily_weight_controller.dart';
+import '../domain/daily_targets.dart';
+import '../domain/daily_weight_entry.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -24,6 +29,17 @@ class DashboardScreen extends ConsumerWidget {
     final todaySummary = ref.watch(todayNutritionSummaryProvider);
     final dailySummaries = ref.watch(dailyNutritionSummariesProvider);
     final todayWeight = ref.watch(todayWeightEntryProvider);
+    final dailyTargets = ref.watch(dailyTargetsProvider);
+    final workoutRecommendation = ref.watch(workoutRecommendationProvider);
+    final todayWorkouts = ref.watch(todayWorkoutSessionsProvider);
+    final todayWorkoutCalories = ref.watch(todayWorkoutCaloriesProvider);
+    final totalSetsToday = todayWorkouts.fold<int>(
+      0,
+      (value, session) => value + session.totalSets,
+    );
+    final estimatedBalance = dailyTargets == null
+        ? null
+        : summary.totalCalories - dailyTargets.estimatedBurnCalories;
 
     return Scaffold(
       appBar: AppBar(
@@ -45,8 +61,10 @@ class DashboardScreen extends ConsumerWidget {
             title: strings.quickActionsTitle,
             primaryLabel: strings.addMealTitle,
             onPrimaryPressed: () => context.go('/food/manual'),
-            secondaryLabel: strings.addSharedFoodTitle,
-            onSecondaryPressed: () => context.go('/food/shared-catalog'),
+            secondaryLabel: strings.quickActionWorkout,
+            onSecondaryPressed: () => context.go('/workout/manual'),
+            tertiaryLabel: strings.addSharedFoodTitle,
+            onTertiaryPressed: () => context.go('/food/shared-catalog'),
           ),
           const SizedBox(height: 16),
           _DailySummaryCard(
@@ -55,6 +73,31 @@ class DashboardScreen extends ConsumerWidget {
             todayWeight: todayWeight,
             onLogWeightPressed: () => _showWeightDialog(context, ref, strings),
           ),
+          const SizedBox(height: 16),
+          _WorkoutTodayCard(
+            strings: strings,
+            sessions: todayWorkouts,
+            workoutCalories: todayWorkoutCalories,
+            totalSets: totalSetsToday,
+          ),
+          const SizedBox(height: 16),
+          if (dailyTargets != null) ...[
+            _DailyTargetsCard(
+              strings: strings,
+              summary: summary,
+              targets: dailyTargets,
+              estimatedBalance: estimatedBalance ?? 0,
+            ),
+            const SizedBox(height: 16),
+          ],
+          if (workoutRecommendation != null) ...[
+            _WorkoutRecommendationCard(
+              strings: strings,
+              recommendation: workoutRecommendation,
+            ),
+            const SizedBox(height: 16),
+          ],
+          const _ProgressCard(),
           const SizedBox(height: 16),
           _MetricCard(
             title: strings.caloriesConsumed,
@@ -67,34 +110,80 @@ class DashboardScreen extends ConsumerWidget {
           _MetricCard(
             title: strings.protein,
             value: '${summary.totalProteinGrams} g',
-            subtitle: strings.proteinGoalPending,
+            subtitle: dailyTargets == null
+                ? strings.proteinGoalPending
+                : strings.remainingProteinMessage(
+                    max(
+                        0,
+                        dailyTargets.targetProteinGrams -
+                            summary.totalProteinGrams),
+                  ),
+          ),
+          const SizedBox(height: 12),
+          _MetricCard(
+            title: strings.carbs,
+            value: '${summary.totalCarbsGrams} g',
+            subtitle: strings.entriesCount(summary.entryCount),
+          ),
+          const SizedBox(height: 12),
+          _MetricCard(
+            title: strings.fat,
+            value: '${summary.totalFatGrams} g',
+            subtitle: strings.entriesCount(summary.entryCount),
           ),
           const SizedBox(height: 12),
           _MetricCard(
             title: strings.estimatedBalance,
-            value: '0 kcal',
-            subtitle: strings.activityPending,
+            value:
+                estimatedBalance == null ? '0 kcal' : '$estimatedBalance kcal',
+            subtitle: estimatedBalance == null
+                ? strings.activityPending
+                : strings.calorieDeltaMessage(estimatedBalance),
           ),
-          const SizedBox(height: 24),
-          Text(strings.nextIntegration,
-              style: Theme.of(context).textTheme.bodyLarge),
           const SizedBox(height: 24),
           Text(strings.mealsTodayTitle,
               style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 12),
           if (entries.isEmpty)
-            _EmptyMealsCard(message: strings.noMealsYet)
+            _EmptyInfoCard(message: strings.noMealsYet)
           else
             ...entries.map((entry) => Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: _MealEntryCard(entry: entry, strings: strings),
                 )),
           const SizedBox(height: 24),
+          Text(strings.workoutHistoryTitle,
+              style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 12),
+          Consumer(
+            builder: (context, ref, child) {
+              final workouts = ref.watch(manualWorkoutSessionsProvider);
+              if (workouts.isEmpty) {
+                return _EmptyInfoCard(message: strings.noWorkoutsYet);
+              }
+
+              return Column(
+                children: workouts
+                    .take(5)
+                    .map(
+                      (session) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _WorkoutHistoryCard(
+                          strings: strings,
+                          session: session,
+                        ),
+                      ),
+                    )
+                    .toList(),
+              );
+            },
+          ),
+          const SizedBox(height: 24),
           Text(strings.dailyHistoryTitle,
               style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 12),
           if (dailySummaries.isEmpty)
-            _EmptyMealsCard(message: strings.noDailySummaryYet)
+            _EmptyInfoCard(message: strings.noDailySummaryYet)
           else
             ...dailySummaries.take(7).map(
                   (summary) => Padding(
@@ -133,7 +222,7 @@ class DashboardScreen extends ConsumerWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancel'),
+              child: Text(strings.cancelButton),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
@@ -218,6 +307,24 @@ class _DailySummaryCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: _MiniMetric(
+                    label: strings.carbs,
+                    value: '${summary?.totalCarbsGrams ?? 0} g',
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _MiniMetric(
+                    label: strings.fat,
+                    value: '${summary?.totalFatGrams ?? 0} g',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _MiniMetric(
                     label: strings.todayWeightTitle,
                     value: todayWeight == null
                         ? strings.noWeightLogged
@@ -233,6 +340,358 @@ class _DailySummaryCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _WorkoutTodayCard extends StatelessWidget {
+  const _WorkoutTodayCard({
+    required this.strings,
+    required this.sessions,
+    required this.workoutCalories,
+    required this.totalSets,
+  });
+
+  final AppStrings strings;
+  final List<ManualWorkoutSession> sessions;
+  final int workoutCalories;
+  final int totalSets;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(strings.workoutTodayTitle,
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _MiniMetric(
+                    label: strings.workoutCaloriesToday,
+                    value: '$workoutCalories kcal',
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _MiniMetric(
+                    label: strings.workoutSetsToday,
+                    value: '$totalSets',
+                  ),
+                ),
+              ],
+            ),
+            if (sessions.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              ...sessions.map(
+                (session) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Text(
+                    '• ${session.title}: ${session.heaviestWeightKg.toStringAsFixed(1)} kg max',
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DailyTargetsCard extends StatelessWidget {
+  const _DailyTargetsCard({
+    required this.strings,
+    required this.summary,
+    required this.targets,
+    required this.estimatedBalance,
+  });
+
+  final AppStrings strings;
+  final ManualFoodSummary summary;
+  final DailyTargets targets;
+  final int estimatedBalance;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(strings.dailyTargetsTitle,
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Text(strings.goalSummary(targets.goal)),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _MiniMetric(
+                    label: strings.targetCaloriesTitle,
+                    value: '${targets.targetCalories} kcal',
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _MiniMetric(
+                    label: strings.targetProteinTitle,
+                    value: '${targets.targetProteinGrams} g',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _MiniMetric(
+                    label: strings.estimatedBurnTitle,
+                    value: '${targets.estimatedBurnCalories} kcal',
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _MiniMetric(
+                    label: strings.workoutCaloriesToday,
+                    value: '${targets.workoutCalories} kcal',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _MiniMetric(
+                    label: strings.carbs,
+                    value:
+                        '${summary.totalCarbsGrams}/${targets.targetCarbsGrams} g',
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _MiniMetric(
+                    label: strings.fat,
+                    value:
+                        '${summary.totalFatGrams}/${targets.targetFatGrams} g',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(strings.calorieDeltaMessage(estimatedBalance)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _WorkoutRecommendationCard extends StatelessWidget {
+  const _WorkoutRecommendationCard({
+    required this.strings,
+    required this.recommendation,
+  });
+
+  final AppStrings strings;
+  final GoalRecommendation recommendation;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(strings.workoutRecommendationsTitle,
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Text(recommendation.routineName,
+                style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 8),
+            Text(recommendation.headline),
+            const SizedBox(height: 12),
+            ...recommendation.exercises.map((exercise) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Text('• $exercise'),
+                )),
+            const SizedBox(height: 12),
+            Text(
+                '${strings.nutritionFocusTitle}: ${recommendation.nutritionFocus}'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProgressCard extends ConsumerStatefulWidget {
+  const _ProgressCard();
+
+  @override
+  ConsumerState<_ProgressCard> createState() => _ProgressCardState();
+}
+
+class _ProgressCardState extends ConsumerState<_ProgressCard> {
+  ProgressMode _mode = ProgressMode.strength;
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = stringsFor(ref);
+    final points = switch (_mode) {
+      ProgressMode.strength => ref.watch(progressStrengthProvider),
+      ProgressMode.bodyWeight => ref.watch(progressBodyWeightProvider),
+      ProgressMode.calories => ref.watch(progressCaloriesProvider),
+      ProgressMode.combined => ref.watch(progressCombinedProvider),
+    };
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(strings.progressDiagramTitle,
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Text(strings.workoutProgressHint),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: OutlinedButton.icon(
+                onPressed: () => context.push('/dashboard/progress'),
+                icon: const Icon(Icons.insights_outlined),
+                label: Text(strings.openProgressButton),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _ProgressModeChip(
+                  label: strings.progressStrength,
+                  selected: _mode == ProgressMode.strength,
+                  onTap: () => setState(() => _mode = ProgressMode.strength),
+                ),
+                _ProgressModeChip(
+                  label: strings.progressBodyWeight,
+                  selected: _mode == ProgressMode.bodyWeight,
+                  onTap: () => setState(() => _mode = ProgressMode.bodyWeight),
+                ),
+                _ProgressModeChip(
+                  label: strings.progressCaloriesBurned,
+                  selected: _mode == ProgressMode.calories,
+                  onTap: () => setState(() => _mode = ProgressMode.calories),
+                ),
+                _ProgressModeChip(
+                  label: strings.progressCombined,
+                  selected: _mode == ProgressMode.combined,
+                  onTap: () => setState(() => _mode = ProgressMode.combined),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            if (points.isEmpty)
+              Text(strings.noProgressDataYet)
+            else ...[
+              if (_mode == ProgressMode.bodyWeight)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(strings.bodyWeightTrendDown),
+                ),
+              _ProgressBarChart(points: points),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProgressModeChip extends StatelessWidget {
+  const _ProgressModeChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) => onTap(),
+    );
+  }
+}
+
+class _ProgressBarChart extends StatelessWidget {
+  const _ProgressBarChart({required this.points});
+
+  final List<ProgressPoint> points;
+
+  @override
+  Widget build(BuildContext context) {
+    var maxValue = 0.0;
+    for (final point in points) {
+      maxValue = max(maxValue, point.value);
+    }
+    if (maxValue <= 0) {
+      maxValue = 1;
+    }
+
+    return SizedBox(
+      height: 180,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: points
+            .map(
+              (point) => Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        point.value.toStringAsFixed(point.value >= 10 ? 0 : 1),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.bottomCenter,
+                          child: Container(
+                            width: double.infinity,
+                            height: max(12, 120 * (point.value / maxValue)),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(point.label,
+                          style: Theme.of(context).textTheme.bodySmall),
+                    ],
+                  ),
+                ),
+              ),
+            )
+            .toList(),
       ),
     );
   }
@@ -277,6 +736,9 @@ class _DailyHistoryCard extends StatelessWidget {
             Text('${summary.totalCalories} kcal'),
             const SizedBox(height: 4),
             Text('${summary.totalProteinGrams} g'),
+            const SizedBox(height: 4),
+            Text(
+                '${summary.totalCarbsGrams} g C / ${summary.totalFatGrams} g F'),
           ],
         ),
       ),
@@ -291,6 +753,8 @@ class _QuickActionCard extends StatelessWidget {
     required this.onPrimaryPressed,
     required this.secondaryLabel,
     required this.onSecondaryPressed,
+    this.tertiaryLabel,
+    this.onTertiaryPressed,
   });
 
   final String title;
@@ -298,6 +762,8 @@ class _QuickActionCard extends StatelessWidget {
   final VoidCallback onPrimaryPressed;
   final String secondaryLabel;
   final VoidCallback onSecondaryPressed;
+  final String? tertiaryLabel;
+  final VoidCallback? onTertiaryPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -309,22 +775,26 @@ class _QuickActionCard extends StatelessWidget {
           children: [
             Text(title, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 16),
-            Row(
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
               children: [
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: onPrimaryPressed,
-                    icon: const Icon(Icons.add_circle_outline),
-                    label: Text(primaryLabel),
-                  ),
+                FilledButton.icon(
+                  onPressed: onPrimaryPressed,
+                  icon: const Icon(Icons.restaurant_outlined),
+                  label: Text(primaryLabel),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: onSecondaryPressed,
-                    child: Text(secondaryLabel),
-                  ),
+                OutlinedButton.icon(
+                  onPressed: onSecondaryPressed,
+                  icon: const Icon(Icons.fitness_center_outlined),
+                  label: Text(secondaryLabel),
                 ),
+                if (tertiaryLabel != null && onTertiaryPressed != null)
+                  OutlinedButton.icon(
+                    onPressed: onTertiaryPressed,
+                    icon: const Icon(Icons.inventory_2_outlined),
+                    label: Text(tertiaryLabel!),
+                  ),
               ],
             ),
           ],
@@ -365,8 +835,8 @@ class _MetricCard extends StatelessWidget {
   }
 }
 
-class _EmptyMealsCard extends StatelessWidget {
-  const _EmptyMealsCard({required this.message});
+class _EmptyInfoCard extends StatelessWidget {
+  const _EmptyInfoCard({required this.message});
 
   final String message;
 
@@ -376,6 +846,79 @@ class _EmptyMealsCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Text(message),
+      ),
+    );
+  }
+}
+
+class _WorkoutHistoryCard extends ConsumerWidget {
+  const _WorkoutHistoryCard({required this.strings, required this.session});
+
+  final AppStrings strings;
+  final ManualWorkoutSession session;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(session.title,
+                          style: Theme.of(context).textTheme.titleMedium),
+                      const SizedBox(height: 4),
+                      Text('${session.dateKey} • ${session.totalSets} sets'),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text('${session.estimatedActiveCalories} kcal'),
+                    const SizedBox(height: 4),
+                    Text(
+                        '${session.heaviestWeightKg.toStringAsFixed(1)} kg max'),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ...session.sets.take(4).map(
+                  (set) => Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                        '${set.exerciseName}: ${set.weightKg} kg x ${set.reps}'),
+                  ),
+                ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: OutlinedButton(
+                onPressed: () async {
+                  await ref
+                      .read(manualWorkoutSessionsProvider.notifier)
+                      .deleteSession(session.id);
+
+                  if (!context.mounted) {
+                    return;
+                  }
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(strings.workoutDeletedMessage)),
+                  );
+                },
+                child: Text(strings.deleteWorkoutButton),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -439,6 +982,15 @@ class _MealEntryCard extends StatelessWidget {
                     Text('${entry.calories} kcal'),
                     const SizedBox(height: 4),
                     Text('${entry.proteinGrams} g'),
+                    const SizedBox(height: 4),
+                    Text('${entry.carbsGrams} g C / ${entry.fatGrams} g F'),
+                    const SizedBox(height: 4),
+                    Text('${entry.sugarGrams} g S / ${entry.fiberGrams} g Fi'),
+                    if (entry.confidence != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                          '${strings.confidence}: ${(entry.confidence! * 100).round()}%'),
+                    ],
                   ],
                 ),
               ],

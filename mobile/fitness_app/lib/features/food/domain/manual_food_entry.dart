@@ -5,7 +5,12 @@ class ManualFoodEntry {
     required this.mealType,
     required this.calories,
     required this.proteinGrams,
+    required this.carbsGrams,
+    required this.fatGrams,
+    required this.sugarGrams,
+    required this.fiberGrams,
     required this.createdAt,
+    this.confidence,
     this.photoPath,
   });
 
@@ -14,7 +19,12 @@ class ManualFoodEntry {
   final String mealType;
   final int calories;
   final int proteinGrams;
+  final int carbsGrams;
+  final int fatGrams;
+  final int sugarGrams;
+  final int fiberGrams;
   final DateTime createdAt;
+  final double? confidence;
   final String? photoPath;
 
   Map<String, dynamic> toJson() {
@@ -24,7 +34,12 @@ class ManualFoodEntry {
       'mealType': mealType,
       'calories': calories,
       'proteinGrams': proteinGrams,
+      'carbsGrams': carbsGrams,
+      'fatGrams': fatGrams,
+      'sugarGrams': sugarGrams,
+      'fiberGrams': fiberGrams,
       'createdAt': createdAt.toIso8601String(),
+      'confidence': confidence,
       'photoPath': photoPath,
     };
   }
@@ -36,7 +51,12 @@ class ManualFoodEntry {
       mealType: json['mealType'] as String,
       calories: json['calories'] as int,
       proteinGrams: json['proteinGrams'] as int,
+      carbsGrams: (json['carbsGrams'] as num?)?.toInt() ?? 0,
+      fatGrams: (json['fatGrams'] as num?)?.toInt() ?? 0,
+      sugarGrams: (json['sugarGrams'] as num?)?.toInt() ?? 0,
+      fiberGrams: (json['fiberGrams'] as num?)?.toInt() ?? 0,
       createdAt: DateTime.parse(json['createdAt'] as String),
+      confidence: (json['confidence'] as num?)?.toDouble(),
       photoPath: json['photoPath'] as String?,
     );
   }
@@ -46,11 +66,15 @@ class ManualFoodSummary {
   const ManualFoodSummary({
     required this.totalCalories,
     required this.totalProteinGrams,
+    required this.totalCarbsGrams,
+    required this.totalFatGrams,
     required this.entryCount,
   });
 
   final int totalCalories;
   final int totalProteinGrams;
+  final int totalCarbsGrams;
+  final int totalFatGrams;
   final int entryCount;
 }
 
@@ -59,11 +83,15 @@ class DailyNutritionSummary {
     required this.dateKey,
     required this.totalCalories,
     required this.totalProteinGrams,
+    required this.totalCarbsGrams,
+    required this.totalFatGrams,
     required this.entryCount,
   });
 
   final String dateKey;
   final int totalCalories;
   final int totalProteinGrams;
+  final int totalCarbsGrams;
+  final int totalFatGrams;
   final int entryCount;
 }

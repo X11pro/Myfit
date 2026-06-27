@@ -2,7 +2,7 @@
 
 ## Resumen
 
-El repo quedo listo para continuar en CachyOS con una app Flutter usable sin login obligatorio, idioma ingles por defecto, dark mode activo, comidas manuales persistidas localmente, resumen diario por fecha, peso diario y base de analisis AI por foto conectada a backend.
+El repo quedo listo para continuar en CachyOS con una app Flutter usable sin login obligatorio, idioma ingles por defecto, dark mode activo, comidas manuales persistidas localmente, resumen diario por fecha, peso diario, macros extendidas locales, registro manual de gym con sets/peso por fecha, edicion de entrenamientos, objetivos diarios segun goal, pantalla separada de progreso con filtro por ejercicio y base de analisis AI por foto conectada a backend.
 
 ## Estado de codigo
 
@@ -56,11 +56,26 @@ El repo quedo listo para continuar en CachyOS con una app Flutter usable sin log
   - soporte para OCR/AI de etiquetas y score nutricional `0-5`,
   - fotos locales por comida,
   - edicion/borrado,
-  - persistencia local durable.
+  - persistencia local durable,
+  - macros extendidas por comida: carbohidratos, grasas, azucar y fibra,
+  - guardado local del `confidence` devuelto por AI para fotos de comida.
+- `mobile/fitness_app/lib/features/workout/`
+  - registro manual local-first de sesiones de gym,
+  - carga manual de sets, reps, peso y RPE opcional,
+  - guardado por fecha para seguimiento historico,
+  - borrado local de sesiones,
+  - edicion de sesiones existentes,
+  - edicion y borrado de sets cargados.
+- `mobile/fitness_app/lib/features/dashboard/`
+  - targets diarios derivados de `goal + peso + actividad laboral + calorias de entrenamiento`,
+  - recomendaciones simples de rutina y foco nutricional segun objetivo,
+  - diagrama de progreso para peso levantado, peso corporal, calorias quemadas y vista combinada,
+  - pantalla separada de progreso,
+  - filtro por ejercicio para la vista de fuerza.
 - `backend/supabase/functions/food-catalog-upsert/index.ts`
   - edge function para extraer datos desde OCR/AI y guardar `food_items` compartidos.
 - `backend/supabase/functions/meal-photo-analyze/index.ts`
-  - edge function para analizar foto de comida y estimar nombre, calorias, proteina, macros y confianza.
+  - edge function para analizar foto de comida y estimar nombre, calorias, proteina, carbohidratos, grasas, azucar, fibra y confianza.
 - `backend/supabase/migrations/20260620_000002_food_items_shared_catalog.sql`
   - indice unico para catalogo compartido por `source + source_id`,
   - columnas `nutrition_quality_score` y `nutrition_quality_reason`.
@@ -71,6 +86,12 @@ El repo quedo listo para continuar en CachyOS con una app Flutter usable sin log
   - score nutricional `0-5`.
 - `mobile/fitness_app/test/widget_test.dart`
   - test actualizado al welcome screen en ingles por defecto.
+- `mobile/fitness_app/test/features/food/manual_food_entries_controller_test.dart`
+  - test de persistencia local y resumen nutricional para macros extendidas y confianza.
+- `mobile/fitness_app/test/features/dashboard/daily_targets_calculator_test.dart`
+  - test de calculo de objetivos diarios, recomendaciones por goal y filtro de progreso por ejercicio.
+- `mobile/fitness_app/test/features/workout/manual_workout_controller_test.dart`
+  - test de persistencia local y actualizacion de sesiones gym con sets y fecha.
 
 ## Estado del entorno CachyOS
 
@@ -97,7 +118,12 @@ dart format .
 flutter analyze
 flutter test
 flutter doctor -v
+flutter build apk --debug
 ```
+
+APK debug mas reciente generado en:
+
+- `mobile/fitness_app/build/app/outputs/flutter-apk/app-debug.apk`
 
 ## Commits relevantes
 
@@ -111,10 +137,10 @@ flutter doctor -v
 1. Seguir iterando la UX real cuando llegue el Figma.
 2. Reintroducir autenticacion en una proxima iteracion sin Auth0, probablemente sobre Supabase o guest identity persistente.
 3. Conectar `manual food entry` a persistencia remota cuando quede definido el modelo final de identidad.
-4. Agregar edicion/borrado y persistencia local de comidas manuales.
-5. Configurar `OPENAI_API_KEY` en Supabase para habilitar AI real en `food-catalog-upsert` y `meal-photo-analyze`.
-6. Probar end-to-end la pantalla Flutter del catalogo compartido y el boton `Analyze with AI` contra las funciones ya desplegadas.
-7. Conectar los resultados AI a `meal_entries` remotos cuando se defina el modelo final de identidad.
+4. Configurar `OPENAI_API_KEY` en Supabase para habilitar AI real en `food-catalog-upsert` y `meal-photo-analyze`.
+5. Probar end-to-end la pantalla Flutter del catalogo compartido y el boton `Analyze with AI` contra las funciones ya desplegadas.
+6. Conectar los resultados AI a `meal_entries` remotos cuando se defina el modelo final de identidad.
+7. Conectar workouts manuales y objetivos diarios a persistencia remota cuando quede definido el modelo final de identidad.
 
 ## Riesgos o notas
 
@@ -122,7 +148,9 @@ flutter doctor -v
 - Falta definir bundle identifier iOS real.
 - No hay claves reales ni `.env` comprometidos en el repo.
 - La app esta temporalmente en guest mode para destrabar UX y desarrollo de producto.
-- El perfil del invitado ya persiste localmente, pero las comidas manuales aun viven solo en memoria.
+- El perfil guest y las comidas manuales ya persisten localmente con `shared_preferences`.
+- El flujo manual actual ya muestra y guarda `carbs`, `fat`, `sugar`, `fiber` y `confidence` cuando vienen del analisis AI.
+- Los workouts manuales y el progreso de gym aun son local-first; no se sincronizan con Supabase todavia.
 - La migracion y las edge functions `food-catalog-upsert` y `meal-photo-analyze` ya quedaron desplegadas.
 - La extraccion AI desde imagen aun depende de configurar `OPENAI_API_KEY` como secret en Supabase.
 - Recordatorio explicito para la proxima sesion: reimplementar autenticacion sin Auth0 antes de conectar persistencia remota multiusuario.

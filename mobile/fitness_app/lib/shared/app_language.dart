@@ -27,11 +27,168 @@ class AppStrings {
   String get quickActionsTitle =>
       isEnglish ? 'Quick actions' : 'Acciones rapidas';
 
+  String get quickActionWorkout => isEnglish ? 'Log workout' : 'Registrar gym';
+
   String get todaySummaryTitle =>
       isEnglish ? 'Today summary' : 'Resumen de hoy';
 
   String get dailyHistoryTitle =>
       isEnglish ? 'Daily history' : 'Historial diario';
+
+  String get gymTitle => isEnglish ? 'Gym tracker' : 'Seguimiento gym';
+
+  String get gymSubtitle => isEnglish
+      ? 'Save your sets, weight, and session date to track progress over time.'
+      : 'Guarda tus sets, pesos y fecha de sesion para seguir el progreso en el tiempo.';
+
+  String get logWorkoutTitle =>
+      isEnglish ? 'Manual workout' : 'Entrenamiento manual';
+
+  String get workoutNameLabel =>
+      isEnglish ? 'Session name' : 'Nombre de la sesion';
+
+  String get workoutDateLabel => isEnglish ? 'Date' : 'Fecha';
+
+  String get durationMinutesLabel =>
+      isEnglish ? 'Duration (min)' : 'Duracion (min)';
+
+  String get workoutCaloriesLabel =>
+      isEnglish ? 'Calories burned' : 'Calorias quemadas';
+
+  String get notesLabel => isEnglish ? 'Notes' : 'Notas';
+
+  String get loggedSetsTitle => isEnglish ? 'Logged sets' : 'Sets cargados';
+
+  String get addSetButton => isEnglish ? 'Add set' : 'Agregar set';
+
+  String get noSetsAddedYet =>
+      isEnglish ? 'No sets added yet.' : 'Todavia no agregaste sets.';
+
+  String get saveWorkoutButton =>
+      isEnglish ? 'Save workout' : 'Guardar entrenamiento';
+
+  String get workoutSavedMessage =>
+      isEnglish ? 'Workout saved.' : 'Entrenamiento guardado.';
+
+  String get invalidWorkoutMessage => isEnglish
+      ? 'Enter a session name and at least one set.'
+      : 'Ingresa un nombre de sesion y al menos un set.';
+
+  String get exerciseNameLabel => isEnglish ? 'Exercise' : 'Ejercicio';
+
+  String get muscleGroupLabel => isEnglish ? 'Muscle group' : 'Grupo muscular';
+
+  String get repsLabel => isEnglish ? 'Reps' : 'Repeticiones';
+
+  String get setWeightLabel => isEnglish ? 'Weight (kg)' : 'Peso (kg)';
+
+  String get rpeLabel => isEnglish ? 'RPE (optional)' : 'RPE (opcional)';
+
+  String get cancelButton => isEnglish ? 'Cancel' : 'Cancelar';
+
+  String get addButton => isEnglish ? 'Add' : 'Agregar';
+
+  String get workoutHistoryTitle =>
+      isEnglish ? 'Workout history' : 'Historial de entrenamientos';
+
+  String get noWorkoutsYet => isEnglish
+      ? 'No workouts logged yet. Add your first gym session.'
+      : 'Todavia no hay entrenamientos cargados. Agrega tu primera sesion.';
+
+  String get deleteWorkoutButton =>
+      isEnglish ? 'Delete workout' : 'Eliminar entrenamiento';
+
+  String get workoutDeletedMessage =>
+      isEnglish ? 'Workout deleted.' : 'Entrenamiento eliminado.';
+
+  String get workoutTodayTitle =>
+      isEnglish ? 'Workout today' : 'Entrenamiento de hoy';
+
+  String get workoutCaloriesToday =>
+      isEnglish ? 'Workout calories' : 'Calorias de entrenamiento';
+
+  String get workoutSetsToday => isEnglish ? 'Sets today' : 'Sets de hoy';
+
+  String get dailyTargetsTitle =>
+      isEnglish ? 'Daily targets' : 'Objetivos del dia';
+
+  String get estimatedBurnTitle =>
+      isEnglish ? 'Estimated burn' : 'Gasto estimado';
+
+  String get targetCaloriesTitle =>
+      isEnglish ? 'Target calories' : 'Calorias objetivo';
+
+  String get targetProteinTitle =>
+      isEnglish ? 'Target protein' : 'Proteina objetivo';
+
+  String get workoutRecommendationsTitle =>
+      isEnglish ? 'Routine recommendation' : 'Recomendacion de rutina';
+
+  String get nutritionFocusTitle =>
+      isEnglish ? 'Nutrition focus' : 'Foco nutricional';
+
+  String get progressDiagramTitle =>
+      isEnglish ? 'Progress diagram' : 'Diagrama de progreso';
+
+  String get progressStrength => isEnglish ? 'Weight lifted' : 'Peso levantado';
+
+  String get progressBodyWeight => isEnglish ? 'Body weight' : 'Peso corporal';
+
+  String get progressCaloriesBurned =>
+      isEnglish ? 'Calories burned' : 'Calorias quemadas';
+
+  String get progressCombined => isEnglish ? 'Combined' : 'Combinado';
+
+  String get progressScreenTitle => isEnglish ? 'Progress' : 'Progreso';
+
+  String get progressScreenSubtitle => isEnglish
+      ? 'Review the trend of your gym performance, body weight, and calorie burn.'
+      : 'Revisa la tendencia de tu rendimiento en gym, peso corporal y calorias quemadas.';
+
+  String get exerciseFilterLabel =>
+      isEnglish ? 'Exercise filter' : 'Filtro por ejercicio';
+
+  String get allExercisesOption =>
+      isEnglish ? 'All exercises' : 'Todos los ejercicios';
+
+  String get openProgressButton =>
+      isEnglish ? 'Open progress' : 'Abrir progreso';
+
+  String get progressDeltaTitle => isEnglish ? 'Delta' : 'Cambio';
+
+  String get noProgressDataYet => isEnglish
+      ? 'Not enough data yet. Log workouts or body weight to see progress.'
+      : 'Todavia no hay datos suficientes. Registra entrenamientos o peso corporal para ver progreso.';
+
+  String get bodyWeightTrendDown => isEnglish
+      ? 'Lower bars mean body weight is going down.'
+      : 'Barras mas bajas significan que el peso corporal esta bajando.';
+
+  String goalSummary(String goal) =>
+      isEnglish ? 'Goal: ${goalName(goal)}' : 'Objetivo: ${goalName(goal)}';
+
+  String remainingProteinMessage(int grams) => isEnglish
+      ? 'You still need $grams g of protein today.'
+      : 'Todavia te faltan $grams g de proteina hoy.';
+
+  String calorieDeltaMessage(int calories) {
+    if (isEnglish) {
+      if (calories == 0) {
+        return 'You are exactly on your calorie target.';
+      }
+      return calories > 0
+          ? 'You are $calories kcal above target.'
+          : 'You are ${calories.abs()} kcal below target.';
+    }
+
+    if (calories == 0) {
+      return 'Estas exactamente en tu objetivo calorico.';
+    }
+
+    return calories > 0
+        ? 'Vas $calories kcal por encima del objetivo.'
+        : 'Vas ${calories.abs()} kcal por debajo del objetivo.';
+  }
 
   String get logWeightTitle =>
       isEnglish ? 'Log today weight' : 'Registrar peso de hoy';
@@ -156,6 +313,17 @@ class AppStrings {
 
   String get editMealButton => isEnglish ? 'Edit' : 'Editar';
 
+  String get editWorkoutTitle =>
+      isEnglish ? 'Edit workout' : 'Editar entrenamiento';
+
+  String get updateWorkoutButton =>
+      isEnglish ? 'Update workout' : 'Actualizar entrenamiento';
+
+  String get workoutUpdatedMessage =>
+      isEnglish ? 'Workout updated.' : 'Entrenamiento actualizado.';
+
+  String get editSetButton => isEnglish ? 'Edit set' : 'Editar set';
+
   String get deleteMealButton => isEnglish ? 'Delete' : 'Eliminar';
 
   String get mealDeletedMessage =>
@@ -200,6 +368,16 @@ class AppStrings {
 
   String get protein => isEnglish ? 'Protein' : 'Proteina';
 
+  String get carbs => isEnglish ? 'Carbs' : 'Carbohidratos';
+
+  String get fat => isEnglish ? 'Fat' : 'Grasas';
+
+  String get sugar => isEnglish ? 'Sugar' : 'Azucar';
+
+  String get fiber => isEnglish ? 'Fiber' : 'Fibra';
+
+  String get confidence => isEnglish ? 'Confidence' : 'Confianza';
+
   String get estimatedBalance =>
       isEnglish ? 'Estimated balance' : 'Balance estimado';
 
@@ -218,6 +396,10 @@ class AppStrings {
   String get nextIntegration => isEnglish
       ? 'Next integration: meals + daily summary + Health Connect/HealthKit.'
       : 'Siguiente integracion: meals + daily summary + Health Connect/HealthKit.';
+
+  String get workoutProgressHint => isEnglish
+      ? 'Track strength, body weight, calories, or all three together.'
+      : 'Sigue fuerza, peso corporal, calorias o las tres cosas juntas.';
 
   String get onboardingTitle =>
       isEnglish ? 'Set your starting point' : 'Configura tu punto de partida';
@@ -259,6 +441,21 @@ class AppStrings {
   String get jobModerate => isEnglish ? 'Moderate physical' : 'Fisico moderado';
 
   String get jobIntense => isEnglish ? 'Intense physical' : 'Fisico intenso';
+
+  String goalName(String goal) {
+    switch (goal) {
+      case 'lose_fat':
+        return goalLoseFat;
+      case 'gain_muscle':
+        return goalGainMuscle;
+      case 'maintain':
+        return goalMaintain;
+      case 'recomp':
+        return goalRecomp;
+      default:
+        return goal;
+    }
+  }
 
   String mealTypeName(String mealType) {
     switch (mealType) {

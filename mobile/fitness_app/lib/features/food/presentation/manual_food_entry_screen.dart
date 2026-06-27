@@ -26,9 +26,14 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
   final _nameController = TextEditingController();
   final _caloriesController = TextEditingController();
   final _proteinController = TextEditingController();
+  final _carbsController = TextEditingController();
+  final _fatController = TextEditingController();
+  final _sugarController = TextEditingController();
+  final _fiberController = TextEditingController();
   String _mealType = 'breakfast';
   String? _photoPath;
   bool _isAnalyzing = false;
+  double? _confidence;
 
   bool get _isEditing => widget.entry != null;
 
@@ -44,8 +49,13 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
     _nameController.text = entry.name;
     _caloriesController.text = entry.calories.toString();
     _proteinController.text = entry.proteinGrams.toString();
+    _carbsController.text = entry.carbsGrams.toString();
+    _fatController.text = entry.fatGrams.toString();
+    _sugarController.text = entry.sugarGrams.toString();
+    _fiberController.text = entry.fiberGrams.toString();
     _mealType = entry.mealType;
     _photoPath = entry.photoPath;
+    _confidence = entry.confidence;
   }
 
   @override
@@ -53,6 +63,10 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
     _nameController.dispose();
     _caloriesController.dispose();
     _proteinController.dispose();
+    _carbsController.dispose();
+    _fatController.dispose();
+    _sugarController.dispose();
+    _fiberController.dispose();
     super.dispose();
   }
 
@@ -113,6 +127,37 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
             keyboardType: TextInputType.number,
             decoration: InputDecoration(labelText: strings.proteinLabel),
           ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _carbsController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(labelText: strings.carbsLabel),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _fatController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(labelText: strings.fatLabel),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _sugarController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(labelText: strings.sugarLabel),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _fiberController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(labelText: strings.fiberLabel),
+          ),
+          if (_confidence != null) ...[
+            const SizedBox(height: 16),
+            Text(
+              '${strings.confidence}: ${(_confidence! * 100).round()}%',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
           const SizedBox(height: 24),
           Text(strings.mealPhotoLabel,
               style: Theme.of(context).textTheme.titleMedium),
@@ -201,6 +246,10 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
     final name = _nameController.text.trim();
     final calories = int.tryParse(_caloriesController.text.trim());
     final protein = int.tryParse(_proteinController.text.trim());
+    final carbs = int.tryParse(_carbsController.text.trim()) ?? 0;
+    final fat = int.tryParse(_fatController.text.trim()) ?? 0;
+    final sugar = int.tryParse(_sugarController.text.trim()) ?? 0;
+    final fiber = int.tryParse(_fiberController.text.trim()) ?? 0;
 
     if (name.isEmpty || calories == null || protein == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -218,6 +267,11 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
         mealType: _mealType,
         calories: calories,
         proteinGrams: protein,
+        carbsGrams: carbs,
+        fatGrams: fat,
+        sugarGrams: sugar,
+        fiberGrams: fiber,
+        confidence: _confidence,
         photoPath: _photoPath,
       );
     } else {
@@ -226,6 +280,11 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
         mealType: _mealType,
         calories: calories,
         proteinGrams: protein,
+        carbsGrams: carbs,
+        fatGrams: fat,
+        sugarGrams: sugar,
+        fiberGrams: fiber,
+        confidence: _confidence,
         photoPath: _photoPath,
       );
     }
@@ -296,6 +355,10 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
       final name = analysis['name']?.toString();
       final estimatedCalories = analysis['estimatedCalories'] as num?;
       final estimatedProtein = analysis['estimatedProteinGrams'] as num?;
+      final estimatedCarbs = analysis['estimatedCarbsGrams'] as num?;
+      final estimatedFat = analysis['estimatedFatGrams'] as num?;
+      final estimatedSugar = analysis['estimatedSugarGrams'] as num?;
+      final estimatedFiber = analysis['estimatedFiberGrams'] as num?;
       final estimatedMealType = analysis['estimatedMealType']?.toString();
       final confidence = (analysis['confidence'] as num?)?.toDouble() ?? 0;
 
@@ -308,11 +371,24 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
       if (estimatedProtein != null) {
         _proteinController.text = estimatedProtein.round().toString();
       }
+      if (estimatedCarbs != null) {
+        _carbsController.text = estimatedCarbs.round().toString();
+      }
+      if (estimatedFat != null) {
+        _fatController.text = estimatedFat.round().toString();
+      }
+      if (estimatedSugar != null) {
+        _sugarController.text = estimatedSugar.round().toString();
+      }
+      if (estimatedFiber != null) {
+        _fiberController.text = estimatedFiber.round().toString();
+      }
       if (estimatedMealType != null &&
           ['breakfast', 'lunch', 'dinner', 'snack']
               .contains(estimatedMealType)) {
         setState(() => _mealType = estimatedMealType);
       }
+      setState(() => _confidence = confidence);
 
       if (!mounted) {
         return;

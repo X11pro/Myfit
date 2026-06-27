@@ -136,7 +136,8 @@ Pendiente importante para OCR/AI real desde imagen:
 
 Seguir el guest flow actual y avanzar estas piezas en orden:
 
-- persistencia local durable de comidas manuales,
+- validar UX del modulo gym/progreso ya implementado,
+- decidir siguientes metricas de progreso por ejercicio o volumen,
 - prueba real del catalogo compartido con OCR/AI,
 - reintroduccion de autenticacion sin Auth0,
 - conexion de comidas y catalogo a persistencia remota multiusuario.
@@ -151,10 +152,13 @@ Estado funcional actual de la app:
 - onboarding guest con perfil local persistido,
 - dashboard con acciones rapidas,
 - manual food entry local,
+- manual workout local con edicion de sesiones y sets,
+- pantalla separada de progreso con filtro por ejercicio,
 - pantalla para aportar productos al catalogo compartido,
 - fotos locales por comida,
 - resumen diario y peso diario local,
-- boton `Analyze with AI` conectado a backend.
+- boton `Analyze with AI` conectado a backend,
+- APK debug reciente en `build/app/outputs/flutter-apk/app-debug.apk`.
 
 ## 11. Comandos utiles para Supabase
 
@@ -177,7 +181,19 @@ npx supabase secrets set OPENAI_API_KEY=tu_key --project-ref cyecalxewqcyxxglxlo
 
 Usar `prompts/codex_start_prompt.md`.
 
-## 13. Auto-sync opcional cada 20 minutos en Linux
+## 13. Build debug Android
+
+Desde `mobile/fitness_app`:
+
+```bash
+flutter build apk --debug
+```
+
+Salida esperada:
+
+- `build/app/outputs/flutter-apk/app-debug.apk`
+
+## 14. Auto-sync opcional cada 20 minutos en Linux
 
 Desde la raiz del repo:
 
@@ -189,7 +205,7 @@ systemctl --user status myfit-git-sync.timer
 
 Esto crea un timer de `systemd --user` que ejecuta sync cada 20 minutos.
 
-## 14. Regla de continuidad
+## 15. Regla de continuidad
 
 La palabra clave del usuario es `AMARILLO`.
 

@@ -15,15 +15,21 @@ final manualFoodSummaryProvider = Provider<ManualFoodSummary>((ref) {
 
   var totalCalories = 0;
   var totalProteinGrams = 0;
+  var totalCarbsGrams = 0;
+  var totalFatGrams = 0;
 
   for (final entry in entries) {
     totalCalories += entry.calories;
     totalProteinGrams += entry.proteinGrams;
+    totalCarbsGrams += entry.carbsGrams;
+    totalFatGrams += entry.fatGrams;
   }
 
   return ManualFoodSummary(
     totalCalories: totalCalories,
     totalProteinGrams: totalProteinGrams,
+    totalCarbsGrams: totalCarbsGrams,
+    totalFatGrams: totalFatGrams,
     entryCount: entries.length,
   );
 });
@@ -31,14 +37,18 @@ final manualFoodSummaryProvider = Provider<ManualFoodSummary>((ref) {
 final dailyNutritionSummariesProvider =
     Provider<List<DailyNutritionSummary>>((ref) {
   final entries = ref.watch(manualFoodEntriesProvider);
-  final totals = <String, ({int calories, int protein, int count})>{};
+  final totals =
+      <String, ({int calories, int protein, int carbs, int fat, int count})>{};
 
   for (final entry in entries) {
     final dateKey = _dateKey(entry.createdAt);
-    final current = totals[dateKey] ?? (calories: 0, protein: 0, count: 0);
+    final current = totals[dateKey] ??
+        (calories: 0, protein: 0, carbs: 0, fat: 0, count: 0);
     totals[dateKey] = (
       calories: current.calories + entry.calories,
       protein: current.protein + entry.proteinGrams,
+      carbs: current.carbs + entry.carbsGrams,
+      fat: current.fat + entry.fatGrams,
       count: current.count + 1,
     );
   }
@@ -49,6 +59,8 @@ final dailyNutritionSummariesProvider =
           dateKey: entry.key,
           totalCalories: entry.value.calories,
           totalProteinGrams: entry.value.protein,
+          totalCarbsGrams: entry.value.carbs,
+          totalFatGrams: entry.value.fat,
           entryCount: entry.value.count,
         ),
       )
@@ -86,6 +98,11 @@ class ManualFoodEntriesNotifier extends Notifier<List<ManualFoodEntry>> {
     required String mealType,
     required int calories,
     required int proteinGrams,
+    required int carbsGrams,
+    required int fatGrams,
+    int sugarGrams = 0,
+    int fiberGrams = 0,
+    double? confidence,
     String? photoPath,
   }) async {
     state = [
@@ -95,7 +112,12 @@ class ManualFoodEntriesNotifier extends Notifier<List<ManualFoodEntry>> {
         mealType: mealType,
         calories: calories,
         proteinGrams: proteinGrams,
+        carbsGrams: carbsGrams,
+        fatGrams: fatGrams,
+        sugarGrams: sugarGrams,
+        fiberGrams: fiberGrams,
         createdAt: DateTime.now(),
+        confidence: confidence,
         photoPath: photoPath,
       ),
       ...state,
@@ -110,6 +132,11 @@ class ManualFoodEntriesNotifier extends Notifier<List<ManualFoodEntry>> {
     required String mealType,
     required int calories,
     required int proteinGrams,
+    required int carbsGrams,
+    required int fatGrams,
+    int sugarGrams = 0,
+    int fiberGrams = 0,
+    double? confidence,
     String? photoPath,
   }) async {
     state = [
@@ -121,7 +148,12 @@ class ManualFoodEntriesNotifier extends Notifier<List<ManualFoodEntry>> {
             mealType: mealType,
             calories: calories,
             proteinGrams: proteinGrams,
+            carbsGrams: carbsGrams,
+            fatGrams: fatGrams,
+            sugarGrams: sugarGrams,
+            fiberGrams: fiberGrams,
             createdAt: entry.createdAt,
+            confidence: confidence,
             photoPath: photoPath,
           )
         else
