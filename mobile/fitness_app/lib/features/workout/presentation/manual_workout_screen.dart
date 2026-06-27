@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../shared/app_language.dart';
+import '../../../shared/widgets/app_top_bar.dart';
 import '../../dashboard/application/daily_targets_calculator.dart';
 import '../../dashboard/domain/daily_targets.dart';
 import '../application/manual_workout_controller.dart';
@@ -35,7 +36,8 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
 
     final session = widget.session;
     if (session == null) {
-      _titleController.text = stringsFor(ref).defaultWorkoutTitle;
+      _titleController.text =
+          AppStrings(ref.read(appLanguageProvider)).defaultWorkoutTitle;
       return;
     }
 
@@ -63,8 +65,9 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
     final recommendation = ref.watch(workoutRecommendationProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_isEditing ? strings.editWorkoutTitle : strings.gymTitle),
+      appBar: AppTopBar(
+        title: _isEditing ? strings.editWorkoutTitle : strings.gymTitle,
+        strings: strings,
       ),
       body: ListView(
         padding: const EdgeInsets.all(24),

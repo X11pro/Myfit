@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../shared/app_language.dart';
 import '../../../shared/app_state.dart';
+import '../../../shared/widgets/app_top_bar.dart';
 
 class SplashScreen extends ConsumerWidget {
   const SplashScreen({super.key});
@@ -15,6 +16,7 @@ class SplashScreen extends ConsumerWidget {
     final language = ref.watch(appLanguageProvider);
 
     return Scaffold(
+      appBar: AppTopBar(title: strings.welcomeScreenTitle, strings: strings),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),

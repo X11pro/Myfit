@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/app_env.dart';
 import '../../../shared/app_language.dart';
 import '../../../shared/app_state.dart';
+import '../../../shared/widgets/app_top_bar.dart';
 import '../application/auth_controller.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -35,6 +36,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final strings = stringsFor(ref);
 
     return Scaffold(
+      appBar: AppTopBar(title: 'Myfit', strings: strings),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),

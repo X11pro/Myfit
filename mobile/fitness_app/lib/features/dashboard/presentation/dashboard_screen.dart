@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../shared/app_language.dart';
 import '../../../shared/app_state.dart';
+import '../../../shared/widgets/app_top_bar.dart';
 import '../../food/application/manual_food_entries_controller.dart';
 import '../../food/domain/manual_food_entry.dart';
 import '../../workout/application/manual_workout_controller.dart';
@@ -47,15 +48,7 @@ class DashboardScreen extends ConsumerWidget {
         : max(0, dailyTargets.targetProteinGrams - summary.totalProteinGrams);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(strings.dashboardTitle),
-        actions: [
-          IconButton(
-            onPressed: () => context.go('/splash'),
-            icon: const Icon(Icons.home_outlined),
-          ),
-        ],
-      ),
+      appBar: AppTopBar(title: strings.dashboardTitle, strings: strings),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [

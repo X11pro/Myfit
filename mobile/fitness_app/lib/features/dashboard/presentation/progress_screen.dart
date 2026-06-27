@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/app_language.dart';
+import '../../../shared/widgets/app_top_bar.dart';
 import '../application/daily_targets_calculator.dart';
 import '../domain/daily_targets.dart';
 import 'widgets/progress_chart_widgets.dart';
@@ -29,7 +30,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
     final selectedExercise = ref.watch(strengthExerciseFilterProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(strings.progressScreenTitle)),
+      appBar: AppTopBar(title: strings.progressScreenTitle, strings: strings),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [

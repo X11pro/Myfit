@@ -151,6 +151,7 @@ Estado funcional actual de la app:
 - selector `EN / ESP` en welcome,
 - onboarding guest con perfil local persistido,
 - dashboard con acciones rapidas,
+- top bar global con `back`, `home` y `menu`,
 - manual food entry local,
 - manual workout local con edicion de sesiones y sets,
 - pantalla separada de progreso con filtro por ejercicio,
@@ -188,6 +189,7 @@ Usar `prompts/codex_start_prompt.md`.
 Desde `mobile/fitness_app`:
 
 ```bash
+flutter clean
 flutter build apk --debug
 ```
 

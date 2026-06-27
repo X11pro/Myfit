@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../shared/app_language.dart';
 import '../../../shared/app_state.dart';
+import '../../../shared/widgets/app_top_bar.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -45,7 +46,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     final strings = stringsFor(ref);
 
     return Scaffold(
-      appBar: AppBar(title: Text(strings.setupProfile)),
+      appBar: AppTopBar(title: strings.setupProfile, strings: strings),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [

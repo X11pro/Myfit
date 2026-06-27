@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../shared/app_language.dart';
+import '../../../shared/widgets/app_top_bar.dart';
 import '../application/manual_food_entries_controller.dart';
 import '../domain/manual_food_entry.dart';
 
@@ -75,8 +76,9 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
     final strings = stringsFor(ref);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_isEditing ? strings.editMealTitle : strings.addMealTitle),
+      appBar: AppTopBar(
+        title: _isEditing ? strings.editMealTitle : strings.addMealTitle,
+        strings: strings,
       ),
       body: ListView(
         padding: const EdgeInsets.all(24),

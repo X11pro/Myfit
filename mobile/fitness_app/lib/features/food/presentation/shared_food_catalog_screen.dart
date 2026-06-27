@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../shared/app_language.dart';
+import '../../../shared/widgets/app_top_bar.dart';
 
 class SharedFoodCatalogScreen extends ConsumerStatefulWidget {
   const SharedFoodCatalogScreen({super.key});
@@ -54,7 +55,7 @@ class _SharedFoodCatalogScreenState
     final strings = stringsFor(ref);
 
     return Scaffold(
-      appBar: AppBar(title: Text(strings.addSharedFoodTitle)),
+      appBar: AppTopBar(title: strings.addSharedFoodTitle, strings: strings),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [

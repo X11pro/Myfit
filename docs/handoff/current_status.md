@@ -2,7 +2,7 @@
 
 ## Resumen
 
-El repo quedo listo para continuar en CachyOS con una app Flutter usable sin login obligatorio, idioma ingles por defecto, cambio consistente a espanol desde el selector `EN / ESP`, dark mode activo, comidas manuales persistidas localmente, resumen diario por fecha, peso diario, macros extendidas locales, registro manual de gym con sets/peso por fecha, edicion de entrenamientos, objetivos diarios segun goal, pantalla separada de progreso con filtro por ejercicio y base de analisis AI por foto conectada a backend.
+El repo quedo listo para continuar en CachyOS con una app Flutter usable sin login obligatorio, idioma ingles por defecto, cambio consistente a espanol desde el selector `EN / ESP`, dark mode activo, top bar global con `back/home/menu`, comidas manuales persistidas localmente, resumen diario por fecha, peso diario, macros extendidas locales, registro manual de gym con sets/peso por fecha, edicion de entrenamientos, objetivos diarios segun goal, pantalla separada de progreso con filtro por ejercicio y base de analisis AI por foto conectada a backend.
 
 ## Estado de codigo
 
@@ -75,6 +75,9 @@ El repo quedo listo para continuar en CachyOS con una app Flutter usable sin log
   - CTA principal del dia,
   - secciones plegables para movil,
   - grafico de progreso tipo linea/area.
+- `mobile/fitness_app/lib/shared/widgets/app_top_bar.dart`
+  - top bar reusable con iconos de `back`, `home` y `menu`,
+  - accesos rapidos globales desde menu a dashboard, profile, meal, workout, progress y welcome.
 - `mobile/fitness_app/lib/features/auth/`
   - login screen alineada con ingles por defecto y traduccion al espanol via `AppStrings`.
 - `mobile/fitness_app/lib/shared/app_language.dart`
@@ -101,12 +104,15 @@ El repo quedo listo para continuar en CachyOS con una app Flutter usable sin log
   - test de calculo de objetivos diarios, recomendaciones por goal y filtro de progreso por ejercicio.
 - `mobile/fitness_app/test/features/workout/manual_workout_controller_test.dart`
   - test de persistencia local y actualizacion de sesiones gym con sets y fecha.
+- `mobile/fitness_app/lib/features/workout/presentation/manual_workout_screen.dart`
+  - fix del crash al abrir `Log Workout` por lectura reactiva en `initState`.
 
 ## Estado del entorno CachyOS
 
 - Flutter operativo desde `/home/x11pro_lnx_up/flutter`.
 - `flutter doctor -v`: sin errores.
 - Android SDK operativo en `/home/x11pro_lnx_up/Android/Sdk`.
+- `android/app/build.gradle.kts` alineado a `ndkVersion = "28.2.13676358"`.
 - `cmdline-tools` instalados en `~/Android/Sdk/cmdline-tools/latest`.
 - Licencias Android aceptadas.
 - Chromium instalado via Flatpak y visible para Flutter web.
@@ -127,6 +133,7 @@ dart format .
 flutter analyze
 flutter test
 flutter doctor -v
+flutter clean
 flutter build apk --debug
 ```
 
@@ -134,6 +141,7 @@ APK debug mas reciente generado en:
 
 - `mobile/fitness_app/build/app/outputs/flutter-apk/app-debug.apk`
 - regenerado despues de la limpieza de idiomas y del pulido visual de dashboard/progreso.
+- regenerado tambien despues de agregar top bar global y alinear NDK 28.
 
 ## Commits relevantes
 
@@ -161,7 +169,9 @@ APK debug mas reciente generado en:
 - El perfil guest y las comidas manuales ya persisten localmente con `shared_preferences`.
 - El flujo manual actual ya muestra y guarda `carbs`, `fat`, `sugar`, `fiber` y `confidence` cuando vienen del analisis AI.
 - La UI principal quedo revisada para evitar mezcla accidental de ingles/espanol en dashboard, auth y workout; el selector `EN / ESP` cambia el copy visible del flujo principal.
+- Todas las pantallas principales ahora usan top bar uniforme con `back`, `home` y `menu`.
 - Los workouts manuales y el progreso de gym aun son local-first; no se sincronizan con Supabase todavia.
+- Si la build Android falla tras tocar NDK, correr `flutter clean` antes de volver a `flutter build apk --debug`.
 - La migracion y las edge functions `food-catalog-upsert` y `meal-photo-analyze` ya quedaron desplegadas.
 - La extraccion AI desde imagen aun depende de configurar `OPENAI_API_KEY` como secret en Supabase.
 - Recordatorio explicito para la proxima sesion: reimplementar autenticacion sin Auth0 antes de conectar persistencia remota multiusuario.

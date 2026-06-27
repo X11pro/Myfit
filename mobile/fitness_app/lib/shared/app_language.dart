@@ -71,6 +71,14 @@ class AppStrings {
   String get continueGuest =>
       isEnglish ? 'Continue as guest' : 'Continuar como invitado';
 
+  String get welcomeScreenTitle => isEnglish ? 'Welcome' : 'Bienvenida';
+
+  String get backButtonTooltip => isEnglish ? 'Back' : 'Atras';
+
+  String get homeButtonTooltip => isEnglish ? 'Home' : 'Inicio';
+
+  String get menuButtonTooltip => isEnglish ? 'Menu' : 'Menu';
+
   String get setupProfile => isEnglish ? 'Set up profile' : 'Configurar perfil';
 
   String get quickActionsTitle =>
