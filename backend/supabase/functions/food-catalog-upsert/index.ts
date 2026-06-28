@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { callOpenRouterJson } from '../_shared/openrouter.ts'
 
 type Mode = 'extract' | 'upsert'
 
@@ -151,7 +152,7 @@ async function normalizeFood(payload: CatalogPayload): Promise<NormalizedFood> {
     }
   }
 
-  if (payload.ocrText?.trim().isNotEmpty) {
+  if ((payload.ocrText?.trim().length ?? 0) > 0) {
     return parseFromOcrText(payload.ocrText, source, barcode)
   }
 
@@ -159,7 +160,7 @@ async function normalizeFood(payload: CatalogPayload): Promise<NormalizedFood> {
 }
 
 async function extractWithAi(payload: CatalogPayload): Promise<NormalizedFood | null> {
-  const apiKey = Deno.env.get('OPENAI_API_KEY')
+  const apiKey = Deno.env.get('OPENROUTER_API_KEY')
   if (!apiKey) {
     return null
   }
@@ -171,40 +172,15 @@ async function extractWithAi(payload: CatalogPayload): Promise<NormalizedFood | 
     'Use per 100g values whenever possible.',
   ].join(' ')
 
-  const response = await fetch('https://api.openai.com/v1/responses', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: Deno.env.get('OPENAI_MODEL') ?? 'gpt-4.1-mini',
-      input: [
-        {
-          role: 'user',
-          content: [
-            { type: 'input_text', text: prompt },
-            {
-              type: 'input_image',
-              image_url: `data:image/jpeg;base64,${payload.imageBase64}`,
-            },
-          ],
-        },
-      ],
-    }),
-  })
-
-  if (!response.ok) {
+  let parsed: Record<string, unknown>
+  try {
+    parsed = await callOpenRouterJson({
+      prompt,
+      imageBase64: payload.imageBase64,
+    })
+  } catch {
     return null
   }
-
-  const body = await response.json()
-  const rawText = body.output_text as string | undefined
-  if (!rawText) {
-    return null
-  }
-
-  const parsed = JSON.parse(rawText)
 
   if (!parsed.name) {
     return null
@@ -248,7 +224,7 @@ function parseFromOcrText(
   const lines = ocrText
     .split('\n')
     .map((line) => line.trim())
-    .filter((line) => line.isNotEmpty)
+    .filter((line) => line.length > 0)
 
   if (lines.length === 0) {
     throw new Error('OCR text is empty.')
@@ -268,7 +244,7 @@ function parseFromOcrText(
   return {
     source,
     sourceId: barcode,
-    name: lines.first,
+    name: lines[0],
     brand: lines.length > 1 ? lines[1] : null,
     caloriesPer100g: score.caloriesPer100g,
     proteinPer100g: score.proteinPer100g,

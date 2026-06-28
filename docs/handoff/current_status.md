@@ -2,7 +2,7 @@
 
 ## Resumen
 
-El repo quedo listo para continuar en CachyOS con una app Flutter usable sin login obligatorio, idioma ingles por defecto, cambio consistente a espanol desde el selector `EN / ESP`, dark mode activo, top bar global con `back/home/menu`, comidas manuales persistidas localmente, resumen diario por fecha, peso diario, macros extendidas locales, registro manual de gym con sets/peso por fecha, edicion de entrenamientos, objetivos diarios segun goal, pantalla separada de progreso con filtro por ejercicio y metricas de fuerza mas utiles, y base de analisis AI por foto conectada a backend.
+El repo quedo listo para continuar en CachyOS con una app Flutter usable sin login obligatorio, idioma ingles por defecto, cambio consistente a espanol desde el selector `EN / ESP`, dark mode activo, top bar global con `back/home/menu`, comidas manuales persistidas localmente, resumen diario por fecha, peso diario, macros extendidas locales, registro manual de gym con sets/peso por fecha, edicion de entrenamientos, objetivos diarios segun goal, pantalla separada de progreso con filtro por ejercicio y metricas de fuerza mas utiles, y backend de catalogo compartido + analisis AI por foto ya migrado a OpenRouter.
 
 ## Estado de codigo
 
@@ -127,8 +127,15 @@ El repo quedo listo para continuar en CachyOS con una app Flutter usable sin log
   - normalizacion de `confidence` entre `0` y `1`.
 - `mobile/fitness_app/test/features/workout/manual_workout_controller_test.dart`
   - test nuevo para sugerencias de ejercicios recientes sin duplicados.
+- `backend/supabase/functions/_shared/openrouter.ts`
+  - helper comun para llamadas a OpenRouter con imagen + JSON.
+- `backend/supabase/functions/food-catalog-upsert/index.ts`
+  - migracion real de OpenAI a OpenRouter,
+  - correcciones TS/Deno minimas para deploy limpio.
+- `backend/supabase/functions/meal-photo-analyze/index.ts`
+  - migracion real de OpenAI a OpenRouter con parsing JSON mas robusto.
 - `docs/research/free_food_photo_llm_recommendation.md`
-  - recomendacion del mejor LLM free/open para reconocimiento de comida: `Qwen2.5-VL-7B-Instruct`.
+  - contiene referencia vieja a `Qwen2.5-VL-7B-Instruct`; el modelo realmente adoptado en esta iteracion es `qwen/qwen3-vl-8b-instruct` via OpenRouter.
 
 ## Estado del entorno CachyOS
 
@@ -184,24 +191,40 @@ flutter analyze
 flutter test
 ```
 
+## Verificaciones hechas en esta sesion
+
+En esta sesion se ejecuto correctamente:
+
+```bash
+npx supabase secrets set OPENROUTER_API_KEY=... OPENROUTER_MODEL=qwen/qwen3-vl-8b-instruct --project-ref cyecalxewqcyxxglxloa
+npx supabase functions deploy food-catalog-upsert --project-ref cyecalxewqcyxxglxloa --workdir backend
+npx supabase functions deploy meal-photo-analyze --project-ref cyecalxewqcyxxglxloa --workdir backend
+```
+
+Smoke tests remotos confirmados:
+
+- `food-catalog-upsert` respondio OK en `mode=extract`.
+- `meal-photo-analyze` ya no falla por `OPENAI_API_KEY` y ahora pega a OpenRouter.
+- El error observado en `meal-photo-analyze` fue por imagen base64 invalida de prueba, lo cual confirma que la ruta nueva ya esta activa.
+
 ## Commits relevantes
 
 - `efc2e21` `Add AMARILLO continuity rule`
+- `f80f5df` `Update workout UX and reboot handoff`
 - `9986cb7` `Generate Flutter app platforms`
 - `eb29587` `Add Flutter scaffold and initial schema`
 - `c4466fe` `Add project structure and planning docs`
 
 ## Pendientes inmediatos
 
-1. Seguir iterando la UX real del modulo gym, ahora sobre la base de metricas de fuerza (`peso maximo`, `volumen`, `1RM estimado`) y `reps` visibles junto a `sets`.
-2. Extender la carga rapida en workout manual si hace falta: por ejemplo resumen por ejercicio dentro de la sesion o autocompletado mas fuerte.
-3. Probar end-to-end la pantalla Flutter del catalogo compartido y el boton `Analyze with AI` contra las funciones ya desplegadas.
-4. Configurar `SUPABASE_URL` y `SUPABASE_ANON_KEY` al correr la app para poder hacer la prueba real de frontend contra Supabase.
-5. Configurar `OPENAI_API_KEY` en Supabase para habilitar AI real en `food-catalog-upsert` y `meal-photo-analyze`, o decidir reemplazo por backend free/open.
-6. Evaluar migrar el reconocimiento de comida a un modelo free/open. Recomendacion actual documentada: `Qwen2.5-VL-7B-Instruct`.
-7. Reintroducir autenticacion en una proxima iteracion sin Auth0, probablemente sobre Supabase o guest identity persistente.
-8. Conectar `manual food entry` a persistencia remota cuando quede definido el modelo final de identidad.
-9. Conectar workouts manuales, resultados AI y objetivos diarios a persistencia remota cuando quede definido el modelo final de identidad.
+1. Probar end-to-end la pantalla Flutter del catalogo compartido con una imagen real y `--dart-define` para Supabase.
+2. Probar end-to-end el boton `Analyze with AI` en `manual food entry` con una foto valida de comida.
+3. Si OpenRouter devuelve respuestas incompletas en casos reales, ajustar prompt/parsing sin reabrir analisis ya cerrados.
+4. Seguir iterando la UX real del modulo gym, ahora sobre la base de metricas de fuerza (`peso maximo`, `volumen`, `1RM estimado`) y `reps` visibles junto a `sets`.
+5. Extender la carga rapida en workout manual si hace falta: por ejemplo resumen por ejercicio dentro de la sesion o autocompletado mas fuerte.
+6. Reintroducir autenticacion en una proxima iteracion sin Auth0, probablemente sobre Supabase o guest identity persistente.
+7. Conectar `manual food entry` a persistencia remota cuando quede definido el modelo final de identidad.
+8. Conectar workouts manuales, resultados AI y objetivos diarios a persistencia remota cuando quede definido el modelo final de identidad.
 
 ## Riesgos o notas
 
@@ -217,10 +240,13 @@ flutter test
 - La pantalla de progreso de fuerza ahora deja alternar entre `peso maximo`, `volumen` y `1RM estimado`; `1RM` es solo una estimacion educativa.
 - El dashboard y el historial de workout ya muestran `repeticiones` junto a `sets`, lo que mejora la lectura rapida de carga total.
 - Si la build Android falla tras tocar NDK, correr `flutter clean` antes de volver a `flutter build apk --debug`.
-- La migracion y las edge functions `food-catalog-upsert` y `meal-photo-analyze` ya quedaron desplegadas.
-- La extraccion AI desde imagen aun depende de configurar `OPENAI_API_KEY` como secret en Supabase.
-- La prueba end-to-end real del frontend con Supabase quedo bloqueada en esta sesion porque la shell actual no tenia `SUPABASE_URL` ni `SUPABASE_ANON_KEY` expuestos.
-- Si se quiere evitar gasto en reconocimiento de comida por foto, la recomendacion actual es evaluar `Qwen2.5-VL-7B-Instruct` y usar bases nutricionales para macros finales en vez de confiar solo en el LLM.
+- Las edge functions `food-catalog-upsert` y `meal-photo-analyze` quedaron migradas localmente a OpenRouter y redeployadas en Supabase.
+- Los secrets remotos vigentes para AI son `OPENROUTER_API_KEY` y `OPENROUTER_MODEL`; ya no corresponde documentar `OPENAI_API_KEY` como dependencia actual de estas funciones.
+- El modelo efectivamente adoptado y validado para esta iteracion es `qwen/qwen3-vl-8b-instruct` via OpenRouter.
+- La prueba end-to-end real del frontend con Supabase ya no esta bloqueada por secrets faltantes; el siguiente paso real es correr Flutter con foto valida y validar la UX final.
+- `food-catalog-upsert` respondio OK en smoke test remoto; `meal-photo-analyze` respondio contra OpenRouter y fallo solo con una imagen base64 invalida de prueba.
+- `deno` no estuvo disponible en esta maquina, por lo que no se corrieron `deno fmt` ni `deno check` antes del deploy.
+- Por seguridad, conviene rotar `OPENROUTER_API_KEY` y `SUPABASE_ACCESS_TOKEN` porque fueron expuestos durante la sesion.
 - Recordatorio explicito para la proxima sesion: reimplementar autenticacion sin Auth0 antes de conectar persistencia remota multiusuario.
 - `currentWeightKg` del onboarding se guarda en `body_metrics`, no en `profiles`, porque el esquema actual ya separa ese dato historico.
 - El worktree del repo contiene cambios previos y/o de entorno no relacionados, especialmente en `backend/supabase/functions/meal-photo-analyze` y varios archivos Android; revisar cuidadosamente antes de hacer commits amplios.

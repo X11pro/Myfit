@@ -1,3 +1,5 @@
+import { callOpenRouterJson } from '../_shared/openrouter.ts'
+
 type AnalyzeMealPayload = {
   imageBase64?: string
 }
@@ -31,10 +33,10 @@ Deno.serve(async (request) => {
       return jsonResponse({ error: 'Missing meal image.' }, 400)
     }
 
-    const apiKey = Deno.env.get('OPENAI_API_KEY')
+    const apiKey = Deno.env.get('OPENROUTER_API_KEY')
     if (!apiKey) {
       return jsonResponse(
-        { error: 'OPENAI_API_KEY is not configured in Supabase secrets.' },
+        { error: 'OPENROUTER_API_KEY is not configured in Supabase secrets.' },
         503,
       )
     }
@@ -47,41 +49,11 @@ Deno.serve(async (request) => {
       'Keep the answer conservative and practical.',
     ].join(' ')
 
-    const response = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: Deno.env.get('OPENAI_MODEL') ?? 'gpt-4.1-mini',
-        input: [
-          {
-            role: 'user',
-            content: [
-              { type: 'input_text', text: prompt },
-              {
-                type: 'input_image',
-                image_url: `data:image/jpeg;base64,${payload.imageBase64}`,
-              },
-            ],
-          },
-        ],
-      }),
+    const parsed = await callOpenRouterJson({
+      prompt,
+      imageBase64: payload.imageBase64,
     })
 
-    if (!response.ok) {
-      const text = await response.text()
-      return jsonResponse({ error: text }, 502)
-    }
-
-    const body = await response.json()
-    const rawText = body.output_text as string | undefined
-    if (!rawText) {
-      return jsonResponse({ error: 'AI response did not include output_text.' }, 502)
-    }
-
-    const parsed = JSON.parse(rawText)
     const analysis: MealAnalysis = {
       name: String(parsed.name ?? 'Unknown meal').trim(),
       estimatedMealType: stringOrNull(parsed.estimatedMealType),

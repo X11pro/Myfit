@@ -111,7 +111,8 @@ Variables esperadas:
 
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
-- `OPENAI_API_KEY`
+- `OPENROUTER_API_KEY`
+- `OPENROUTER_MODEL`
 - `USDA_FDC_API_KEY`
 
 ## 8. Supabase
@@ -128,9 +129,18 @@ Tambien ya esta desplegada la Edge Function:
 
 Pendiente importante para OCR/AI real desde imagen:
 
-1. Configurar secret `OPENAI_API_KEY` en Supabase.
+1. Correr la app Flutter con `--dart-define` para `SUPABASE_URL` y `SUPABASE_ANON_KEY`.
 2. Probar la pantalla Flutter de catalogo compartido contra la funcion desplegada.
-3. Probar el boton `Analyze with AI` de comidas manuales contra `meal-photo-analyze`.
+3. Probar el boton `Analyze with AI` de comidas manuales contra `meal-photo-analyze` con una foto valida.
+4. Si `deno` esta disponible en otra maquina, correr `deno fmt` y `deno check` sobre `backend/supabase/functions`.
+
+Estado confirmado al cerrar esta sesion:
+
+- `food-catalog-upsert` y `meal-photo-analyze` ya fueron redeployadas.
+- Los secrets remotos actuales son `OPENROUTER_API_KEY` y `OPENROUTER_MODEL`.
+- El modelo en uso es `qwen/qwen3-vl-8b-instruct` via OpenRouter.
+- El smoke test remoto de `food-catalog-upsert` dio OK.
+- El smoke test remoto de `meal-photo-analyze` confirmo que ya pega a OpenRouter; el error observado fue solo por imagen base64 invalida.
 
 ## 9. Primer objetivo al volver
 
@@ -139,7 +149,7 @@ Seguir el guest flow actual y avanzar estas piezas en orden:
 - validar UX del modulo gym/progreso ya implementado,
 - partir del ultimo punto ya hecho: metricas de fuerza con `peso maximo`, `volumen` y `1RM estimado`,
 - revisar si la siguiente mejora de gym debe ser duplicar set anterior, autocompletar ejercicios recientes o resumen por ejercicio,
-- prueba real del catalogo compartido con OCR/AI,
+- prueba real del catalogo compartido con OCR/AI ya migrado a OpenRouter,
 - reintroduccion de autenticacion sin Auth0,
 - conexion de comidas y catalogo a persistencia remota multiusuario.
 
@@ -190,7 +200,15 @@ npx supabase functions deploy meal-photo-analyze --project-ref cyecalxewqcyxxglx
 Para habilitar AI real en la Edge Function:
 
 ```bash
-npx supabase secrets set OPENAI_API_KEY=tu_key --project-ref cyecalxewqcyxxglxloa
+export SUPABASE_ACCESS_TOKEN="sbp_TU_TOKEN"
+npx supabase secrets set OPENROUTER_API_KEY="tu_key" OPENROUTER_MODEL="qwen/qwen3-vl-8b-instruct" --project-ref cyecalxewqcyxxglxloa
+```
+
+Deploy actual de funciones:
+
+```bash
+npx supabase functions deploy food-catalog-upsert --project-ref cyecalxewqcyxxglxloa --workdir backend
+npx supabase functions deploy meal-photo-analyze --project-ref cyecalxewqcyxxglxloa --workdir backend
 ```
 
 ## 12. Prompt recomendado para agente

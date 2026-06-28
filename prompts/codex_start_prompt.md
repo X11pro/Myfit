@@ -19,8 +19,10 @@ Contexto inmediato:
 - Ya se muestran repeticiones al lado de sets en workout/dashboard.
 - Ya existe carga rapida minima en workout: `Repeat last` + sugerencias de ejercicios recientes.
 - El flujo Flutter de AI/comida ahora valida configuracion Supabase y maneja respuestas incompletas del backend.
-- La prueba E2E real con Supabase quedo pendiente porque en la shell anterior faltaban `SUPABASE_URL` y `SUPABASE_ANON_KEY`.
-- La recomendacion actual para reconocimiento de comida con un modelo free/open es `Qwen2.5-VL-7B-Instruct`.
+- La migracion real del backend de OpenAI a OpenRouter ya quedo implementada en `backend/supabase/functions/meal-photo-analyze/index.ts`, `backend/supabase/functions/food-catalog-upsert/index.ts` y `backend/supabase/functions/_shared/openrouter.ts`.
+- Los secrets remotos de Supabase para OpenRouter ya quedaron cargados y ambas functions ya fueron redeployadas.
+- El modelo efectivamente adoptado para esta iteracion es `qwen/qwen3-vl-8b-instruct` via OpenRouter.
+- La prueba E2E real pendiente ya no depende de cargar secrets remotos sino de correr Flutter con `SUPABASE_URL` y `SUPABASE_ANON_KEY` y usar una foto valida.
 - El APK debug mas reciente esta en mobile/fitness_app/build/app/outputs/flutter-apk/app-debug.apk.
 
 Tareas al retomar:
@@ -28,8 +30,8 @@ Tareas al retomar:
 2. Leer docs/setup/cachyos_resume.md y docs/handoff/current_status.md.
 3. Confirmar que el ultimo punto implementado incluye top bar global + fix de Log Workout + NDK 28 + metricas de progreso de fuerza + reps junto a sets + `Repeat last` + sugerencias de ejercicios recientes.
 4. Ejecutar flutter pub get, flutter analyze y flutter test.
-5. Preparar la prueba real del catalogo compartido y `Analyze with AI` con `--dart-define` para `SUPABASE_URL` y `SUPABASE_ANON_KEY` si todavia faltan.
-6. Decidir si el reconocimiento de comida sigue temporalmente con OpenAI o si se empieza a migrar a una opcion free/open basada en `Qwen2.5-VL-7B-Instruct`.
+5. Ejecutar la prueba real del catalogo compartido y `Analyze with AI` con `--dart-define` para `SUPABASE_URL` y `SUPABASE_ANON_KEY`.
+6. Validar con una foto real que OpenRouter responde bien desde Flutter y, si hay respuestas incompletas, ajustar prompt/parsing sin reabrir analisis ya cerrados.
 7. Seguir desde ahi sin reiniciar nada desde cero.
 8. Mantener respuestas en espanol.
 
