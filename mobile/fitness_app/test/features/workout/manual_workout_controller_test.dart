@@ -108,4 +108,62 @@ void main() {
     expect(updated.heaviestWeightKg, 180);
     expect(updated.notes, 'Updated');
   });
+
+  test('builds recent exercise suggestions without duplicates', () async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final notifier = container.read(manualWorkoutSessionsProvider.notifier);
+
+    await notifier.addSession(
+      title: 'Upper',
+      date: DateTime(2026, 6, 28),
+      durationMinutes: 55,
+      estimatedActiveCalories: 300,
+      sets: const [
+        GymSetEntry(
+          exerciseName: 'Bench press',
+          muscleGroup: 'Chest',
+          setNumber: 1,
+          reps: 8,
+          weightKg: 80,
+        ),
+        GymSetEntry(
+          exerciseName: 'Row',
+          muscleGroup: 'Back',
+          setNumber: 2,
+          reps: 10,
+          weightKg: 60,
+        ),
+      ],
+    );
+
+    await notifier.addSession(
+      title: 'Upper 2',
+      date: DateTime(2026, 6, 29),
+      durationMinutes: 50,
+      estimatedActiveCalories: 290,
+      sets: const [
+        GymSetEntry(
+          exerciseName: 'Bench press',
+          muscleGroup: 'Chest',
+          setNumber: 1,
+          reps: 6,
+          weightKg: 85,
+        ),
+        GymSetEntry(
+          exerciseName: 'Pull up',
+          muscleGroup: 'Back',
+          setNumber: 2,
+          reps: 8,
+          weightKg: 0,
+        ),
+      ],
+    );
+
+    expect(
+      container.read(recentWorkoutExerciseNamesProvider),
+      ['Bench press', 'Pull up', 'Row'],
+    );
+  });
 }

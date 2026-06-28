@@ -118,8 +118,14 @@ class AppStrings {
 
   String get addSetButton => isEnglish ? 'Add set' : 'Agregar set';
 
+  String get repeatLastSetButton =>
+      isEnglish ? 'Repeat last' : 'Repetir ultimo';
+
   String get noSetsAddedYet =>
       isEnglish ? 'No sets added yet.' : 'Todavia no agregaste sets.';
+
+  String get recentExercisesTitle =>
+      isEnglish ? 'Recent exercises' : 'Ejercicios recientes';
 
   String get defaultWorkoutTitle => isEnglish ? 'Gym session' : 'Sesion de gym';
 
@@ -128,6 +134,10 @@ class AppStrings {
 
   String get workoutSavedMessage =>
       isEnglish ? 'Workout saved.' : 'Entrenamiento guardado.';
+
+  String repeatLastSetMessage(String exerciseName) => isEnglish
+      ? 'Last set duplicated for $exerciseName.'
+      : 'Se duplico el ultimo set de $exerciseName.';
 
   String get invalidWorkoutMessage => isEnglish
       ? 'Enter a session name and at least one set.'
@@ -476,6 +486,10 @@ class AppStrings {
       ? 'Enter at least a product name or OCR/label data.'
       : 'Ingresa al menos nombre o datos OCR/etiqueta.';
 
+  String get sharedFoodInvalidResponse => isEnglish
+      ? 'The shared catalog parser returned incomplete data.'
+      : 'El analisis del catalogo compartido devolvio datos incompletos.';
+
   String get qualityScoreLabel =>
       isEnglish ? 'Nutrition quality' : 'Calidad nutricional';
 
@@ -509,6 +523,10 @@ class AppStrings {
   String get aiAnalysisSuccess => isEnglish
       ? 'AI analysis completed. Review the estimated values.'
       : 'Analisis AI completado. Revisa los valores estimados.';
+
+  String get aiAnalysisInvalidResponse => isEnglish
+      ? 'The AI response was incomplete. Try another photo or fill the fields manually.'
+      : 'La respuesta AI vino incompleta. Prueba otra foto o completa los campos manualmente.';
 
   String aiConfidenceLabel(num confidence) => isEnglish
       ? 'Confidence: ${(confidence * 100).round()}%'

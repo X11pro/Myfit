@@ -27,6 +27,25 @@ final todayWorkoutCaloriesProvider = Provider<int>((ref) {
   return total;
 });
 
+final recentWorkoutExerciseNamesProvider = Provider<List<String>>((ref) {
+  final sessions = ref.watch(manualWorkoutSessionsProvider);
+  final names = <String>[];
+  final seen = <String>{};
+
+  for (final session in sessions) {
+    for (final set in session.sets) {
+      final name = set.exerciseName.trim();
+      final normalized = name.toLowerCase();
+      if (name.isEmpty || !seen.add(normalized)) {
+        continue;
+      }
+      names.add(name);
+    }
+  }
+
+  return names;
+});
+
 class ManualWorkoutSessionsNotifier
     extends Notifier<List<ManualWorkoutSession>> {
   static const _storageKey = 'manual_workout_sessions';

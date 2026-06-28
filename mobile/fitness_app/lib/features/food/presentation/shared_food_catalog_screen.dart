@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/config/app_env.dart';
 import '../../../shared/app_language.dart';
 import '../../../shared/widgets/app_top_bar.dart';
 
@@ -202,6 +203,11 @@ class _SharedFoodCatalogScreenState
 
   Future<void> _parseWithAiOrOcr() async {
     final strings = stringsFor(ref);
+    if (!AppEnv.hasSupabaseConfig) {
+      _showMessage(strings.missingSupabaseConfigMessage);
+      return;
+    }
+
     if (_labelTextController.text.trim().isEmpty && _imageBase64 == null) {
       _showMessage(strings.sharedFoodInvalidMessage);
       return;
@@ -219,7 +225,10 @@ class _SharedFoodCatalogScreenState
         },
       );
 
-      final food = Map<String, dynamic>.from(response.data['food'] as Map);
+      final payload = _responseMap(response.data);
+      _throwIfFunctionError(payload);
+      final food =
+          _nestedMap(payload, 'food', strings.sharedFoodInvalidResponse);
       _nameController.text = food['name']?.toString() ?? '';
       _brandController.text = food['brand']?.toString() ?? '';
       _caloriesController.text = _numberText(food['caloriesPer100g']);
@@ -244,6 +253,11 @@ class _SharedFoodCatalogScreenState
 
   Future<void> _saveSharedFood() async {
     final strings = stringsFor(ref);
+    if (!AppEnv.hasSupabaseConfig) {
+      _showMessage(strings.missingSupabaseConfigMessage);
+      return;
+    }
+
     if (_nameController.text.trim().isEmpty &&
         _labelTextController.text.trim().isEmpty &&
         _imageBase64 == null) {
@@ -271,7 +285,10 @@ class _SharedFoodCatalogScreenState
         },
       );
 
-      final food = Map<String, dynamic>.from(response.data['food'] as Map);
+      final payload = _responseMap(response.data);
+      _throwIfFunctionError(payload);
+      final food =
+          _nestedMap(payload, 'food', strings.sharedFoodInvalidResponse);
       setState(() {
         _qualityScore = (food['nutrition_quality_score'] as num?)?.toDouble();
         _qualityReason = food['nutrition_quality_reason']?.toString();
@@ -307,6 +324,42 @@ class _SharedFoodCatalogScreenState
     }
 
     return '';
+  }
+
+  Map<String, dynamic> _responseMap(Object? data) {
+    if (data is Map<String, dynamic>) {
+      return data;
+    }
+
+    if (data is Map) {
+      return Map<String, dynamic>.from(data);
+    }
+
+    throw StateError('Invalid function response.');
+  }
+
+  Map<String, dynamic> _nestedMap(
+    Map<String, dynamic> payload,
+    String key,
+    String fallbackMessage,
+  ) {
+    final value = payload[key];
+    if (value is Map<String, dynamic>) {
+      return value;
+    }
+
+    if (value is Map) {
+      return Map<String, dynamic>.from(value);
+    }
+
+    throw StateError(fallbackMessage);
+  }
+
+  void _throwIfFunctionError(Map<String, dynamic> payload) {
+    final error = payload['error'];
+    if (error != null) {
+      throw StateError(error.toString());
+    }
   }
 
   void _showMessage(String message) {

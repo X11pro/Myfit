@@ -63,6 +63,7 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
     final strings = stringsFor(ref);
     final sessions = ref.watch(manualWorkoutSessionsProvider);
     final recommendation = ref.watch(workoutRecommendationProvider);
+    final recentExercises = ref.watch(recentWorkoutExerciseNamesProvider);
 
     return Scaffold(
       appBar: AppTopBar(
@@ -144,8 +145,18 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                       Text(strings.loggedSetsTitle,
                           style: Theme.of(context).textTheme.titleSmall),
                       const Spacer(),
+                      if (_draftSets.isNotEmpty) ...[
+                        OutlinedButton.icon(
+                          onPressed: _duplicateLastSet,
+                          icon: const Icon(Icons.content_copy_outlined),
+                          label: Text(strings.repeatLastSetButton),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
                       FilledButton.tonalIcon(
-                        onPressed: () => _openSetDialog(),
+                        onPressed: () => _openSetDialog(
+                          recentExercises: recentExercises,
+                        ),
                         icon: const Icon(Icons.fitness_center_outlined),
                         label: Text(strings.addSetButton),
                       ),
@@ -161,7 +172,10 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                         padding: const EdgeInsets.only(bottom: 12),
                         child: _DraftSetTile(
                           set: _draftSets[index],
-                          onEdit: () => _openSetDialog(index: index),
+                          onEdit: () => _openSetDialog(
+                            index: index,
+                            recentExercises: recentExercises,
+                          ),
                           onRemove: () => _removeSet(index),
                         ),
                       ),
@@ -218,7 +232,10 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
     }
   }
 
-  Future<void> _openSetDialog({int? index}) async {
+  Future<void> _openSetDialog({
+    int? index,
+    List<String> recentExercises = const [],
+  }) async {
     final strings = stringsFor(ref);
     final existingSet = index == null ? null : _draftSets[index];
     final exerciseController =
@@ -249,6 +266,27 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                   decoration:
                       InputDecoration(labelText: strings.exerciseNameLabel),
                 ),
+                if (index == null && recentExercises.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      strings.recentExercisesTitle,
+                      style: Theme.of(dialogContext).textTheme.bodySmall,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: recentExercises.take(6).map((exercise) {
+                      return ActionChip(
+                        label: Text(exercise),
+                        onPressed: () => exerciseController.text = exercise,
+                      );
+                    }).toList(),
+                  ),
+                ],
                 const SizedBox(height: 12),
                 TextField(
                   controller: muscleController,
@@ -347,6 +385,33 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
       _draftSets.removeAt(index);
       _reindexSets();
     });
+  }
+
+  void _duplicateLastSet() {
+    final strings = stringsFor(ref);
+    if (_draftSets.isEmpty) {
+      return;
+    }
+
+    final lastSet = _draftSets.last;
+    setState(() {
+      _draftSets.add(
+        GymSetEntry(
+          exerciseName: lastSet.exerciseName,
+          muscleGroup: lastSet.muscleGroup,
+          setNumber: _draftSets.length + 1,
+          reps: lastSet.reps,
+          weightKg: lastSet.weightKg,
+          rpe: lastSet.rpe,
+        ),
+      );
+      _reindexSets();
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+          content: Text(strings.repeatLastSetMessage(lastSet.exerciseName))),
+    );
   }
 
   void _reindexSets() {

@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/config/app_env.dart';
 import '../../../shared/app_language.dart';
 import '../../../shared/widgets/app_top_bar.dart';
 import '../application/manual_food_entries_controller.dart';
@@ -334,6 +335,13 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
   Future<void> _analyzeWithAi() async {
     final strings = stringsFor(ref);
 
+    if (!AppEnv.hasSupabaseConfig) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(strings.missingSupabaseConfigMessage)),
+      );
+      return;
+    }
+
     if (_photoPath == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(strings.aiAnalysisNeedsPhoto)),
@@ -352,8 +360,10 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
         },
       );
 
+      final payload = _responseMap(response.data);
+      _throwIfFunctionError(payload);
       final analysis =
-          Map<String, dynamic>.from(response.data['analysis'] as Map);
+          _nestedMap(payload, 'analysis', strings.aiAnalysisInvalidResponse);
       final name = analysis['name']?.toString();
       final estimatedCalories = analysis['estimatedCalories'] as num?;
       final estimatedProtein = analysis['estimatedProteinGrams'] as num?;
@@ -362,7 +372,9 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
       final estimatedSugar = analysis['estimatedSugarGrams'] as num?;
       final estimatedFiber = analysis['estimatedFiberGrams'] as num?;
       final estimatedMealType = analysis['estimatedMealType']?.toString();
-      final confidence = (analysis['confidence'] as num?)?.toDouble() ?? 0;
+      final confidence = ((analysis['confidence'] as num?)?.toDouble() ?? 0)
+          .clamp(0, 1)
+          .toDouble();
 
       if (name != null && name.trim().isNotEmpty) {
         _nameController.text = name.trim();
@@ -414,6 +426,42 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
       if (mounted) {
         setState(() => _isAnalyzing = false);
       }
+    }
+  }
+
+  Map<String, dynamic> _responseMap(Object? data) {
+    if (data is Map<String, dynamic>) {
+      return data;
+    }
+
+    if (data is Map) {
+      return Map<String, dynamic>.from(data);
+    }
+
+    throw StateError('Invalid function response.');
+  }
+
+  Map<String, dynamic> _nestedMap(
+    Map<String, dynamic> payload,
+    String key,
+    String fallbackMessage,
+  ) {
+    final value = payload[key];
+    if (value is Map<String, dynamic>) {
+      return value;
+    }
+
+    if (value is Map) {
+      return Map<String, dynamic>.from(value);
+    }
+
+    throw StateError(fallbackMessage);
+  }
+
+  void _throwIfFunctionError(Map<String, dynamic> payload) {
+    final error = payload['error'];
+    if (error != null) {
+      throw StateError(error.toString());
     }
   }
 }

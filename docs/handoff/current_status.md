@@ -113,6 +113,22 @@ El repo quedo listo para continuar en CachyOS con una app Flutter usable sin log
   - test de persistencia local y actualizacion de sesiones gym con sets y fecha.
 - `mobile/fitness_app/lib/features/workout/presentation/manual_workout_screen.dart`
   - fix del crash al abrir `Log Workout` por lectura reactiva en `initState`.
+- `mobile/fitness_app/lib/features/workout/application/manual_workout_controller.dart`
+  - provider de ejercicios recientes para sugerir carga rapida dentro de la sesion.
+- `mobile/fitness_app/lib/features/workout/presentation/manual_workout_screen.dart`
+  - boton `Repeat last` para duplicar el ultimo set cargado,
+  - chips con ejercicios recientes al agregar sets nuevos.
+- `mobile/fitness_app/lib/features/food/presentation/shared_food_catalog_screen.dart`
+  - validacion previa de configuracion Supabase,
+  - manejo mas robusto de respuestas incompletas o errores de Edge Functions.
+- `mobile/fitness_app/lib/features/food/presentation/manual_food_entry_screen.dart`
+  - validacion previa de configuracion Supabase,
+  - manejo mas robusto de respuesta AI,
+  - normalizacion de `confidence` entre `0` y `1`.
+- `mobile/fitness_app/test/features/workout/manual_workout_controller_test.dart`
+  - test nuevo para sugerencias de ejercicios recientes sin duplicados.
+- `docs/research/free_food_photo_llm_recommendation.md`
+  - recomendacion del mejor LLM free/open para reconocimiento de comida: `Qwen2.5-VL-7B-Instruct`.
 
 ## Estado del entorno CachyOS
 
@@ -160,6 +176,14 @@ flutter analyze
 flutter test
 ```
 
+Tambien en esta sesion se volvieron a ejecutar correctamente:
+
+```bash
+dart format mobile/fitness_app/lib/features/workout/application/manual_workout_controller.dart mobile/fitness_app/lib/features/workout/presentation/manual_workout_screen.dart mobile/fitness_app/lib/features/food/presentation/shared_food_catalog_screen.dart mobile/fitness_app/lib/features/food/presentation/manual_food_entry_screen.dart mobile/fitness_app/lib/shared/app_language.dart mobile/fitness_app/test/features/workout/manual_workout_controller_test.dart
+flutter analyze
+flutter test
+```
+
 ## Commits relevantes
 
 - `efc2e21` `Add AMARILLO continuity rule`
@@ -170,12 +194,14 @@ flutter test
 ## Pendientes inmediatos
 
 1. Seguir iterando la UX real del modulo gym, ahora sobre la base de metricas de fuerza (`peso maximo`, `volumen`, `1RM estimado`) y `reps` visibles junto a `sets`.
-2. Evaluar una mejora de carga rapida en workout manual: duplicar set anterior, autocompletar ejercicios recientes o resumen por ejercicio dentro de la sesion.
+2. Extender la carga rapida en workout manual si hace falta: por ejemplo resumen por ejercicio dentro de la sesion o autocompletado mas fuerte.
 3. Probar end-to-end la pantalla Flutter del catalogo compartido y el boton `Analyze with AI` contra las funciones ya desplegadas.
-4. Configurar `OPENAI_API_KEY` en Supabase para habilitar AI real en `food-catalog-upsert` y `meal-photo-analyze`.
-5. Reintroducir autenticacion en una proxima iteracion sin Auth0, probablemente sobre Supabase o guest identity persistente.
-6. Conectar `manual food entry` a persistencia remota cuando quede definido el modelo final de identidad.
-7. Conectar workouts manuales, resultados AI y objetivos diarios a persistencia remota cuando quede definido el modelo final de identidad.
+4. Configurar `SUPABASE_URL` y `SUPABASE_ANON_KEY` al correr la app para poder hacer la prueba real de frontend contra Supabase.
+5. Configurar `OPENAI_API_KEY` en Supabase para habilitar AI real en `food-catalog-upsert` y `meal-photo-analyze`, o decidir reemplazo por backend free/open.
+6. Evaluar migrar el reconocimiento de comida a un modelo free/open. Recomendacion actual documentada: `Qwen2.5-VL-7B-Instruct`.
+7. Reintroducir autenticacion en una proxima iteracion sin Auth0, probablemente sobre Supabase o guest identity persistente.
+8. Conectar `manual food entry` a persistencia remota cuando quede definido el modelo final de identidad.
+9. Conectar workouts manuales, resultados AI y objetivos diarios a persistencia remota cuando quede definido el modelo final de identidad.
 
 ## Riesgos o notas
 
@@ -193,6 +219,8 @@ flutter test
 - Si la build Android falla tras tocar NDK, correr `flutter clean` antes de volver a `flutter build apk --debug`.
 - La migracion y las edge functions `food-catalog-upsert` y `meal-photo-analyze` ya quedaron desplegadas.
 - La extraccion AI desde imagen aun depende de configurar `OPENAI_API_KEY` como secret en Supabase.
+- La prueba end-to-end real del frontend con Supabase quedo bloqueada en esta sesion porque la shell actual no tenia `SUPABASE_URL` ni `SUPABASE_ANON_KEY` expuestos.
+- Si se quiere evitar gasto en reconocimiento de comida por foto, la recomendacion actual es evaluar `Qwen2.5-VL-7B-Instruct` y usar bases nutricionales para macros finales en vez de confiar solo en el LLM.
 - Recordatorio explicito para la proxima sesion: reimplementar autenticacion sin Auth0 antes de conectar persistencia remota multiusuario.
 - `currentWeightKg` del onboarding se guarda en `body_metrics`, no en `profiles`, porque el esquema actual ya separa ese dato historico.
 - El worktree del repo contiene cambios previos y/o de entorno no relacionados, especialmente en `backend/supabase/functions/meal-photo-analyze` y varios archivos Android; revisar cuidadosamente antes de hacer commits amplios.

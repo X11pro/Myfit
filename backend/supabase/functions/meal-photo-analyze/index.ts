@@ -9,6 +9,8 @@ type MealAnalysis = {
   estimatedProteinGrams: number | null
   estimatedCarbsGrams: number | null
   estimatedFatGrams: number | null
+  estimatedSugarGrams: number | null
+  estimatedFiberGrams: number | null
   confidence: number
   notes: string | null
 }
@@ -40,7 +42,7 @@ Deno.serve(async (request) => {
     const prompt = [
       'Analyze the meal photo and estimate a simple nutrition summary.',
       'Return JSON only with these fields:',
-      'name, estimatedMealType, estimatedCalories, estimatedProteinGrams, estimatedCarbsGrams, estimatedFatGrams, confidence, notes.',
+      'name, estimatedMealType, estimatedCalories, estimatedProteinGrams, estimatedCarbsGrams, estimatedFatGrams, estimatedSugarGrams, estimatedFiberGrams, confidence, notes.',
       'Confidence must be a number between 0 and 1.',
       'Keep the answer conservative and practical.',
     ].join(' ')
@@ -87,6 +89,8 @@ Deno.serve(async (request) => {
       estimatedProteinGrams: numberOrNull(parsed.estimatedProteinGrams),
       estimatedCarbsGrams: numberOrNull(parsed.estimatedCarbsGrams),
       estimatedFatGrams: numberOrNull(parsed.estimatedFatGrams),
+      estimatedSugarGrams: numberOrNull(parsed.estimatedSugarGrams),
+      estimatedFiberGrams: numberOrNull(parsed.estimatedFiberGrams),
       confidence: numberOrNull(parsed.confidence) ?? 0.5,
       notes: stringOrNull(parsed.notes),
     }
