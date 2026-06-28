@@ -54,3 +54,9 @@ enum ProgressMode {
   calories,
   combined,
 }
+
+enum StrengthProgressMetric {
+  heaviestWeight,
+  totalVolume,
+  estimatedOneRepMax,
+}

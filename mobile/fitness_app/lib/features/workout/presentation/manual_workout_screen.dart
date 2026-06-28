@@ -528,6 +528,7 @@ class _WorkoutHistoryCard extends ConsumerWidget {
                       Text(strings.workoutDateSetsSummary(
                         session.dateKey,
                         session.totalSets,
+                        session.totalReps,
                       )),
                     ],
                   ),

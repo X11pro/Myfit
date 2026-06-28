@@ -23,6 +23,14 @@ class ManualWorkoutSession {
 
   int get totalSets => sets.length;
 
+  int get totalReps {
+    var total = 0;
+    for (final set in sets) {
+      total += set.reps;
+    }
+    return total;
+  }
+
   double get heaviestWeightKg {
     var maxWeight = 0.0;
     for (final set in sets) {

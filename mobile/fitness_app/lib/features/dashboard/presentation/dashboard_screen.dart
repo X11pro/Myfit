@@ -40,6 +40,10 @@ class DashboardScreen extends ConsumerWidget {
       0,
       (value, session) => value + session.totalSets,
     );
+    final totalRepsToday = todayWorkouts.fold<int>(
+      0,
+      (value, session) => value + session.totalReps,
+    );
     final estimatedBalance = dailyTargets == null
         ? null
         : summary.totalCalories - dailyTargets.estimatedBurnCalories;
@@ -84,6 +88,7 @@ class DashboardScreen extends ConsumerWidget {
             sessions: todayWorkouts,
             workoutCalories: todayWorkoutCalories,
             totalSets: totalSetsToday,
+            totalReps: totalRepsToday,
           ),
           const SizedBox(height: 16),
           if (dailyTargets != null) ...[
@@ -333,12 +338,14 @@ class _WorkoutTodayCard extends StatelessWidget {
     required this.sessions,
     required this.workoutCalories,
     required this.totalSets,
+    required this.totalReps,
   });
 
   final AppStrings strings;
   final List<ManualWorkoutSession> sessions;
   final int workoutCalories;
   final int totalSets;
+  final int totalReps;
 
   @override
   Widget build(BuildContext context) {
@@ -364,6 +371,13 @@ class _WorkoutTodayCard extends StatelessWidget {
                   child: _MiniMetric(
                     label: strings.workoutSetsToday,
                     value: '$totalSets',
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _MiniMetric(
+                    label: strings.workoutRepsToday,
+                    value: '$totalReps',
                   ),
                 ),
               ],
@@ -963,6 +977,7 @@ class _WorkoutHistoryCard extends ConsumerWidget {
                         strings.workoutDateSetsSummary(
                           session.dateKey,
                           session.totalSets,
+                          session.totalReps,
                         ),
                       ),
                     ],

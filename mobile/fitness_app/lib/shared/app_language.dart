@@ -161,8 +161,8 @@ class AppStrings {
   String setNumberLabel(int setNumber) =>
       isEnglish ? 'Set $setNumber' : 'Set $setNumber';
 
-  String workoutDateSetsSummary(String dateKey, int count) =>
-      '$dateKey • ${setsCountLabel(count)}';
+  String workoutDateSetsSummary(String dateKey, int setCount, int repsCount) =>
+      '$dateKey • ${setsCountLabel(setCount)} • ${repsCountLabel(repsCount)}';
 
   String draftSetSubtitle({
     required int reps,
@@ -202,6 +202,9 @@ class AppStrings {
 
   String get workoutSetsToday => isEnglish ? 'Sets today' : 'Sets de hoy';
 
+  String get workoutRepsToday =>
+      isEnglish ? 'Reps today' : 'Repeticiones de hoy';
+
   String get dailyTargetsTitle =>
       isEnglish ? 'Daily targets' : 'Objetivos del dia';
 
@@ -224,6 +227,18 @@ class AppStrings {
       isEnglish ? 'Progress diagram' : 'Diagrama de progreso';
 
   String get progressStrength => isEnglish ? 'Weight lifted' : 'Peso levantado';
+
+  String get strengthMetricLabel =>
+      isEnglish ? 'Strength metric' : 'Metrica de fuerza';
+
+  String get progressHeaviestWeight =>
+      isEnglish ? 'Heaviest weight' : 'Peso maximo';
+
+  String get progressTrainingVolume =>
+      isEnglish ? 'Training volume' : 'Volumen';
+
+  String get progressEstimatedOneRepMax =>
+      isEnglish ? 'Estimated 1RM' : '1RM estimado';
 
   String get progressBodyWeight => isEnglish ? 'Body weight' : 'Peso corporal';
 
@@ -248,6 +263,10 @@ class AppStrings {
       isEnglish ? 'Open progress' : 'Abrir progreso';
 
   String get progressDeltaTitle => isEnglish ? 'Delta' : 'Cambio';
+
+  String get latestValueLabel => isEnglish ? 'Latest' : 'Ultimo';
+
+  String get bestValueLabel => isEnglish ? 'Best' : 'Mejor';
 
   String get filterActiveTitle => isEnglish ? 'Active filter' : 'Filtro activo';
 

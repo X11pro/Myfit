@@ -20,6 +20,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
   @override
   Widget build(BuildContext context) {
     final strings = stringsFor(ref);
+    final strengthMetric = ref.watch(strengthProgressMetricProvider);
     final points = switch (_mode) {
       ProgressMode.strength => ref.watch(progressStrengthProvider),
       ProgressMode.bodyWeight => ref.watch(progressBodyWeightProvider),
@@ -92,6 +93,42 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
+            const SizedBox(height: 16),
+            Text(
+              strings.strengthMetricLabel,
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _ModeChip(
+                  label: strings.progressHeaviestWeight,
+                  selected:
+                      strengthMetric == StrengthProgressMetric.heaviestWeight,
+                  onTap: () => ref
+                      .read(strengthProgressMetricProvider.notifier)
+                      .state = StrengthProgressMetric.heaviestWeight,
+                ),
+                _ModeChip(
+                  label: strings.progressTrainingVolume,
+                  selected:
+                      strengthMetric == StrengthProgressMetric.totalVolume,
+                  onTap: () => ref
+                      .read(strengthProgressMetricProvider.notifier)
+                      .state = StrengthProgressMetric.totalVolume,
+                ),
+                _ModeChip(
+                  label: strings.progressEstimatedOneRepMax,
+                  selected: strengthMetric ==
+                      StrengthProgressMetric.estimatedOneRepMax,
+                  onTap: () => ref
+                      .read(strengthProgressMetricProvider.notifier)
+                      .state = StrengthProgressMetric.estimatedOneRepMax,
+                ),
+              ],
+            ),
           ],
           const SizedBox(height: 20),
           Card(
@@ -120,7 +157,12 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          _ProgressSummaryCard(points: points, strings: strings, mode: _mode),
+          _ProgressSummaryCard(
+            points: points,
+            strings: strings,
+            mode: _mode,
+            strengthMetric: strengthMetric,
+          ),
         ],
       ),
     );
@@ -153,11 +195,13 @@ class _ProgressSummaryCard extends StatelessWidget {
     required this.points,
     required this.strings,
     required this.mode,
+    required this.strengthMetric,
   });
 
   final List<ProgressPoint> points;
   final AppStrings strings;
   final ProgressMode mode;
+  final StrengthProgressMetric strengthMetric;
 
   @override
   Widget build(BuildContext context) {
@@ -168,6 +212,9 @@ class _ProgressSummaryCard extends StatelessWidget {
     final first = points.first.value;
     final last = points.last.value;
     final delta = last - first;
+    final best = points
+        .map((point) => point.value)
+        .reduce((current, next) => current > next ? current : next);
 
     return Card(
       child: Padding(
@@ -179,12 +226,14 @@ class _ProgressSummaryCard extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             Text(
-              delta >= 0
-                  ? '+${delta.toStringAsFixed(1)}'
-                  : delta.toStringAsFixed(1),
+              _formatDelta(delta),
             ),
             const SizedBox(height: 8),
             Text(_summaryText(delta)),
+            const SizedBox(height: 16),
+            Text('${strings.latestValueLabel}: ${_formatValue(last)}'),
+            const SizedBox(height: 4),
+            Text('${strings.bestValueLabel}: ${_formatValue(best)}'),
           ],
         ),
       ),
@@ -197,5 +246,33 @@ class _ProgressSummaryCard extends StatelessWidget {
     }
 
     return strings.trendDirectionMessage(delta);
+  }
+
+  String _formatDelta(double delta) {
+    final prefix = delta > 0 ? '+' : '';
+    return '$prefix${_formatValue(delta)}';
+  }
+
+  String _formatValue(double value) {
+    final decimals = value.abs() >= 10 ? 0 : 1;
+    final formatted = value.toStringAsFixed(decimals);
+
+    switch (mode) {
+      case ProgressMode.bodyWeight:
+        return '$formatted kg';
+      case ProgressMode.calories:
+        return '$formatted kcal';
+      case ProgressMode.combined:
+        return formatted;
+      case ProgressMode.strength:
+        switch (strengthMetric) {
+          case StrengthProgressMetric.heaviestWeight:
+            return '$formatted kg';
+          case StrengthProgressMetric.totalVolume:
+            return '$formatted kg';
+          case StrengthProgressMetric.estimatedOneRepMax:
+            return '$formatted kg e1RM';
+        }
+    }
   }
 }

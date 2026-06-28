@@ -2,7 +2,7 @@
 
 ## Resumen
 
-El repo quedo listo para continuar en CachyOS con una app Flutter usable sin login obligatorio, idioma ingles por defecto, cambio consistente a espanol desde el selector `EN / ESP`, dark mode activo, top bar global con `back/home/menu`, comidas manuales persistidas localmente, resumen diario por fecha, peso diario, macros extendidas locales, registro manual de gym con sets/peso por fecha, edicion de entrenamientos, objetivos diarios segun goal, pantalla separada de progreso con filtro por ejercicio y base de analisis AI por foto conectada a backend.
+El repo quedo listo para continuar en CachyOS con una app Flutter usable sin login obligatorio, idioma ingles por defecto, cambio consistente a espanol desde el selector `EN / ESP`, dark mode activo, top bar global con `back/home/menu`, comidas manuales persistidas localmente, resumen diario por fecha, peso diario, macros extendidas locales, registro manual de gym con sets/peso por fecha, edicion de entrenamientos, objetivos diarios segun goal, pantalla separada de progreso con filtro por ejercicio y metricas de fuerza mas utiles, y base de analisis AI por foto conectada a backend.
 
 ## Estado de codigo
 
@@ -25,6 +25,8 @@ El repo quedo listo para continuar en CachyOS con una app Flutter usable sin log
 - ExecPlans relevantes:
   - `.agent/plans/20260612_supabase_auth_profiles_execplan.md`
   - `.agent/plans/20260620_manual_food_entry_execplan.md`
+  - `.agent/plans/20260627_gym_diet_progress_execplan.md`
+  - `.agent/plans/2026-06-28-gym-progress-metrics.md`
 
 ## Cambios implementados en esta sesion
 
@@ -65,13 +67,16 @@ El repo quedo listo para continuar en CachyOS con una app Flutter usable sin log
   - guardado por fecha para seguimiento historico,
   - borrado local de sesiones,
   - edicion de sesiones existentes,
-  - edicion y borrado de sets cargados.
+  - edicion y borrado de sets cargados,
+  - `repeticiones` visibles junto a `sets` en resumenes de sesion y dashboard.
 - `mobile/fitness_app/lib/features/dashboard/`
   - targets diarios derivados de `goal + peso + actividad laboral + calorias de entrenamiento`,
   - recomendaciones simples de rutina y foco nutricional segun objetivo,
   - diagrama de progreso para peso levantado, peso corporal, calorias quemadas y vista combinada,
   - pantalla separada de progreso,
   - filtro por ejercicio para la vista de fuerza,
+  - selector de metrica de fuerza entre `peso maximo`, `volumen` y `1RM estimado`,
+  - agrupado diario corregido para sumar calorias y volumen por fecha,
   - CTA principal del dia,
   - secciones plegables para movil,
   - grafico de progreso tipo linea/area.
@@ -82,7 +87,8 @@ El repo quedo listo para continuar en CachyOS con una app Flutter usable sin log
   - login screen alineada con ingles por defecto y traduccion al espanol via `AppStrings`.
 - `mobile/fitness_app/lib/shared/app_language.dart`
   - limpieza de textos mezclados EN/ES para dashboard, auth y workout,
-  - helpers de localizacion para labels de sets, reps y progreso.
+  - helpers de localizacion para labels de sets, reps y progreso,
+  - nuevos labels para metricas de fuerza y `reps today`.
 - `backend/supabase/functions/food-catalog-upsert/index.ts`
   - edge function para extraer datos desde OCR/AI y guardar `food_items` compartidos.
 - `backend/supabase/functions/meal-photo-analyze/index.ts`
@@ -101,7 +107,8 @@ El repo quedo listo para continuar en CachyOS con una app Flutter usable sin log
 - `mobile/fitness_app/test/features/food/manual_food_entries_controller_test.dart`
   - test de persistencia local y resumen nutricional para macros extendidas y confianza.
 - `mobile/fitness_app/test/features/dashboard/daily_targets_calculator_test.dart`
-  - test de calculo de objetivos diarios, recomendaciones por goal y filtro de progreso por ejercicio.
+  - test de calculo de objetivos diarios, recomendaciones por goal y filtro de progreso por ejercicio,
+  - test de `training volume`, `estimated 1RM` y suma diaria de calorias por multiples sesiones.
 - `mobile/fitness_app/test/features/workout/manual_workout_controller_test.dart`
   - test de persistencia local y actualizacion de sesiones gym con sets y fecha.
 - `mobile/fitness_app/lib/features/workout/presentation/manual_workout_screen.dart`
@@ -143,6 +150,16 @@ APK debug mas reciente generado en:
 - regenerado despues de la limpieza de idiomas y del pulido visual de dashboard/progreso.
 - regenerado tambien despues de agregar top bar global y alinear NDK 28.
 
+## Verificaciones hechas en la ultima sesion
+
+En la ultima sesion se volvio a ejecutar correctamente:
+
+```bash
+flutter pub get
+flutter analyze
+flutter test
+```
+
 ## Commits relevantes
 
 - `efc2e21` `Add AMARILLO continuity rule`
@@ -152,13 +169,13 @@ APK debug mas reciente generado en:
 
 ## Pendientes inmediatos
 
-1. Seguir iterando la UX real cuando llegue el Figma.
-2. Reintroducir autenticacion en una proxima iteracion sin Auth0, probablemente sobre Supabase o guest identity persistente.
-3. Conectar `manual food entry` a persistencia remota cuando quede definido el modelo final de identidad.
+1. Seguir iterando la UX real del modulo gym, ahora sobre la base de metricas de fuerza (`peso maximo`, `volumen`, `1RM estimado`) y `reps` visibles junto a `sets`.
+2. Evaluar una mejora de carga rapida en workout manual: duplicar set anterior, autocompletar ejercicios recientes o resumen por ejercicio dentro de la sesion.
+3. Probar end-to-end la pantalla Flutter del catalogo compartido y el boton `Analyze with AI` contra las funciones ya desplegadas.
 4. Configurar `OPENAI_API_KEY` en Supabase para habilitar AI real en `food-catalog-upsert` y `meal-photo-analyze`.
-5. Probar end-to-end la pantalla Flutter del catalogo compartido y el boton `Analyze with AI` contra las funciones ya desplegadas.
-6. Conectar los resultados AI a `meal_entries` remotos cuando se defina el modelo final de identidad.
-7. Conectar workouts manuales y objetivos diarios a persistencia remota cuando quede definido el modelo final de identidad.
+5. Reintroducir autenticacion en una proxima iteracion sin Auth0, probablemente sobre Supabase o guest identity persistente.
+6. Conectar `manual food entry` a persistencia remota cuando quede definido el modelo final de identidad.
+7. Conectar workouts manuales, resultados AI y objetivos diarios a persistencia remota cuando quede definido el modelo final de identidad.
 
 ## Riesgos o notas
 
@@ -171,12 +188,14 @@ APK debug mas reciente generado en:
 - La UI principal quedo revisada para evitar mezcla accidental de ingles/espanol en dashboard, auth y workout; el selector `EN / ESP` cambia el copy visible del flujo principal.
 - Todas las pantallas principales ahora usan top bar uniforme con `back`, `home` y `menu`.
 - Los workouts manuales y el progreso de gym aun son local-first; no se sincronizan con Supabase todavia.
+- La pantalla de progreso de fuerza ahora deja alternar entre `peso maximo`, `volumen` y `1RM estimado`; `1RM` es solo una estimacion educativa.
+- El dashboard y el historial de workout ya muestran `repeticiones` junto a `sets`, lo que mejora la lectura rapida de carga total.
 - Si la build Android falla tras tocar NDK, correr `flutter clean` antes de volver a `flutter build apk --debug`.
 - La migracion y las edge functions `food-catalog-upsert` y `meal-photo-analyze` ya quedaron desplegadas.
 - La extraccion AI desde imagen aun depende de configurar `OPENAI_API_KEY` como secret en Supabase.
 - Recordatorio explicito para la proxima sesion: reimplementar autenticacion sin Auth0 antes de conectar persistencia remota multiusuario.
 - `currentWeightKg` del onboarding se guarda en `body_metrics`, no en `profiles`, porque el esquema actual ya separa ese dato historico.
-- El worktree del repo contiene muchos cambios previos y/o de entorno no relacionados; revisar cuidadosamente antes de hacer commits amplios.
+- El worktree del repo contiene cambios previos y/o de entorno no relacionados, especialmente en `backend/supabase/functions/meal-photo-analyze` y varios archivos Android; revisar cuidadosamente antes de hacer commits amplios.
 
 ## Regla persistente del usuario
 

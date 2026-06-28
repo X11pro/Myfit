@@ -137,7 +137,8 @@ Pendiente importante para OCR/AI real desde imagen:
 Seguir el guest flow actual y avanzar estas piezas en orden:
 
 - validar UX del modulo gym/progreso ya implementado,
-- decidir siguientes metricas de progreso por ejercicio o volumen,
+- partir del ultimo punto ya hecho: metricas de fuerza con `peso maximo`, `volumen` y `1RM estimado`,
+- revisar si la siguiente mejora de gym debe ser duplicar set anterior, autocompletar ejercicios recientes o resumen por ejercicio,
 - prueba real del catalogo compartido con OCR/AI,
 - reintroduccion de autenticacion sin Auth0,
 - conexion de comidas y catalogo a persistencia remota multiusuario.
@@ -155,6 +156,8 @@ Estado funcional actual de la app:
 - manual food entry local,
 - manual workout local con edicion de sesiones y sets,
 - pantalla separada de progreso con filtro por ejercicio,
+- metricas de fuerza alternables: `peso maximo`, `volumen` y `1RM estimado`,
+- `repeticiones` visibles junto a `sets` en resumenes de workout,
 - dashboard pulido con CTA principal, secciones plegables y grafico de linea/area,
 - ingles por defecto verificado y cambio consistente a espanol desde `EN / ESP`,
 - pantalla para aportar productos al catalogo compartido,
@@ -162,6 +165,16 @@ Estado funcional actual de la app:
 - resumen diario y peso diario local,
 - boton `Analyze with AI` conectado a backend,
 - APK debug reciente en `build/app/outputs/flutter-apk/app-debug.apk`.
+
+## 10.1 Ultimo punto implementado confirmado
+
+Antes de seguir, confirmar en el repo que el ultimo bloque funcional ya presente es:
+
+- top bar global,
+- fix de `Log Workout`,
+- NDK 28 alineado,
+- progreso de fuerza con selector de metrica,
+- `reps` al lado de `sets` en workout/dashboard.
 
 ## 11. Comandos utiles para Supabase
 

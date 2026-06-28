@@ -41,6 +41,10 @@ final workoutRecommendationProvider = Provider<GoalRecommendation?>((ref) {
 
 final strengthExerciseFilterProvider = StateProvider<String?>((ref) => null);
 
+final strengthProgressMetricProvider = StateProvider<StrengthProgressMetric>(
+  (ref) => StrengthProgressMetric.heaviestWeight,
+);
+
 final strengthExerciseOptionsProvider = Provider<List<String>>((ref) {
   final sessions = ref.watch(manualWorkoutSessionsProvider);
   final exercises = <String>{};
@@ -59,12 +63,17 @@ final strengthExerciseOptionsProvider = Provider<List<String>>((ref) {
 final progressStrengthProvider = Provider<List<ProgressPoint>>((ref) {
   final sessions = ref.watch(manualWorkoutSessionsProvider);
   final selectedExercise = ref.watch(strengthExerciseFilterProvider);
+  final metric = ref.watch(strengthProgressMetricProvider);
   return _groupWorkoutSeries(
     sessions,
     valueForSession: (session) => _strengthValueForSession(
       session,
       selectedExercise: selectedExercise,
+      metric: metric,
     ),
+    aggregateForDate: metric == StrengthProgressMetric.totalVolume
+        ? _sumAggregate
+        : _maxAggregate,
   );
 });
 
@@ -73,6 +82,7 @@ final progressCaloriesProvider = Provider<List<ProgressPoint>>((ref) {
   return _groupWorkoutSeries(
     sessions,
     valueForSession: (session) => session.estimatedActiveCalories.toDouble(),
+    aggregateForDate: _sumAggregate,
   );
 });
 
@@ -165,18 +175,37 @@ int estimateJobActivityCalories(String jobActivityLevel) {
 double _strengthValueForSession(
   ManualWorkoutSession session, {
   required String? selectedExercise,
+  required StrengthProgressMetric metric,
 }) {
-  if (selectedExercise == null || selectedExercise.isEmpty) {
-    return session.heaviestWeightKg;
+  final matchingSets = _matchingSetsForSession(
+    session,
+    selectedExercise: selectedExercise,
+  );
+  if (matchingSets.isEmpty) {
+    return 0;
   }
 
-  var maxWeight = 0.0;
-  for (final set in session.sets) {
-    if (_matchesExercise(set, selectedExercise) && set.weightKg > maxWeight) {
-      maxWeight = set.weightKg;
-    }
+  switch (metric) {
+    case StrengthProgressMetric.heaviestWeight:
+      return _heaviestWeightForSets(matchingSets);
+    case StrengthProgressMetric.totalVolume:
+      return _totalVolumeForSets(matchingSets);
+    case StrengthProgressMetric.estimatedOneRepMax:
+      return _estimatedOneRepMaxForSets(matchingSets);
   }
-  return maxWeight;
+}
+
+List<GymSetEntry> _matchingSetsForSession(
+  ManualWorkoutSession session, {
+  required String? selectedExercise,
+}) {
+  if (selectedExercise == null || selectedExercise.isEmpty) {
+    return session.sets;
+  }
+
+  return session.sets
+      .where((set) => _matchesExercise(set, selectedExercise))
+      .toList();
 }
 
 bool _matchesExercise(GymSetEntry set, String selectedExercise) {
@@ -276,12 +305,17 @@ GoalRecommendation recommendationForGoal(String goal) {
 List<ProgressPoint> _groupWorkoutSeries(
   List<ManualWorkoutSession> sessions, {
   required double Function(ManualWorkoutSession session) valueForSession,
+  required double Function(double current, double next) aggregateForDate,
 }) {
   final grouped = <String, double>{};
   for (final session in sessions) {
     final value = valueForSession(session);
-    final current = grouped[session.dateKey] ?? 0;
-    grouped[session.dateKey] = max(current, value);
+    if (value <= 0) {
+      continue;
+    }
+    final current = grouped[session.dateKey];
+    grouped[session.dateKey] =
+        current == null ? value : aggregateForDate(current, value);
   }
 
   final keys = grouped.keys.toList()..sort();
@@ -291,6 +325,42 @@ List<ProgressPoint> _groupWorkoutSeries(
       .map((key) =>
           ProgressPoint(label: _shortDate(key), value: grouped[key] ?? 0))
       .toList();
+}
+
+double _maxAggregate(double current, double next) => max(current, next);
+
+double _sumAggregate(double current, double next) => current + next;
+
+double _heaviestWeightForSets(List<GymSetEntry> sets) {
+  var maxWeight = 0.0;
+  for (final set in sets) {
+    if (set.weightKg > maxWeight) {
+      maxWeight = set.weightKg;
+    }
+  }
+  return maxWeight;
+}
+
+double _totalVolumeForSets(List<GymSetEntry> sets) {
+  var total = 0.0;
+  for (final set in sets) {
+    total += set.weightKg * set.reps;
+  }
+  return total;
+}
+
+double _estimatedOneRepMaxForSets(List<GymSetEntry> sets) {
+  var bestEstimate = 0.0;
+  for (final set in sets) {
+    if (set.reps <= 0 || set.weightKg <= 0) {
+      continue;
+    }
+    final estimate = set.weightKg * (1 + (set.reps / 30));
+    if (estimate > bestEstimate) {
+      bestEstimate = estimate;
+    }
+  }
+  return bestEstimate;
 }
 
 List<ProgressPoint> _normalize(List<ProgressPoint> points,
