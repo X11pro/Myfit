@@ -129,7 +129,6 @@ Tambien ya esta desplegada la Edge Function:
 
 Pendiente importante para OCR/AI real desde imagen:
 
-<<<<<<< HEAD
 1. Conseguir primero `SUPABASE_URL` y `SUPABASE_ANON_KEY` reales en la shell local o un `SUPABASE_ACCESS_TOKEN` valido para pedir la anon key via CLI.
 2. Correr la app Flutter con `--dart-define` para `SUPABASE_URL` y `SUPABASE_ANON_KEY`.
 3. Probar la pantalla Flutter de catalogo compartido contra la funcion desplegada.
@@ -149,11 +148,6 @@ Estado confirmado al cerrar esta sesion:
 - `npx supabase projects api-keys --project-ref cyecalxewqcyxxglxloa --output json` no se pudo usar porque tampoco habia `SUPABASE_ACCESS_TOKEN` local.
 - En workout manual ya quedo implementado el flujo `muscle group -> exercise`, sets multiples desde el dialogo y selector visual de `RPE`.
 - `RPE` queda persistido por set dentro de la sesion del dia para analisis futuro de progresion.
-=======
-1. Configurar secret `OPENROUTER_API_KEY` en Supabase.
-2. Probar la pantalla Flutter de catalogo compartido contra la funcion desplegada.
-3. Probar el boton `Analyze with AI` de comidas manuales contra `meal-photo-analyze`.
->>>>>>> efd4786 (Auto-sync project changes)
 
 ## 9. Primer objetivo al volver
 
@@ -222,7 +216,6 @@ npx supabase functions deploy meal-photo-analyze --project-ref cyecalxewqcyxxglx
 Para habilitar AI real en la Edge Function:
 
 ```bash
-<<<<<<< HEAD
 export SUPABASE_ACCESS_TOKEN="sbp_TU_TOKEN"
 npx supabase secrets set OPENROUTER_API_KEY="tu_key" OPENROUTER_MODEL="qwen/qwen3-vl-8b-instruct" --project-ref cyecalxewqcyxxglxloa
 ```
@@ -232,9 +225,6 @@ Deploy actual de funciones:
 ```bash
 npx supabase functions deploy food-catalog-upsert --project-ref cyecalxewqcyxxglxloa --workdir backend
 npx supabase functions deploy meal-photo-analyze --project-ref cyecalxewqcyxxglxloa --workdir backend
-=======
-npx supabase secrets set OPENROUTER_API_KEY=tu_key OPENROUTER_MODEL=qwen/qwen3-vl-8b-instruct --project-ref cyecalxewqcyxxglxloa
->>>>>>> efd4786 (Auto-sync project changes)
 ```
 
 ## 12. Prompt recomendado para agente

@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-import { callOpenRouterJson } from '../_shared/openrouter.ts'
-=======
 import { callOpenRouterVisionJson } from '../_shared/openrouter.ts'
->>>>>>> efd4786 (Auto-sync project changes)
 
 type AnalyzeMealPayload = {
   imageBase64?: string
@@ -37,12 +33,7 @@ Deno.serve(async (request) => {
       return jsonResponse({ error: 'Missing meal image.' }, 400)
     }
 
-<<<<<<< HEAD
-    const apiKey = Deno.env.get('OPENROUTER_API_KEY')
-    if (!apiKey) {
-=======
     if (!Deno.env.get('OPENROUTER_API_KEY')) {
->>>>>>> efd4786 (Auto-sync project changes)
       return jsonResponse(
         { error: 'OPENROUTER_API_KEY is not configured in Supabase secrets.' },
         503,
@@ -57,16 +48,10 @@ Deno.serve(async (request) => {
       'Keep the answer conservative and practical.',
     ].join(' ')
 
-<<<<<<< HEAD
-    const parsed = await callOpenRouterJson({
-      prompt,
-      imageBase64: payload.imageBase64,
-=======
     const parsed = await callOpenRouterVisionJson({
       prompt,
       imageBase64: payload.imageBase64,
       maxTokens: 400,
->>>>>>> efd4786 (Auto-sync project changes)
     })
 
     const analysis: MealAnalysis = {
