@@ -3,8 +3,6 @@
 Usa este prompt al abrir el repositorio en el nuevo sistema:
 
 ```text
-Lee primero AGENTS.md, docs/product/fitness_product_plan.md y docs/handoff/current_status.md.
-
 Lee tambien docs/research/free_food_photo_llm_recommendation.md.
 
 Quiero continuar Myfit exactamente desde el ultimo punto.

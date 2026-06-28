@@ -115,6 +115,17 @@ Variables esperadas:
 - `OPENROUTER_MODEL`
 - `USDA_FDC_API_KEY`
 
+Ejemplo de carga local en la shell antes de retomar:
+
+```bash
+export SUPABASE_URL="https://TU-PROYECTO.supabase.co"
+export SUPABASE_ANON_KEY="TU_ANON_KEY"
+export OPENROUTER_API_KEY="TU_OPENROUTER_API_KEY"
+export OPENROUTER_MODEL="qwen/qwen3-vl-8b-instruct"
+```
+
+No guardar esas claves en el repo ni en prompts versionados.
+
 ## 8. Supabase
 
 El proyecto real de Supabase ya esta conectado y tiene aplicadas estas migraciones:
@@ -153,11 +164,14 @@ Estado confirmado al cerrar esta sesion:
 
 Seguir el guest flow actual y avanzar estas piezas en orden:
 
+- prueba real del catalogo compartido con OCR/AI ya migrado a OpenRouter,
+- prueba real de `Analyze with AI` ya migrado a OpenRouter,
 - validar UX del modulo gym/progreso ya implementado,
 - partir del ultimo punto ya hecho: metricas de fuerza con `peso maximo`, `volumen` y `1RM estimado`,
 - revisar si la siguiente mejora de gym debe ser duplicar set anterior, autocompletar ejercicios recientes o resumen por ejercicio,
 - prueba real del catalogo compartido con OCR/AI ya migrado a OpenRouter,
 - destrabar credenciales locales de Supabase para poder correr esa prueba E2E real,
+- decidir siguientes metricas de progreso por ejercicio o volumen,
 - reintroduccion de autenticacion sin Auth0,
 - conexion de comidas y catalogo a persistencia remota multiusuario.
 
@@ -209,11 +223,12 @@ Desde la raiz del repo:
 ```bash
 npx supabase link --project-ref cyecalxewqcyxxglxloa --workdir backend --yes
 npx supabase db push --linked --workdir backend
+npx supabase secrets set OPENROUTER_API_KEY="$OPENROUTER_API_KEY" OPENROUTER_MODEL="${OPENROUTER_MODEL:-qwen/qwen3-vl-8b-instruct}" --project-ref cyecalxewqcyxxglxloa
 npx supabase functions deploy food-catalog-upsert --project-ref cyecalxewqcyxxglxloa --workdir backend
 npx supabase functions deploy meal-photo-analyze --project-ref cyecalxewqcyxxglxloa --workdir backend
 ```
 
-Para habilitar AI real en la Edge Function:
+Para correr la app Flutter desde CachyOS con Supabase configurado:
 
 ```bash
 export SUPABASE_ACCESS_TOKEN="sbp_TU_TOKEN"
@@ -225,6 +240,23 @@ Deploy actual de funciones:
 ```bash
 npx supabase functions deploy food-catalog-upsert --project-ref cyecalxewqcyxxglxloa --workdir backend
 npx supabase functions deploy meal-photo-analyze --project-ref cyecalxewqcyxxglxloa --workdir backend
+```
+
+Para correr la app Flutter desde CachyOS con Supabase configurado:
+
+```bash
+cd mobile/fitness_app
+flutter run -d android \
+  --dart-define="SUPABASE_URL=$SUPABASE_URL" \
+  --dart-define="SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY"
+```
+
+Si `deno` esta disponible en CachyOS, conviene correr tambien antes del deploy:
+
+```bash
+deno fmt backend/supabase/functions/_shared/openrouter.ts backend/supabase/functions/meal-photo-analyze/index.ts backend/supabase/functions/food-catalog-upsert/index.ts
+deno check backend/supabase/functions/meal-photo-analyze/index.ts
+deno check backend/supabase/functions/food-catalog-upsert/index.ts
 ```
 
 ## 12. Prompt recomendado para agente

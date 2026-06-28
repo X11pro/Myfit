@@ -4,6 +4,16 @@
 
 El repo quedo listo para continuar en CachyOS con una app Flutter usable sin login obligatorio, idioma ingles por defecto, cambio consistente a espanol desde el selector `EN / ESP`, dark mode activo, top bar global con `back/home/menu`, comidas manuales persistidas localmente, resumen diario por fecha, peso diario, macros extendidas locales, registro manual de gym con sets/peso por fecha, edicion de entrenamientos, objetivos diarios segun goal, pantalla separada de progreso con filtro por ejercicio y metricas de fuerza mas utiles, y backend de catalogo compartido + analisis AI por foto ya migrado a OpenRouter.
 
+Ultimo estado exacto antes de pausar:
+
+- UX de workout manual mejorada con `Repeat last` para duplicar el ultimo set y sugerencias de ejercicios recientes.
+- Flujo Flutter de catalogo compartido y `Analyze with AI` reforzado para validar configuracion de Supabase y tolerar respuestas incompletas del backend.
+- `flutter analyze` y `flutter test` pasaron correctamente en la app Flutter.
+- La migracion de backend desde OpenAI a OpenRouter ya quedo implementada localmente en `food-catalog-upsert` y `meal-photo-analyze`.
+- El proveedor elegido para esta iteracion es `OpenRouter` con `qwen/qwen3-vl-8b-instruct` por disponibilidad real validada.
+- La prueba end-to-end real quedo pendiente por falta de variables `SUPABASE_URL` y `SUPABASE_ANON_KEY` en la shell actual y por faltar cargar/deployar los secrets de OpenRouter en Supabase.
+- La API key real no esta guardada en el repo y debe recargarse manualmente como variable de entorno al retomar.
+
 ## Estado de codigo
 
 - Remoto configurado: `origin -> https://github.com/X11pro/Myfit.git`.
@@ -177,6 +187,20 @@ flutter clean
 flutter build apk --debug
 ```
 
+En esta sesion adicionalmente se verifico:
+
+```bash
+flutter analyze
+flutter test
+```
+
+Resultado:
+
+- `flutter test`: paso.
+- `flutter analyze`: paso con 4 warnings deprecados ya existentes por `value` -> `initialValue` en formularios, sin errores nuevos de la migracion OpenRouter.
+- La API key de OpenRouter fue validada manualmente fuera del repo con respuesta correcta y prueba multimodal minima OK.
+- `deno fmt` y `deno check` no se pudieron correr en la shell Windows de esta sesion porque `deno` no estaba instalado ahi.
+
 APK debug mas reciente generado en:
 
 - `mobile/fitness_app/build/app/outputs/flutter-apk/app-debug.apk`
@@ -281,6 +305,7 @@ Smoke tests remotos confirmados:
 - `currentWeightKg` del onboarding se guarda en `body_metrics`, no en `profiles`, porque el esquema actual ya separa ese dato historico.
 - El worktree del repo contiene cambios previos y/o de entorno no relacionados, especialmente en `backend/supabase/functions/meal-photo-analyze` y varios archivos Android; revisar cuidadosamente antes de hacer commits amplios.
 - En esta maquina hay `flutter devices` para `Linux` y `Chrome`, asi que el siguiente bloqueo no es tooling Flutter sino credenciales reales de Supabase.
+- No persistir API keys en `docs/`, `prompts/`, `.env.example` ni commits. Recargarlas solo como variables de entorno o secrets de Supabase.
 
 ## Regla persistente del usuario
 
