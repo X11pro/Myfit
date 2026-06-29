@@ -18,6 +18,7 @@ Contexto inmediato:
 - Ya existe progreso de fuerza con selector de metrica: peso maximo, volumen y 1RM estimado.
 - Ya se muestran repeticiones al lado de sets en workout/dashboard.
 - Ya existe carga rapida minima en workout: `Repeat last` + sugerencias de ejercicios recientes.
+- El dialogo de workout ya fue mejorado para usar `muscle group -> exercise`, crear multiples sets iguales y capturar `RPE` visual con persistencia por set.
 - El flujo Flutter de AI/comida ahora valida configuracion Supabase y maneja respuestas incompletas del backend.
 - La migracion real del backend de OpenAI a OpenRouter ya quedo implementada en `backend/supabase/functions/meal-photo-analyze/index.ts`, `backend/supabase/functions/food-catalog-upsert/index.ts` y `backend/supabase/functions/_shared/openrouter.ts`.
 - Los secrets remotos de Supabase para OpenRouter ya quedaron cargados y ambas functions ya fueron redeployadas.
@@ -28,12 +29,13 @@ Contexto inmediato:
 Tareas al retomar:
 1. Revisar el estado real del repo sin revertir cambios ajenos.
 2. Leer docs/setup/cachyos_resume.md y docs/handoff/current_status.md.
-3. Confirmar que el ultimo punto implementado incluye top bar global + fix de Log Workout + NDK 28 + metricas de progreso de fuerza + reps junto a sets + `Repeat last` + sugerencias de ejercicios recientes.
+3. Confirmar que el ultimo punto implementado incluye top bar global + fix de Log Workout + NDK 28 + metricas de progreso de fuerza + reps junto a sets + `Repeat last` + sugerencias de ejercicios recientes + flujo `muscle group -> exercise` + sets multiples + `RPE` visual persistido.
 4. Ejecutar flutter pub get, flutter analyze y flutter test.
 5. Ejecutar la prueba real del catalogo compartido y `Analyze with AI` con `--dart-define` para `SUPABASE_URL` y `SUPABASE_ANON_KEY`.
 6. Validar con una foto real que OpenRouter responde bien desde Flutter y, si hay respuestas incompletas, ajustar prompt/parsing sin reabrir analisis ya cerrados.
-7. Seguir desde ahi sin reiniciar nada desde cero.
-8. Mantener respuestas en espanol.
+7. Validar en movil la nueva UX de workout antes de seguir con cambios mayores en progreso o analitica.
+8. Seguir desde ahi sin reiniciar nada desde cero.
+9. Mantener respuestas en espanol.
 
 No reinicies el proyecto desde cero. Continua desde la estructura y commits ya existentes.
 

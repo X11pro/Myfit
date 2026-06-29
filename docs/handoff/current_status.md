@@ -117,7 +117,12 @@ El repo quedo listo para continuar en CachyOS con una app Flutter usable sin log
   - provider de ejercicios recientes para sugerir carga rapida dentro de la sesion.
 - `mobile/fitness_app/lib/features/workout/presentation/manual_workout_screen.dart`
   - boton `Repeat last` para duplicar el ultimo set cargado,
-  - chips con ejercicios recientes al agregar sets nuevos.
+  - chips con ejercicios recientes al agregar sets nuevos,
+  - campo `Sets` para crear multiples series iguales de una vez,
+  - selector visual de `RPE` con valores `6-10` y medios puntos,
+  - flujo reordenado a `muscle group -> exercise`,
+  - dropdown de ejercicios populares por grupo muscular,
+  - opcion de `custom exercise` cuando el ejercicio no esta en la lista.
 - `mobile/fitness_app/lib/features/food/presentation/shared_food_catalog_screen.dart`
   - validacion previa de configuracion Supabase,
   - manejo mas robusto de respuestas incompletas o errores de Edge Functions.
@@ -126,7 +131,10 @@ El repo quedo listo para continuar en CachyOS con una app Flutter usable sin log
   - manejo mas robusto de respuesta AI,
   - normalizacion de `confidence` entre `0` y `1`.
 - `mobile/fitness_app/test/features/workout/manual_workout_controller_test.dart`
-  - test nuevo para sugerencias de ejercicios recientes sin duplicados.
+  - test nuevo para sugerencias de ejercicios recientes sin duplicados,
+  - verificacion explicita de persistencia local de `RPE` por set.
+- `mobile/fitness_app/test/features/workout/manual_workout_screen_test.dart`
+  - test del flujo UI para crear multiples sets iguales desde el dialogo.
 - `backend/supabase/functions/_shared/openrouter.ts`
   - helper comun para llamadas a OpenRouter con imagen + JSON.
 - `backend/supabase/functions/food-catalog-upsert/index.ts`
@@ -219,9 +227,9 @@ Smoke tests remotos confirmados:
 
 1. Probar end-to-end la pantalla Flutter del catalogo compartido con una imagen real y `--dart-define` para Supabase.
 2. Probar end-to-end el boton `Analyze with AI` en `manual food entry` con una foto valida de comida.
-3. Si OpenRouter devuelve respuestas incompletas en casos reales, ajustar prompt/parsing sin reabrir analisis ya cerrados.
-4. Seguir iterando la UX real del modulo gym, ahora sobre la base de metricas de fuerza (`peso maximo`, `volumen`, `1RM estimado`) y `reps` visibles junto a `sets`.
-5. Extender la carga rapida en workout manual si hace falta: por ejemplo resumen por ejercicio dentro de la sesion o autocompletado mas fuerte.
+3. Validar en movil la UX nueva de workout: `muscle group -> exercise`, sets multiples y selector RPE.
+4. Si OpenRouter devuelve respuestas incompletas en casos reales, ajustar prompt/parsing sin reabrir analisis ya cerrados.
+5. Empezar a mostrar `RPE` en historial/progreso si hace falta para analisis de progresion en gym.
 6. Reintroducir autenticacion en una proxima iteracion sin Auth0, probablemente sobre Supabase o guest identity persistente.
 7. Conectar `manual food entry` a persistencia remota cuando quede definido el modelo final de identidad.
 8. Conectar workouts manuales, resultados AI y objetivos diarios a persistencia remota cuando quede definido el modelo final de identidad.
@@ -237,6 +245,8 @@ Smoke tests remotos confirmados:
 - La UI principal quedo revisada para evitar mezcla accidental de ingles/espanol en dashboard, auth y workout; el selector `EN / ESP` cambia el copy visible del flujo principal.
 - Todas las pantallas principales ahora usan top bar uniforme con `back`, `home` y `menu`.
 - Los workouts manuales y el progreso de gym aun son local-first; no se sincronizan con Supabase todavia.
+- `RPE` ya se guarda dentro de cada `GymSetEntry` junto con los datos del set y la fecha de su sesion, lo que deja la base lista para futuras metricas de progresion.
+- El flujo de alta de sets ahora es mas guiado: primero grupo muscular, luego ejercicio sugerido, y solo despues entrada manual si hace falta.
 - La pantalla de progreso de fuerza ahora deja alternar entre `peso maximo`, `volumen` y `1RM estimado`; `1RM` es solo una estimacion educativa.
 - El dashboard y el historial de workout ya muestran `repeticiones` junto a `sets`, lo que mejora la lectura rapida de carga total.
 - Si la build Android falla tras tocar NDK, correr `flutter clean` antes de volver a `flutter build apk --debug`.

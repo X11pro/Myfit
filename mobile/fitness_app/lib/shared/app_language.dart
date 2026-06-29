@@ -147,11 +147,68 @@ class AppStrings {
 
   String get muscleGroupLabel => isEnglish ? 'Muscle group' : 'Grupo muscular';
 
+  String get selectMuscleGroupLabel =>
+      isEnglish ? 'Select muscle group' : 'Elegir grupo muscular';
+
+  String get selectExerciseLabel =>
+      isEnglish ? 'Select exercise' : 'Elegir ejercicio';
+
   String get repsLabel => isEnglish ? 'Reps' : 'Repeticiones';
+
+  String get setsLabel => isEnglish ? 'Sets' : 'Sets';
 
   String get setWeightLabel => isEnglish ? 'Weight (kg)' : 'Peso (kg)';
 
   String get rpeLabel => isEnglish ? 'RPE (optional)' : 'RPE (opcional)';
+
+  String get rpeHelpLabel =>
+      isEnglish ? 'Effort felt in the set' : 'Esfuerzo sentido en el set';
+
+  String get noRpeLabel => isEnglish ? 'No RPE' : 'Sin RPE';
+
+  String get addCustomExerciseOption =>
+      isEnglish ? 'Add custom exercise' : 'Agregar ejercicio personalizado';
+
+  String get customExerciseLabel =>
+      isEnglish ? 'Custom exercise' : 'Ejercicio personalizado';
+
+  String rpeValueLabel(double value) {
+    final isWhole = value == value.roundToDouble();
+    return isWhole ? value.toStringAsFixed(0) : value.toStringAsFixed(1);
+  }
+
+  String rpeEffortTitle(double value) {
+    if (value >= 9.5) {
+      return isEnglish ? 'Max Effort' : 'Esfuerzo maximo';
+    }
+    if (value >= 8.5) {
+      return isEnglish ? 'Very Hard Effort' : 'Esfuerzo muy duro';
+    }
+    if (value >= 7.5) {
+      return isEnglish ? 'Hard Effort' : 'Esfuerzo duro';
+    }
+    if (value >= 6.5) {
+      return isEnglish ? 'Moderate Effort' : 'Esfuerzo moderado';
+    }
+    return isEnglish ? 'Controlled Effort' : 'Esfuerzo controlado';
+  }
+
+  String rpeReserveHint(double value) {
+    final repsLeft = 10 - value;
+    if (repsLeft <= 0) {
+      return isEnglish
+          ? 'Could not do another rep'
+          : 'No podias hacer otra repeticion';
+    }
+
+    final repsText = repsLeft == repsLeft.roundToDouble()
+        ? repsLeft.toStringAsFixed(0)
+        : repsLeft.toStringAsFixed(1);
+
+    return isEnglish
+        ? 'Could probably do $repsText more reps'
+        : 'Probablemente podias hacer $repsText reps mas';
+  }
 
   String get cancelButton => isEnglish ? 'Cancel' : 'Cancelar';
 

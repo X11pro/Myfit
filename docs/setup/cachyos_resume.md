@@ -141,6 +141,8 @@ Estado confirmado al cerrar esta sesion:
 - El modelo en uso es `qwen/qwen3-vl-8b-instruct` via OpenRouter.
 - El smoke test remoto de `food-catalog-upsert` dio OK.
 - El smoke test remoto de `meal-photo-analyze` confirmo que ya pega a OpenRouter; el error observado fue solo por imagen base64 invalida.
+- En workout manual ya quedo implementado el flujo `muscle group -> exercise`, sets multiples desde el dialogo y selector visual de `RPE`.
+- `RPE` queda persistido por set dentro de la sesion del dia para analisis futuro de progresion.
 
 ## 9. Primer objetivo al volver
 
@@ -168,6 +170,10 @@ Estado funcional actual de la app:
 - pantalla separada de progreso con filtro por ejercicio,
 - metricas de fuerza alternables: `peso maximo`, `volumen` y `1RM estimado`,
 - `repeticiones` visibles junto a `sets` en resumenes de workout,
+- `muscle group` como primer selector al agregar sets,
+- dropdown de ejercicios populares por grupo muscular con opcion de custom exercise,
+- `sets` multiples desde el dialogo,
+- selector visual de `RPE` con persistencia por set,
 - dashboard pulido con CTA principal, secciones plegables y grafico de linea/area,
 - ingles por defecto verificado y cambio consistente a espanol desde `EN / ESP`,
 - pantalla para aportar productos al catalogo compartido,
@@ -184,7 +190,11 @@ Antes de seguir, confirmar en el repo que el ultimo bloque funcional ya presente
 - fix de `Log Workout`,
 - NDK 28 alineado,
 - progreso de fuerza con selector de metrica,
-- `reps` al lado de `sets` en workout/dashboard.
+- `reps` al lado de `sets` en workout/dashboard,
+- `Repeat last`,
+- sugerencias de ejercicios recientes,
+- `sets` multiples y `RPE` visual,
+- flujo `muscle group -> exercise`.
 
 ## 11. Comandos utiles para Supabase
 

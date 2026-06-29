@@ -28,7 +28,7 @@ void main() {
               setNumber: 1,
               reps: 8,
               weightKg: 80,
-              rpe: 8,
+              rpe: 8.5,
             ),
           ],
           notes: 'Good session',
@@ -48,6 +48,7 @@ void main() {
     expect(sessions.single.estimatedActiveCalories, 420);
     expect(sessions.single.heaviestWeightKg, 80);
     expect(sessions.single.totalSets, 1);
+    expect(sessions.single.sets.single.rpe, 8.5);
   });
 
   test('updates existing workout session and replaces sets', () async {
