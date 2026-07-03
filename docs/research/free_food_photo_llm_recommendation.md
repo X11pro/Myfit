@@ -2,7 +2,7 @@
 
 ## Decision vigente
 
-- Opcion recomendada actual para costo cero o muy bajo: `Qwen2.5-VL-7B-Instruct`.
+- Opcion recomendada actual para costo cero o muy bajo en este repo: `qwen/qwen3-vl-8b-instruct` via OpenRouter.
 - Uso previsto: reconocimiento de comida desde foto, estimacion inicial de porcion, `confidence` y salida JSON estructurada.
 - Limite deliberado: no usar el LLM como fuente final unica de macros.
 
@@ -21,8 +21,8 @@
 
 ## Implicacion tecnica inmediata
 
-- La funcion `backend/supabase/functions/meal-photo-analyze/index.ts` hoy depende de `OPENAI_API_KEY`.
-- El siguiente paso tecnico correcto es migrar esa funcion a un proveedor compatible con `Qwen2.5-VL-7B-Instruct` manteniendo el mismo contrato JSON hacia Flutter o cambiandolo solo si hace falta para agregar porcion y campos de matching nutricional.
+- La migracion backend actual usa `OPENROUTER_API_KEY` y por defecto `OPENROUTER_MODEL=qwen/qwen3-vl-8b-instruct`.
+- El siguiente paso tecnico correcto es desplegar las funciones migradas y probarlas end-to-end manteniendo el mismo contrato JSON hacia Flutter o cambiandolo solo si hace falta para agregar porcion y campos de matching nutricional.
 
 ## Restricciones a preservar
 

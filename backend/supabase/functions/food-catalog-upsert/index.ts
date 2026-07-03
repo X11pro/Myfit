@@ -1,5 +1,9 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
+<<<<<<< HEAD
 import { callOpenRouterJson } from '../_shared/openrouter.ts'
+=======
+import { callOpenRouterVisionJson } from '../_shared/openrouter.ts'
+>>>>>>> efd4786 (Auto-sync project changes)
 
 type Mode = 'extract' | 'upsert'
 
@@ -160,8 +164,12 @@ async function normalizeFood(payload: CatalogPayload): Promise<NormalizedFood> {
 }
 
 async function extractWithAi(payload: CatalogPayload): Promise<NormalizedFood | null> {
+<<<<<<< HEAD
   const apiKey = Deno.env.get('OPENROUTER_API_KEY')
   if (!apiKey) {
+=======
+  if (!Deno.env.get('OPENROUTER_API_KEY')) {
+>>>>>>> efd4786 (Auto-sync project changes)
     return null
   }
 
@@ -172,6 +180,7 @@ async function extractWithAi(payload: CatalogPayload): Promise<NormalizedFood | 
     'Use per 100g values whenever possible.',
   ].join(' ')
 
+<<<<<<< HEAD
   let parsed: Record<string, unknown>
   try {
     parsed = await callOpenRouterJson({
@@ -214,6 +223,50 @@ async function extractWithAi(payload: CatalogPayload): Promise<NormalizedFood | 
     nutritionQualityReason:
         emptyToNull(parsed.nutritionQualityReason) ?? quality.reason,
   }
+=======
+  try {
+    const parsed = await callOpenRouterVisionJson({
+      prompt,
+      imageBase64: payload.imageBase64,
+      maxTokens: 500,
+    })
+
+    if (!parsed.name) {
+      return null
+    }
+
+    const quality = calculateNutritionQualityScore({
+      caloriesPer100g: toNullableNumber(parsed.caloriesPer100g),
+      proteinPer100g: toNullableNumber(parsed.proteinPer100g),
+      carbsPer100g: toNullableNumber(parsed.carbsPer100g),
+      fatPer100g: toNullableNumber(parsed.fatPer100g),
+      sugarPer100g: toNullableNumber(parsed.sugarPer100g),
+      fiberPer100g: toNullableNumber(parsed.fiberPer100g),
+      saturatedFatPer100g: toNullableNumber(parsed.saturatedFatPer100g),
+      sodiumMgPer100g: toNullableNumber(parsed.sodiumMgPer100g),
+    })
+
+    return {
+      source: 'shared_ai',
+      sourceId: null,
+      name: String(parsed.name).trim(),
+      brand: emptyToNull(parsed.brand),
+      caloriesPer100g: quality.caloriesPer100g,
+      proteinPer100g: quality.proteinPer100g,
+      carbsPer100g: quality.carbsPer100g,
+      fatPer100g: quality.fatPer100g,
+      sugarPer100g: quality.sugarPer100g,
+      fiberPer100g: quality.fiberPer100g,
+      confidence: toNullableNumber(parsed.confidence) ?? 0.75,
+      nutritionQualityScore:
+          toNullableNumber(parsed.nutritionQualityScore) ?? quality.score,
+      nutritionQualityReason:
+          emptyToNull(parsed.nutritionQualityReason) ?? quality.reason,
+    }
+  } catch {
+    return null
+  }
+>>>>>>> efd4786 (Auto-sync project changes)
 }
 
 function parseFromOcrText(

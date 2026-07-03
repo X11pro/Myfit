@@ -93,6 +93,8 @@ El repo quedo listo para continuar en CachyOS con una app Flutter usable sin log
   - edge function para extraer datos desde OCR/AI y guardar `food_items` compartidos.
 - `backend/supabase/functions/meal-photo-analyze/index.ts`
   - edge function para analizar foto de comida y estimar nombre, calorias, proteina, carbohidratos, grasas, azucar, fibra y confianza.
+- `backend/supabase/functions/_shared/openrouter.ts`
+  - helper compartido para llamar OpenRouter con `qwen/qwen3-vl-8b-instruct` y parsear JSON multimodal.
 - `backend/supabase/migrations/20260620_000002_food_items_shared_catalog.sql`
   - indice unico para catalogo compartido por `source + source_id`,
   - columnas `nutrition_quality_score` y `nutrition_quality_reason`.
@@ -242,6 +244,7 @@ Smoke tests remotos confirmados:
 
 ## Pendientes inmediatos
 
+<<<<<<< HEAD
 1. Conseguir `SUPABASE_URL` y `SUPABASE_ANON_KEY` reales o un `SUPABASE_ACCESS_TOKEN` valido en esta maquina para desbloquear la prueba E2E real.
 2. Probar end-to-end la pantalla Flutter del catalogo compartido con una imagen real y `--dart-define` para Supabase.
 3. Probar end-to-end el boton `Analyze with AI` en `manual food entry` con una foto valida de comida.
@@ -250,6 +253,15 @@ Smoke tests remotos confirmados:
 6. Reintroducir autenticacion en una proxima iteracion sin Auth0, probablemente sobre Supabase o guest identity persistente.
 7. Conectar `manual food entry` a persistencia remota cuando quede definido el modelo final de identidad.
 8. Conectar workouts manuales, resultados AI y objetivos diarios a persistencia remota cuando quede definido el modelo final de identidad.
+=======
+1. Seguir iterando la UX real cuando llegue el Figma.
+2. Reintroducir autenticacion en una proxima iteracion sin Auth0, probablemente sobre Supabase o guest identity persistente.
+3. Conectar `manual food entry` a persistencia remota cuando quede definido el modelo final de identidad.
+4. Cargar `OPENROUTER_API_KEY` y opcionalmente `OPENROUTER_MODEL` en Supabase para habilitar AI real en `food-catalog-upsert` y `meal-photo-analyze`.
+5. Desplegar las funciones migradas y probar end-to-end la pantalla Flutter del catalogo compartido y el boton `Analyze with AI`.
+6. Conectar los resultados AI a `meal_entries` remotos cuando se defina el modelo final de identidad.
+7. Conectar workouts manuales y objetivos diarios a persistencia remota cuando quede definido el modelo final de identidad.
+>>>>>>> efd4786 (Auto-sync project changes)
 
 ## Riesgos o notas
 
@@ -267,6 +279,7 @@ Smoke tests remotos confirmados:
 - La pantalla de progreso de fuerza ahora deja alternar entre `peso maximo`, `volumen` y `1RM estimado`; `1RM` es solo una estimacion educativa.
 - El dashboard y el historial de workout ya muestran `repeticiones` junto a `sets`, lo que mejora la lectura rapida de carga total.
 - Si la build Android falla tras tocar NDK, correr `flutter clean` antes de volver a `flutter build apk --debug`.
+<<<<<<< HEAD
 - Las edge functions `food-catalog-upsert` y `meal-photo-analyze` quedaron migradas localmente a OpenRouter y redeployadas en Supabase.
 - Los secrets remotos vigentes para AI son `OPENROUTER_API_KEY` y `OPENROUTER_MODEL`; ya no corresponde documentar `OPENAI_API_KEY` como dependencia actual de estas funciones.
 - El modelo efectivamente adoptado y validado para esta iteracion es `qwen/qwen3-vl-8b-instruct` via OpenRouter.
@@ -274,6 +287,10 @@ Smoke tests remotos confirmados:
 - `food-catalog-upsert` respondio OK en smoke test remoto; `meal-photo-analyze` respondio contra OpenRouter y fallo solo con una imagen base64 invalida de prueba.
 - `deno` no estuvo disponible en esta maquina, por lo que no se corrieron `deno fmt` ni `deno check` antes del deploy.
 - Por seguridad, conviene rotar `OPENROUTER_API_KEY` y `SUPABASE_ACCESS_TOKEN` porque fueron expuestos durante la sesion.
+=======
+- La migracion y las edge functions `food-catalog-upsert` y `meal-photo-analyze` ya quedaron desplegadas.
+- La extraccion AI desde imagen ya quedo migrada localmente a OpenRouter; falta cargar `OPENROUTER_API_KEY`, desplegar funciones y hacer la prueba real.
+>>>>>>> efd4786 (Auto-sync project changes)
 - Recordatorio explicito para la proxima sesion: reimplementar autenticacion sin Auth0 antes de conectar persistencia remota multiusuario.
 - `currentWeightKg` del onboarding se guarda en `body_metrics`, no en `profiles`, porque el esquema actual ya separa ese dato historico.
 - El worktree del repo contiene cambios previos y/o de entorno no relacionados, especialmente en `backend/supabase/functions/meal-photo-analyze` y varios archivos Android; revisar cuidadosamente antes de hacer commits amplios.
