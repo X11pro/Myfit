@@ -129,10 +129,11 @@ Tambien ya esta desplegada la Edge Function:
 
 Pendiente importante para OCR/AI real desde imagen:
 
-1. Correr la app Flutter con `--dart-define` para `SUPABASE_URL` y `SUPABASE_ANON_KEY`.
-2. Probar la pantalla Flutter de catalogo compartido contra la funcion desplegada.
-3. Probar el boton `Analyze with AI` de comidas manuales contra `meal-photo-analyze` con una foto valida.
-4. Si `deno` esta disponible en otra maquina, correr `deno fmt` y `deno check` sobre `backend/supabase/functions`.
+1. Conseguir primero `SUPABASE_URL` y `SUPABASE_ANON_KEY` reales en la shell local o un `SUPABASE_ACCESS_TOKEN` valido para pedir la anon key via CLI.
+2. Correr la app Flutter con `--dart-define` para `SUPABASE_URL` y `SUPABASE_ANON_KEY`.
+3. Probar la pantalla Flutter de catalogo compartido contra la funcion desplegada.
+4. Probar el boton `Analyze with AI` de comidas manuales contra `meal-photo-analyze` con una foto valida.
+5. Si `deno` esta disponible en otra maquina, correr `deno fmt` y `deno check` sobre `backend/supabase/functions`.
 
 Estado confirmado al cerrar esta sesion:
 
@@ -141,6 +142,10 @@ Estado confirmado al cerrar esta sesion:
 - El modelo en uso es `qwen/qwen3-vl-8b-instruct` via OpenRouter.
 - El smoke test remoto de `food-catalog-upsert` dio OK.
 - El smoke test remoto de `meal-photo-analyze` confirmo que ya pega a OpenRouter; el error observado fue solo por imagen base64 invalida.
+- En esta maquina `flutter analyze`, `flutter test` y `flutter run -d linux` siguen funcionando.
+- La app arranca en Linux con `--dart-define` placeholder, asi que la integracion base de Flutter no esta rota.
+- La prueba E2E real sigue frenada solo por falta de `SUPABASE_URL` y `SUPABASE_ANON_KEY` reales en la shell actual.
+- `npx supabase projects api-keys --project-ref cyecalxewqcyxxglxloa --output json` no se pudo usar porque tampoco habia `SUPABASE_ACCESS_TOKEN` local.
 - En workout manual ya quedo implementado el flujo `muscle group -> exercise`, sets multiples desde el dialogo y selector visual de `RPE`.
 - `RPE` queda persistido por set dentro de la sesion del dia para analisis futuro de progresion.
 
@@ -152,6 +157,7 @@ Seguir el guest flow actual y avanzar estas piezas en orden:
 - partir del ultimo punto ya hecho: metricas de fuerza con `peso maximo`, `volumen` y `1RM estimado`,
 - revisar si la siguiente mejora de gym debe ser duplicar set anterior, autocompletar ejercicios recientes o resumen por ejercicio,
 - prueba real del catalogo compartido con OCR/AI ya migrado a OpenRouter,
+- destrabar credenciales locales de Supabase para poder correr esa prueba E2E real,
 - reintroduccion de autenticacion sin Auth0,
 - conexion de comidas y catalogo a persistencia remota multiusuario.
 

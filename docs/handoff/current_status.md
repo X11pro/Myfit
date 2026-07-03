@@ -209,6 +209,23 @@ npx supabase functions deploy food-catalog-upsert --project-ref cyecalxewqcyxxgl
 npx supabase functions deploy meal-photo-analyze --project-ref cyecalxewqcyxxglxloa --workdir backend
 ```
 
+En la sesion mas reciente tambien se ejecuto correctamente:
+
+```bash
+flutter analyze
+flutter test
+flutter devices
+flutter run -d linux --dart-define=SUPABASE_URL=placeholder --dart-define=SUPABASE_ANON_KEY=placeholder
+```
+
+Resultado confirmado de esa prueba:
+
+- `flutter analyze` sigue OK.
+- `flutter test` sigue OK.
+- La app Flutter arranca en Linux y llega a inicializar Supabase cuando se le pasan `--dart-define`.
+- La prueba E2E real del catalogo compartido y `Analyze with AI` sigue bloqueada en esta maquina por falta de `SUPABASE_URL` y `SUPABASE_ANON_KEY` reales en la shell actual.
+- Tambien falta `SUPABASE_ACCESS_TOKEN` local para recuperar la anon key por CLI con `npx supabase projects api-keys`.
+
 Smoke tests remotos confirmados:
 
 - `food-catalog-upsert` respondio OK en `mode=extract`.
@@ -225,11 +242,11 @@ Smoke tests remotos confirmados:
 
 ## Pendientes inmediatos
 
-1. Probar end-to-end la pantalla Flutter del catalogo compartido con una imagen real y `--dart-define` para Supabase.
-2. Probar end-to-end el boton `Analyze with AI` en `manual food entry` con una foto valida de comida.
-3. Validar en movil la UX nueva de workout: `muscle group -> exercise`, sets multiples y selector RPE.
-4. Si OpenRouter devuelve respuestas incompletas en casos reales, ajustar prompt/parsing sin reabrir analisis ya cerrados.
-5. Empezar a mostrar `RPE` en historial/progreso si hace falta para analisis de progresion en gym.
+1. Conseguir `SUPABASE_URL` y `SUPABASE_ANON_KEY` reales o un `SUPABASE_ACCESS_TOKEN` valido en esta maquina para desbloquear la prueba E2E real.
+2. Probar end-to-end la pantalla Flutter del catalogo compartido con una imagen real y `--dart-define` para Supabase.
+3. Probar end-to-end el boton `Analyze with AI` en `manual food entry` con una foto valida de comida.
+4. Validar en movil la UX nueva de workout: `muscle group -> exercise`, sets multiples y selector RPE.
+5. Si OpenRouter devuelve respuestas incompletas en casos reales, ajustar prompt/parsing sin reabrir analisis ya cerrados.
 6. Reintroducir autenticacion en una proxima iteracion sin Auth0, probablemente sobre Supabase o guest identity persistente.
 7. Conectar `manual food entry` a persistencia remota cuando quede definido el modelo final de identidad.
 8. Conectar workouts manuales, resultados AI y objetivos diarios a persistencia remota cuando quede definido el modelo final de identidad.
@@ -253,13 +270,14 @@ Smoke tests remotos confirmados:
 - Las edge functions `food-catalog-upsert` y `meal-photo-analyze` quedaron migradas localmente a OpenRouter y redeployadas en Supabase.
 - Los secrets remotos vigentes para AI son `OPENROUTER_API_KEY` y `OPENROUTER_MODEL`; ya no corresponde documentar `OPENAI_API_KEY` como dependencia actual de estas funciones.
 - El modelo efectivamente adoptado y validado para esta iteracion es `qwen/qwen3-vl-8b-instruct` via OpenRouter.
-- La prueba end-to-end real del frontend con Supabase ya no esta bloqueada por secrets faltantes; el siguiente paso real es correr Flutter con foto valida y validar la UX final.
+- La prueba end-to-end real del frontend con Supabase si sigue bloqueada en esta maquina hasta tener `SUPABASE_URL` y `SUPABASE_ANON_KEY` reales o un `SUPABASE_ACCESS_TOKEN` que permita recuperarlas por CLI.
 - `food-catalog-upsert` respondio OK en smoke test remoto; `meal-photo-analyze` respondio contra OpenRouter y fallo solo con una imagen base64 invalida de prueba.
 - `deno` no estuvo disponible en esta maquina, por lo que no se corrieron `deno fmt` ni `deno check` antes del deploy.
 - Por seguridad, conviene rotar `OPENROUTER_API_KEY` y `SUPABASE_ACCESS_TOKEN` porque fueron expuestos durante la sesion.
 - Recordatorio explicito para la proxima sesion: reimplementar autenticacion sin Auth0 antes de conectar persistencia remota multiusuario.
 - `currentWeightKg` del onboarding se guarda en `body_metrics`, no en `profiles`, porque el esquema actual ya separa ese dato historico.
 - El worktree del repo contiene cambios previos y/o de entorno no relacionados, especialmente en `backend/supabase/functions/meal-photo-analyze` y varios archivos Android; revisar cuidadosamente antes de hacer commits amplios.
+- En esta maquina hay `flutter devices` para `Linux` y `Chrome`, asi que el siguiente bloqueo no es tooling Flutter sino credenciales reales de Supabase.
 
 ## Regla persistente del usuario
 

@@ -23,7 +23,7 @@ Contexto inmediato:
 - La migracion real del backend de OpenAI a OpenRouter ya quedo implementada en `backend/supabase/functions/meal-photo-analyze/index.ts`, `backend/supabase/functions/food-catalog-upsert/index.ts` y `backend/supabase/functions/_shared/openrouter.ts`.
 - Los secrets remotos de Supabase para OpenRouter ya quedaron cargados y ambas functions ya fueron redeployadas.
 - El modelo efectivamente adoptado para esta iteracion es `qwen/qwen3-vl-8b-instruct` via OpenRouter.
-- La prueba E2E real pendiente ya no depende de cargar secrets remotos sino de correr Flutter con `SUPABASE_URL` y `SUPABASE_ANON_KEY` y usar una foto valida.
+- La prueba E2E real pendiente depende de tener `SUPABASE_URL` y `SUPABASE_ANON_KEY` reales en la maquina actual o un `SUPABASE_ACCESS_TOKEN` valido para recuperarlas por CLI, y luego usar una foto valida.
 - El APK debug mas reciente esta en mobile/fitness_app/build/app/outputs/flutter-apk/app-debug.apk.
 
 Tareas al retomar:
@@ -31,11 +31,12 @@ Tareas al retomar:
 2. Leer docs/setup/cachyos_resume.md y docs/handoff/current_status.md.
 3. Confirmar que el ultimo punto implementado incluye top bar global + fix de Log Workout + NDK 28 + metricas de progreso de fuerza + reps junto a sets + `Repeat last` + sugerencias de ejercicios recientes + flujo `muscle group -> exercise` + sets multiples + `RPE` visual persistido.
 4. Ejecutar flutter pub get, flutter analyze y flutter test.
-5. Ejecutar la prueba real del catalogo compartido y `Analyze with AI` con `--dart-define` para `SUPABASE_URL` y `SUPABASE_ANON_KEY`.
-6. Validar con una foto real que OpenRouter responde bien desde Flutter y, si hay respuestas incompletas, ajustar prompt/parsing sin reabrir analisis ya cerrados.
-7. Validar en movil la nueva UX de workout antes de seguir con cambios mayores en progreso o analitica.
-8. Seguir desde ahi sin reiniciar nada desde cero.
-9. Mantener respuestas en espanol.
+5. Verificar primero si la shell actual ya tiene `SUPABASE_URL` y `SUPABASE_ANON_KEY` o `SUPABASE_ACCESS_TOKEN`; si faltan, ese es el bloqueo real inmediato.
+6. Ejecutar la prueba real del catalogo compartido y `Analyze with AI` con `--dart-define` para `SUPABASE_URL` y `SUPABASE_ANON_KEY`.
+7. Validar con una foto real que OpenRouter responde bien desde Flutter y, si hay respuestas incompletas, ajustar prompt/parsing sin reabrir analisis ya cerrados.
+8. Validar en movil la nueva UX de workout antes de seguir con cambios mayores en progreso o analitica.
+9. Seguir desde ahi sin reiniciar nada desde cero.
+10. Mantener respuestas en espanol.
 
 No reinicies el proyecto desde cero. Continua desde la estructura y commits ya existentes.
 
