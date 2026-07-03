@@ -1,6 +1,7 @@
-import 'dart:io';
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -168,24 +169,7 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
           if (_photoPath != null) ...[
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
-              child: Image.file(
-                File(_photoPath!),
-                height: 180,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: 180,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      color:
-                          Theme.of(context).colorScheme.surfaceContainerHighest,
-                    ),
-                    child: Text(strings.noMealsYet),
-                  );
-                },
-              ),
+              child: _buildPhotoPreview(strings),
             ),
             const SizedBox(height: 12),
           ],
@@ -316,6 +300,11 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
   }
 
   Future<String> _copyImageToAppStorage(XFile image) async {
+    if (kIsWeb) {
+      final bytes = await image.readAsBytes();
+      return _toDataUrl(bytes, image.mimeType);
+    }
+
     final directory = await getApplicationDocumentsDirectory();
     final photosDirectory = Directory('${directory.path}/meal_photos');
 
@@ -352,7 +341,7 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
     setState(() => _isAnalyzing = true);
 
     try {
-      final bytes = await File(_photoPath!).readAsBytes();
+      final bytes = await _loadPhotoBytes(_photoPath!);
       final response = await Supabase.instance.client.functions.invoke(
         'meal-photo-analyze',
         body: {
@@ -427,6 +416,64 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
         setState(() => _isAnalyzing = false);
       }
     }
+  }
+
+  Widget _buildPhotoPreview(AppStrings strings) {
+    final photoPath = _photoPath;
+    if (photoPath == null) {
+      return const SizedBox.shrink();
+    }
+
+    ImageProvider imageProvider;
+    if (_isDataUrl(photoPath)) {
+      imageProvider = MemoryImage(_dataUrlBytes(photoPath));
+    } else {
+      imageProvider = FileImage(File(photoPath));
+    }
+
+    return Image(
+      image: imageProvider,
+      height: 180,
+      width: double.infinity,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          height: 180,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          ),
+          child: Text(strings.noMealsYet),
+        );
+      },
+    );
+  }
+
+  Future<Uint8List> _loadPhotoBytes(String photoPath) async {
+    if (_isDataUrl(photoPath)) {
+      return _dataUrlBytes(photoPath);
+    }
+
+    return File(photoPath).readAsBytes();
+  }
+
+  bool _isDataUrl(String value) => value.startsWith('data:');
+
+  Uint8List _dataUrlBytes(String dataUrl) {
+    final commaIndex = dataUrl.indexOf(',');
+    if (commaIndex < 0 || commaIndex == dataUrl.length - 1) {
+      throw StateError('Invalid photo data.');
+    }
+
+    return base64Decode(dataUrl.substring(commaIndex + 1));
+  }
+
+  String _toDataUrl(Uint8List bytes, String? mimeType) {
+    final resolvedMimeType = mimeType?.trim().isNotEmpty == true
+        ? mimeType!
+        : 'image/jpeg';
+    return 'data:$resolvedMimeType;base64,${base64Encode(bytes)}';
   }
 
   Map<String, dynamic> _responseMap(Object? data) {
