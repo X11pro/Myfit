@@ -493,6 +493,25 @@ class AppStrings {
   String get addSharedFoodTitle =>
       isEnglish ? 'Add shared food' : 'Agregar alimento compartido';
 
+  String get foodGalleryTitle =>
+      isEnglish ? 'Food gallery' : 'Galeria de comidas';
+
+  String get foodGallerySubtitle => isEnglish
+      ? 'Review your saved meal photos together with their nutrition details.'
+      : 'Revisa tus fotos de comidas guardadas junto con sus detalles nutricionales.';
+
+  String savedMealPhotosCount(int count) => isEnglish
+      ? '$count saved meal photos'
+      : '$count fotos de comidas guardadas';
+
+  String get noMealPhotosYet => isEnglish
+      ? 'No saved meal photos yet.'
+      : 'Todavia no hay fotos de comidas guardadas.';
+
+  String get foodGalleryEmptyHint => isEnglish
+      ? 'Add a meal with photo and it will appear here for later review.'
+      : 'Agrega una comida con foto y aparecera aqui para revisarla despues.';
+
   String get addSharedFoodSubtitle => isEnglish
       ? 'If a barcode is missing, capture the label with OCR/AI and save the product for everyone.'
       : 'Si falta un codigo de barras, captura la etiqueta con OCR/AI y guarda el producto para todos.';

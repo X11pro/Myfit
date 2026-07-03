@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../features/dashboard/presentation/dashboard_screen.dart';
 import '../features/dashboard/presentation/progress_screen.dart';
 import '../features/food/domain/manual_food_entry.dart';
+import '../features/food/presentation/food_gallery_screen.dart';
 import '../features/food/presentation/manual_food_entry_screen.dart';
 import '../features/food/presentation/shared_food_catalog_screen.dart';
 import '../features/onboarding/presentation/onboarding_screen.dart';
@@ -40,6 +41,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
           path: '/food/shared-catalog',
           builder: (context, state) => const SharedFoodCatalogScreen()),
+      GoRoute(
+          path: '/food/gallery',
+          builder: (context, state) => const FoodGalleryScreen()),
       GoRoute(
         path: '/workout/manual',
         builder: (context, state) => ManualWorkoutScreen(

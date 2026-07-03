@@ -9,6 +9,7 @@ enum _TopBarMenuAction {
   addMeal,
   addWorkout,
   progress,
+  foodGallery,
   sharedCatalog,
   welcome,
 }
@@ -67,6 +68,10 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
               child: Text(strings.progressScreenTitle),
             ),
             PopupMenuItem(
+              value: _TopBarMenuAction.foodGallery,
+              child: Text(strings.foodGalleryTitle),
+            ),
+            PopupMenuItem(
               value: _TopBarMenuAction.sharedCatalog,
               child: Text(strings.addSharedFoodTitle),
             ),
@@ -115,6 +120,9 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
         return;
       case _TopBarMenuAction.progress:
         context.go('/dashboard/progress');
+        return;
+      case _TopBarMenuAction.foodGallery:
+        context.go('/food/gallery');
         return;
       case _TopBarMenuAction.sharedCatalog:
         context.go('/food/shared-catalog');

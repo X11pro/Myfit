@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -10,6 +9,7 @@ import '../../../shared/app_state.dart';
 import '../../../shared/widgets/app_top_bar.dart';
 import '../../food/application/manual_food_entries_controller.dart';
 import '../../food/domain/manual_food_entry.dart';
+import '../../food/presentation/widgets/meal_photo_view.dart';
 import '../../workout/application/manual_workout_controller.dart';
 import '../../workout/domain/manual_workout_session.dart';
 import '../application/daily_targets_calculator.dart';
@@ -72,8 +72,8 @@ class DashboardScreen extends ConsumerWidget {
             onPrimaryPressed: () => context.go('/food/manual'),
             secondaryLabel: strings.quickActionWorkout,
             onSecondaryPressed: () => context.go('/workout/manual'),
-            tertiaryLabel: strings.addSharedFoodTitle,
-            onTertiaryPressed: () => context.go('/food/shared-catalog'),
+            tertiaryLabel: strings.foodGalleryTitle,
+            onTertiaryPressed: () => context.go('/food/gallery'),
           ),
           const SizedBox(height: 16),
           _DailySummaryCard(
@@ -1050,27 +1050,10 @@ class _MealEntryCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (entry.photoPath != null) ...[
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.file(
-                      File(entry.photoPath!),
-                      width: 72,
-                      height: 72,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: 72,
-                          height: 72,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            color: Theme.of(context)
-                                .colorScheme
-                                .surfaceContainerHighest,
-                          ),
-                          child: const Icon(Icons.image_not_supported_outlined),
-                        );
-                      },
-                    ),
+                  MealPhotoView(
+                    photoPath: entry.photoPath!,
+                    width: 72,
+                    height: 72,
                   ),
                   const SizedBox(width: 12),
                 ],
