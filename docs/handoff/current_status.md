@@ -244,19 +244,36 @@ flutter devices
 flutter run -d linux --dart-define=SUPABASE_URL=placeholder --dart-define=SUPABASE_ANON_KEY=placeholder
 ```
 
+En la sesion actual de Windows tambien se ejecuto correctamente:
+
+```bash
+npx supabase projects list
+npx supabase link --project-ref cyecalxewqcyxxglxloa --workdir backend --yes
+npx supabase functions list --project-ref cyecalxewqcyxxglxloa --workdir backend
+flutter run -d edge --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...
+flutter run -d windows --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...
+flutter build apk --debug --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...
+```
+
 Resultado confirmado de esa prueba:
 
 - `flutter analyze` sigue OK.
 - `flutter test` sigue OK.
 - La app Flutter arranca en Linux y llega a inicializar Supabase cuando se le pasan `--dart-define`.
-- La prueba E2E real del catalogo compartido y `Analyze with AI` sigue bloqueada en esta maquina por falta de `SUPABASE_URL` y `SUPABASE_ANON_KEY` reales en la shell actual.
-- Tambien falta `SUPABASE_ACCESS_TOKEN` local para recuperar la anon key por CLI con `npx supabase projects api-keys`.
+- En Windows ya se valido `SUPABASE_ACCESS_TOKEN`, `SUPABASE_URL` y `SUPABASE_ANON_KEY` reales durante la sesion, pero no quedaron persistidos en archivos del repo.
+- `supabase link` ya quedo ejecutado localmente en esta maquina y `functions list` confirmo `food-catalog-upsert` y `meal-photo-analyze` activas en remoto.
+- La app arranca tanto en `Edge` como en `Windows` con Supabase inicializado cuando recibe `--dart-define` reales.
+- El flujo web ya no se rompe al elegir foto desde galeria: `manual food entry` ahora soporta `data:` URLs y preview sin depender de `path_provider` para web.
+- Se agrego una galeria local-first de comidas con foto y resumen nutricional en `/food/gallery`, basada en la persistencia local ya existente.
+- Se regenero `app-debug.apk` con ese flujo nuevo para probar en Android.
 
 Smoke tests remotos confirmados:
 
 - `food-catalog-upsert` respondio OK en `mode=extract`.
 - `meal-photo-analyze` ya no falla por `OPENAI_API_KEY` y ahora pega a OpenRouter.
 - El error observado en `meal-photo-analyze` fue por imagen base64 invalida de prueba, lo cual confirma que la ruta nueva ya esta activa.
+- `food-catalog-upsert` tambien respondio `200 OK` con payload manual autenticado usando la anon key real.
+- `meal-photo-analyze` respondio autenticado y llego a OpenRouter; el riesgo pendiente real esta en probar con una foto valida y confirmar que no aparezcan limites de credito o proveedor.
 
 ## Commits relevantes
 
@@ -269,14 +286,15 @@ Smoke tests remotos confirmados:
 ## Pendientes inmediatos
 
 1. Conseguir `SUPABASE_URL` y `SUPABASE_ANON_KEY` reales o un `SUPABASE_ACCESS_TOKEN` valido en esta maquina para desbloquear la prueba E2E real.
-2. Probar end-to-end la pantalla Flutter del catalogo compartido con una imagen real y `--dart-define` para Supabase.
-3. Probar end-to-end el boton `Analyze with AI` en `manual food entry` con una foto valida de comida.
-4. Validar en movil la UX nueva de workout: `muscle group -> exercise`, sets multiples y selector RPE.
-5. Si OpenRouter devuelve respuestas incompletas en casos reales, ajustar prompt/parsing sin reabrir analisis ya cerrados.
-6. Reintroducir autenticacion en una proxima iteracion sin Auth0, probablemente sobre Supabase o guest identity persistente.
-7. Conectar `manual food entry` a persistencia remota cuando quede definido el modelo final de identidad.
-8. Conectar workouts manuales, resultados AI y objetivos diarios a persistencia remota cuando quede definido el modelo final de identidad.
-9. Seguir iterando la UX real cuando llegue el Figma.
+2. Probar en Android con foto real que `manual food entry` guarda la foto, la muestra en la nueva galeria y deja lanzar `Analyze with AI`.
+3. Probar end-to-end la pantalla Flutter del catalogo compartido con una imagen real y `--dart-define` para Supabase.
+4. Probar end-to-end el boton `Analyze with AI` en `manual food entry` con una foto valida de comida.
+5. Validar en movil la UX nueva de workout: `muscle group -> exercise`, sets multiples y selector RPE.
+6. Si OpenRouter devuelve respuestas incompletas en casos reales, ajustar prompt/parsing sin reabrir analisis ya cerrados.
+7. Reintroducir autenticacion en una proxima iteracion sin Auth0, probablemente sobre Supabase o guest identity persistente.
+8. Conectar `manual food entry` a persistencia remota cuando quede definido el modelo final de identidad.
+9. Conectar workouts manuales, resultados AI y objetivos diarios a persistencia remota cuando quede definido el modelo final de identidad.
+10. Seguir iterando la UX real cuando llegue el Figma.
 
 ## Riesgos o notas
 
@@ -304,7 +322,9 @@ Smoke tests remotos confirmados:
 - Recordatorio explicito para la proxima sesion: reimplementar autenticacion sin Auth0 antes de conectar persistencia remota multiusuario.
 - `currentWeightKg` del onboarding se guarda en `body_metrics`, no en `profiles`, porque el esquema actual ya separa ese dato historico.
 - El worktree del repo contiene cambios previos y/o de entorno no relacionados, especialmente en `backend/supabase/functions/meal-photo-analyze` y varios archivos Android; revisar cuidadosamente antes de hacer commits amplios.
-- En esta maquina hay `flutter devices` para `Linux` y `Chrome`, asi que el siguiente bloqueo no es tooling Flutter sino credenciales reales de Supabase.
+- En esta maquina Windows ya se activo `Developer Mode`, por lo que `flutter run -d windows` vuelve a compilar; la sesion de debug puede perder conexion despues del arranque, pero la app si levanta e inicializa Supabase.
+- La nueva galeria de comidas es local-first; todavia no sube fotos ni meals a Supabase Storage/Postgres.
+- En web se corrigio el flujo de foto guardando `data:` URLs localmente; eso resuelve preview/AI, pero puede crecer mas que un path local y no es el target principal a largo plazo.
 - No persistir API keys en `docs/`, `prompts/`, `.env.example` ni commits. Recargarlas solo como variables de entorno o secrets de Supabase.
 
 ## Regla persistente del usuario

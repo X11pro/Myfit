@@ -140,11 +140,12 @@ Tambien ya esta desplegada la Edge Function:
 
 Pendiente importante para OCR/AI real desde imagen:
 
-1. Conseguir primero `SUPABASE_URL` y `SUPABASE_ANON_KEY` reales en la shell local o un `SUPABASE_ACCESS_TOKEN` valido para pedir la anon key via CLI.
+1. Cargar otra vez `SUPABASE_URL`, `SUPABASE_ANON_KEY` y opcionalmente `SUPABASE_ACCESS_TOKEN` en la shell donde se vaya a probar, sin escribirlos en el repo.
 2. Correr la app Flutter con `--dart-define` para `SUPABASE_URL` y `SUPABASE_ANON_KEY`.
 3. Probar la pantalla Flutter de catalogo compartido contra la funcion desplegada.
 4. Probar el boton `Analyze with AI` de comidas manuales contra `meal-photo-analyze` con una foto valida.
-5. Si `deno` esta disponible en otra maquina, correr `deno fmt` y `deno check` sobre `backend/supabase/functions`.
+5. Confirmar en Android que la nueva galeria local `/food/gallery` muestra la foto guardada y la info nutricional asociada.
+6. Si `deno` esta disponible en otra maquina, correr `deno fmt` y `deno check` sobre `backend/supabase/functions`.
 
 Estado confirmado al cerrar esta sesion:
 
@@ -155,10 +156,13 @@ Estado confirmado al cerrar esta sesion:
 - El smoke test remoto de `meal-photo-analyze` confirmo que ya pega a OpenRouter; el error observado fue solo por imagen base64 invalida.
 - En esta maquina `flutter analyze`, `flutter test` y `flutter run -d linux` siguen funcionando.
 - La app arranca en Linux con `--dart-define` placeholder, asi que la integracion base de Flutter no esta rota.
-- La prueba E2E real sigue frenada solo por falta de `SUPABASE_URL` y `SUPABASE_ANON_KEY` reales en la shell actual.
-- `npx supabase projects api-keys --project-ref cyecalxewqcyxxglxloa --output json` no se pudo usar porque tampoco habia `SUPABASE_ACCESS_TOKEN` local.
+- En Windows ya se validaron `SUPABASE_URL`, `SUPABASE_ANON_KEY` y `SUPABASE_ACCESS_TOKEN` reales durante una sesion de prueba, pero no quedaron persistidos.
+- `npx supabase link --project-ref cyecalxewqcyxxglxloa --workdir backend --yes` y `npx supabase functions list ...` ya quedaron probados en Windows.
 - En workout manual ya quedo implementado el flujo `muscle group -> exercise`, sets multiples desde el dialogo y selector visual de `RPE`.
 - `RPE` queda persistido por set dentro de la sesion del dia para analisis futuro de progresion.
+- `manual food entry` ya soporta preview web con `data:` URLs para fotos elegidas desde galeria.
+- Ya existe una galeria local-first de comidas en `/food/gallery` con foto, fecha, macros, confianza, editar y eliminar.
+- Se regenero `mobile/fitness_app/build/app/outputs/flutter-apk/app-debug.apk` con la galeria incluida.
 
 ## 9. Primer objetivo al volver
 
@@ -166,6 +170,7 @@ Seguir el guest flow actual y avanzar estas piezas en orden:
 
 - prueba real del catalogo compartido con OCR/AI ya migrado a OpenRouter,
 - prueba real de `Analyze with AI` ya migrado a OpenRouter,
+- prueba real en Android de la nueva galeria local de comidas,
 - validar UX del modulo gym/progreso ya implementado,
 - partir del ultimo punto ya hecho: metricas de fuerza con `peso maximo`, `volumen` y `1RM estimado`,
 - revisar si la siguiente mejora de gym debe ser duplicar set anterior, autocompletar ejercicios recientes o resumen por ejercicio,
@@ -198,6 +203,7 @@ Estado funcional actual de la app:
 - ingles por defecto verificado y cambio consistente a espanol desde `EN / ESP`,
 - pantalla para aportar productos al catalogo compartido,
 - fotos locales por comida,
+- galeria local de comidas con foto y resumen nutricional,
 - resumen diario y peso diario local,
 - boton `Analyze with AI` conectado a backend,
 - APK debug reciente en `build/app/outputs/flutter-apk/app-debug.apk`.
@@ -232,6 +238,9 @@ Para correr la app Flutter desde CachyOS con Supabase configurado:
 
 ```bash
 export SUPABASE_ACCESS_TOKEN="sbp_TU_TOKEN"
+npx supabase projects list
+npx supabase link --project-ref cyecalxewqcyxxglxloa --workdir backend --yes
+npx supabase functions list --project-ref cyecalxewqcyxxglxloa --workdir backend
 npx supabase secrets set OPENROUTER_API_KEY="tu_key" OPENROUTER_MODEL="qwen/qwen3-vl-8b-instruct" --project-ref cyecalxewqcyxxglxloa
 ```
 
@@ -269,7 +278,7 @@ Desde `mobile/fitness_app`:
 
 ```bash
 flutter clean
-flutter build apk --debug
+flutter build apk --debug --dart-define="SUPABASE_URL=$SUPABASE_URL" --dart-define="SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY"
 ```
 
 Salida esperada:
