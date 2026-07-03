@@ -89,6 +89,15 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
             strings.addMealSubtitle,
             style: Theme.of(context).textTheme.titleMedium,
           ),
+          const SizedBox(height: 16),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              onPressed: () => context.push('/food/gallery'),
+              icon: const Icon(Icons.photo_library_outlined),
+              label: Text(strings.foodGalleryTitle),
+            ),
+          ),
           const SizedBox(height: 24),
           TextField(
             controller: _nameController,
