@@ -16,8 +16,11 @@ class AppStrings {
       : 'Nutricion, entrenamiento y balance energetico en una sola app.';
 
   String get welcomeDescription => isEnglish
-      ? 'Use the app directly for now. Authentication is temporarily disabled.'
-      : 'Usa la app directamente por ahora. La autenticacion esta deshabilitada temporalmente.';
+      ? 'Use the app in guest mode now, or sign in when Supabase is configured.'
+      : 'Usa la app en modo invitado por ahora, o inicia sesion cuando Supabase este configurado.';
+
+  String get signInWithEmailButton =>
+      isEnglish ? 'Sign in with email' : 'Entrar con email';
 
   String get loginDescription => isEnglish
       ? 'Enter your email to receive an access code and continue with your profile.'
@@ -70,6 +73,15 @@ class AppStrings {
 
   String get continueGuest =>
       isEnglish ? 'Continue as guest' : 'Continuar como invitado';
+
+  String signedInDescription(String? email) => isEnglish
+      ? 'You are signed in${email == null || email.isEmpty ? '' : ' as $email'}.'
+      : 'Tu sesion esta iniciada${email == null || email.isEmpty ? '' : ' como $email'}.';
+
+  String get openProfileOrDashboardButton =>
+      isEnglish ? 'Open app' : 'Abrir app';
+
+  String get signOutButton => isEnglish ? 'Sign out' : 'Cerrar sesion';
 
   String get welcomeScreenTitle => isEnglish ? 'Welcome' : 'Bienvenida';
 

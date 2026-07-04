@@ -107,7 +107,7 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
   void _handleMenuAction(BuildContext context, _TopBarMenuAction value) {
     switch (value) {
       case _TopBarMenuAction.profile:
-        context.go('/onboarding');
+        context.go('/auth');
         return;
       case _TopBarMenuAction.dashboard:
         context.go('/dashboard');

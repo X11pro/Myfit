@@ -14,6 +14,7 @@ class AppState {
     required this.isLoading,
     required this.isAuthenticated,
     required this.isOnboardingComplete,
+    this.authEmail,
     this.displayName,
     this.goal,
     this.jobActivityLevel,
@@ -24,6 +25,7 @@ class AppState {
   final bool isLoading;
   final bool isAuthenticated;
   final bool isOnboardingComplete;
+  final String? authEmail;
   final String? displayName;
   final String? goal;
   final String? jobActivityLevel;
@@ -34,6 +36,7 @@ class AppState {
     bool? isLoading,
     bool? isAuthenticated,
     bool? isOnboardingComplete,
+    String? authEmail,
     String? displayName,
     String? goal,
     String? jobActivityLevel,
@@ -44,6 +47,7 @@ class AppState {
       isLoading: isLoading ?? this.isLoading,
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
       isOnboardingComplete: isOnboardingComplete ?? this.isOnboardingComplete,
+      authEmail: authEmail ?? this.authEmail,
       displayName: displayName ?? this.displayName,
       goal: goal ?? this.goal,
       jobActivityLevel: jobActivityLevel ?? this.jobActivityLevel,
@@ -132,6 +136,7 @@ class AppStateNotifier extends Notifier<AppState> {
       state = state.copyWith(
         isLoading: false,
         isAuthenticated: user != null,
+        authEmail: user?.email,
         displayName: displayName,
         goal: goal,
         jobActivityLevel: jobActivityLevel,
@@ -168,6 +173,7 @@ class AppStateNotifier extends Notifier<AppState> {
         isLoading: false,
         isAuthenticated: true,
         isOnboardingComplete: true,
+        authEmail: user.email,
         displayName: displayName,
         goal: goal,
         jobActivityLevel: jobActivityLevel,
@@ -266,6 +272,7 @@ class AppStateNotifier extends Notifier<AppState> {
         isLoading: false,
         isAuthenticated: true,
         isOnboardingComplete: _isOnboardingComplete(profile),
+        authEmail: user.email,
         displayName: _asString(profile?['display_name']),
         goal: _asString(profile?['goal']),
         jobActivityLevel: _asString(profile?['job_activity_level']),
