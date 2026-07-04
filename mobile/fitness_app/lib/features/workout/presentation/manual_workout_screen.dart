@@ -168,25 +168,30 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                     decoration: InputDecoration(labelText: strings.notesLabel),
                   ),
                   const SizedBox(height: 20),
-                  Row(
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(strings.loggedSetsTitle,
                           style: Theme.of(context).textTheme.titleSmall),
-                      const Spacer(),
-                      if (_draftSets.isNotEmpty) ...[
-                        OutlinedButton.icon(
-                          onPressed: _duplicateLastSet,
-                          icon: const Icon(Icons.content_copy_outlined),
-                          label: Text(strings.repeatLastSetButton),
-                        ),
-                        const SizedBox(width: 8),
-                      ],
-                      FilledButton.tonalIcon(
-                        onPressed: () => _openSetDialog(
-                          recentExercises: recentExercises,
-                        ),
-                        icon: const Icon(Icons.fitness_center_outlined),
-                        label: Text(strings.addSetButton),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          if (_draftSets.isNotEmpty)
+                            OutlinedButton.icon(
+                              onPressed: _duplicateLastSet,
+                              icon: const Icon(Icons.content_copy_outlined),
+                              label: Text(strings.repeatLastSetButton),
+                            ),
+                          FilledButton.tonalIcon(
+                            onPressed: () => _openSetDialog(
+                              recentExercises: recentExercises,
+                            ),
+                            icon: const Icon(Icons.fitness_center_outlined),
+                            label: Text(strings.addSetButton),
+                          ),
+                        ],
                       ),
                     ],
                   ),
