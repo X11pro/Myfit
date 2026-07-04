@@ -265,6 +265,8 @@ Resultado confirmado de esa prueba:
 - La app arranca tanto en `Edge` como en `Windows` con Supabase inicializado cuando recibe `--dart-define` reales.
 - El flujo web ya no se rompe al elegir foto desde galeria: `manual food entry` ahora soporta `data:` URLs y preview sin depender de `path_provider` para web.
 - Se agrego una galeria local-first de comidas con foto y resumen nutricional en `/food/gallery`, basada en la persistencia local ya existente.
+- El flujo de `gym tracker` ahora incluye cronometro de sesion y cronometro de descanso entre series dentro de la misma pantalla.
+- El cronometro de sesion sincroniza el campo `Duration (min)` y el cronometro de descanso arranca automaticamente al agregar o repetir un set.
 - Se regenero `app-debug.apk` con ese flujo nuevo para probar en Android.
 
 Smoke tests remotos confirmados:
@@ -286,15 +288,16 @@ Smoke tests remotos confirmados:
 ## Pendientes inmediatos
 
 1. Conseguir `SUPABASE_URL` y `SUPABASE_ANON_KEY` reales o un `SUPABASE_ACCESS_TOKEN` valido en esta maquina para desbloquear la prueba E2E real.
-2. Probar en Android con foto real que `manual food entry` guarda la foto, la muestra en la nueva galeria y deja lanzar `Analyze with AI`.
-3. Probar end-to-end la pantalla Flutter del catalogo compartido con una imagen real y `--dart-define` para Supabase.
-4. Probar end-to-end el boton `Analyze with AI` en `manual food entry` con una foto valida de comida.
-5. Validar en movil la UX nueva de workout: `muscle group -> exercise`, sets multiples y selector RPE.
-6. Si OpenRouter devuelve respuestas incompletas en casos reales, ajustar prompt/parsing sin reabrir analisis ya cerrados.
-7. Reintroducir autenticacion en una proxima iteracion sin Auth0, probablemente sobre Supabase o guest identity persistente.
-8. Conectar `manual food entry` a persistencia remota cuando quede definido el modelo final de identidad.
-9. Conectar workouts manuales, resultados AI y objetivos diarios a persistencia remota cuando quede definido el modelo final de identidad.
-10. Seguir iterando la UX real cuando llegue el Figma.
+2. Probar en Android que el nuevo cronometro de sesion y el cronometro de descanso de workout se comportan bien en una sesion real.
+3. Probar en Android con foto real que `manual food entry` guarda la foto, la muestra en la nueva galeria y deja lanzar `Analyze with AI`.
+4. Probar end-to-end la pantalla Flutter del catalogo compartido con una imagen real y `--dart-define` para Supabase.
+5. Probar end-to-end el boton `Analyze with AI` en `manual food entry` con una foto valida de comida.
+6. Validar en movil la UX nueva de workout: `muscle group -> exercise`, sets multiples, selector RPE y timers.
+7. Si OpenRouter devuelve respuestas incompletas en casos reales, ajustar prompt/parsing sin reabrir analisis ya cerrados.
+8. Reintroducir autenticacion en una proxima iteracion sin Auth0, probablemente sobre Supabase o guest identity persistente.
+9. Conectar `manual food entry` a persistencia remota cuando quede definido el modelo final de identidad.
+10. Conectar workouts manuales, resultados AI y objetivos diarios a persistencia remota cuando quede definido el modelo final de identidad.
+11. Seguir iterando la UX real cuando llegue el Figma.
 
 ## Riesgos o notas
 
@@ -311,6 +314,7 @@ Smoke tests remotos confirmados:
 - El flujo de alta de sets ahora es mas guiado: primero grupo muscular, luego ejercicio sugerido, y solo despues entrada manual si hace falta.
 - La pantalla de progreso de fuerza ahora deja alternar entre `peso maximo`, `volumen` y `1RM estimado`; `1RM` es solo una estimacion educativa.
 - El dashboard y el historial de workout ya muestran `repeticiones` junto a `sets`, lo que mejora la lectura rapida de carga total.
+- `gym tracker` ahora incluye dos ayudas nuevas locales: cronometro de sesion y cronometro de descanso; por ahora no se persisten como eventos separados ni corren en background.
 - Si la build Android falla tras tocar NDK, correr `flutter clean` antes de volver a `flutter build apk --debug`.
 - Las edge functions `food-catalog-upsert` y `meal-photo-analyze` quedaron migradas localmente a OpenRouter y redeployadas en Supabase.
 - Los secrets remotos vigentes para AI son `OPENROUTER_API_KEY` y `OPENROUTER_MODEL`; ya no corresponde documentar `OPENAI_API_KEY` como dependencia actual de estas funciones.

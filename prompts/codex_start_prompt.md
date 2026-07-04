@@ -18,6 +18,7 @@ Contexto inmediato:
 - Ya se muestran repeticiones al lado de sets en workout/dashboard.
 - Ya existe carga rapida minima en workout: `Repeat last` + sugerencias de ejercicios recientes.
 - El dialogo de workout ya fue mejorado para usar `muscle group -> exercise`, crear multiples sets iguales y capturar `RPE` visual con persistencia por set.
+- `gym tracker` ya incluye cronometro de sesion y cronometro de descanso; el de sesion sincroniza `Duration (min)` y el de descanso arranca automaticamente cuando se agrega o repite un set.
 - El flujo Flutter de AI/comida ahora valida configuracion Supabase y maneja respuestas incompletas del backend.
 - `manual food entry` ya corrige el caso web para fotos elegidas desde galeria usando `data:` URLs cuando hace falta.
 - Ya existe una galeria local-first de comidas en `/food/gallery` con foto, fecha, resumen nutricional, confianza AI, editar y eliminar.
@@ -38,9 +39,10 @@ Tareas al retomar:
 6. Ejecutar la prueba real del catalogo compartido y `Analyze with AI` con `--dart-define` para `SUPABASE_URL` y `SUPABASE_ANON_KEY`.
 7. Priorizar en Android el flujo: guardar foto real -> verla en `/food/gallery` -> lanzar `Analyze with AI`.
 8. Validar con una foto real que OpenRouter responde bien desde Flutter y, si hay respuestas incompletas, ajustar prompt/parsing sin reabrir analisis ya cerrados.
-9. Validar en movil la nueva UX de workout antes de seguir con cambios mayores en progreso o analitica.
-10. Seguir desde ahi sin reiniciar nada desde cero.
-11. Mantener respuestas en espanol.
+9. Validar en Android el comportamiento real de los nuevos timers de workout.
+10. Validar en movil la nueva UX de workout antes de seguir con cambios mayores en progreso o analitica.
+11. Seguir desde ahi sin reiniciar nada desde cero.
+12. Mantener respuestas en espanol.
 
 No reinicies el proyecto desde cero. Continua desde la estructura y commits ya existentes.
 

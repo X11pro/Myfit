@@ -85,11 +85,17 @@ Salida esperada:
   - confianza AI,
   - editar y eliminar.
 - `Add meal` ya muestra un acceso directo visible a `Food gallery`.
+- `Gym tracker` ya incluye:
+  - cronometro de sesion,
+  - cronometro de descanso,
+  - sincronizacion del timer de sesion con `Duration (min)`,
+  - arranque automatico del timer de descanso al agregar o repetir un set.
 
 ## 7. Siguiente prueba recomendada
 
 1. Instalar el `app-debug.apk` actual en Android.
-2. Crear una comida con foto real.
-3. Confirmar que aparece en `/food/gallery`.
-4. Lanzar `Analyze with AI` con esa misma foto.
-5. Si falla, distinguir si el error es de formato de imagen o de credito/proveedor en OpenRouter.
+2. Probar una sesion de gym real con el cronometro total y el cronometro de descanso.
+3. Crear una comida con foto real.
+4. Confirmar que aparece en `/food/gallery`.
+5. Lanzar `Analyze with AI` con esa misma foto.
+6. Si falla, distinguir si el error es de formato de imagen o de credito/proveedor en OpenRouter.
