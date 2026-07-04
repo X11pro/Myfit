@@ -61,3 +61,21 @@
 - Material de tiendas.
 - Declaraciones de salud.
 - Publicacion gradual.
+
+## Backlog post-MVP
+
+- Cronometro de inicio/fin para medir tiempo total de entrenamiento.
+- Cronometro de descanso entre series.
+- Fotos de ejercicios o del cuerpo para analizar tecnica/postura de forma educativa.
+- Exportacion de datos para analisis externo en un SaaS propio para PC o Mac.
+- Integracion de musica o playlists con `Spotify` u otro servicio compatible.
+- Vinculacion con smartwatch o smart ring para mejorar precision de datos de entrenamiento y recuperacion.
+
+## Notas de prioridad
+
+- Alta despues del flujo core actual: cronometro total de entrenamiento.
+- Alta despues del flujo core actual: cronometro de descanso entre series.
+- Media: exportacion de datos, porque ayuda al analisis externo sin bloquear el MVP mobile.
+- Media-baja: integraciones con wearables, cuando el flujo base manual y Health Connect/HealthKit ya este estable.
+- Baja por ahora: musica/playlists, porque no mejora el tracking principal.
+- Baja y con cuidado tecnico/legal: analisis de postura por foto, porque implica UI, privacidad y validacion tecnica adicional.

@@ -20,6 +20,15 @@
 
 - Como usuario, quiero importar sesiones desde la plataforma de salud del sistema.
 - Como usuario, quiero registrar sets manuales del gym cuando no haya datos importados.
+- Como usuario, quiero iniciar y terminar un cronometro de entrenamiento para medir la duracion real de mi sesion.
+- Como usuario, quiero medir el descanso entre series con un cronometro simple para mantener consistencia.
+- Como usuario, quiero guardar fotos de ejercicios o de mi cuerpo para revisar tecnica, postura o cambios fisicos con contexto historico.
+
+## Exportacion e integraciones
+
+- Como usuario, quiero exportar mis datos para analizarlos despues en un SaaS propio desde PC o Mac.
+- Como usuario, quiero conectar mi smartwatch o smart ring para capturar datos mas precisos del entrenamiento y recuperacion.
+- Como usuario, quiero usar una playlist conectada con `Spotify` u otro servicio mientras entreno, sin salir del flujo principal.
 
 ## Coach
 

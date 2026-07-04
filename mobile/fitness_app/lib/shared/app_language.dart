@@ -114,6 +114,23 @@ class AppStrings {
 
   String get notesLabel => isEnglish ? 'Notes' : 'Notas';
 
+  String get workoutSessionTimerTitle =>
+      isEnglish ? 'Workout timer' : 'Cronometro de entrenamiento';
+
+  String get restTimerTitle =>
+      isEnglish ? 'Rest timer' : 'Cronometro de descanso';
+
+  String get startTimerButton => isEnglish ? 'Start timer' : 'Iniciar timer';
+
+  String get startRestButton =>
+      isEnglish ? 'Start rest' : 'Iniciar descanso';
+
+  String get pauseTimerButton => isEnglish ? 'Pause' : 'Pausar';
+
+  String get resumeTimerButton => isEnglish ? 'Resume' : 'Reanudar';
+
+  String get resetTimerButton => isEnglish ? 'Reset' : 'Reiniciar';
+
   String get loggedSetsTitle => isEnglish ? 'Logged sets' : 'Sets cargados';
 
   String get addSetButton => isEnglish ? 'Add set' : 'Agregar set';

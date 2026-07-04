@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -55,8 +57,16 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
   final _notesController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   final List<GymSetEntry> _draftSets = [];
+  Timer? _sessionTimer;
+  Timer? _restTimer;
+  DateTime? _sessionStartedAt;
+  DateTime? _restStartedAt;
+  Duration _sessionElapsed = Duration.zero;
+  Duration _restElapsed = Duration.zero;
 
   bool get _isEditing => widget.session != null;
+  bool get _isSessionRunning => _sessionTimer != null;
+  bool get _isRestRunning => _restTimer != null;
 
   @override
   void initState() {
@@ -75,10 +85,13 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
     _notesController.text = session.notes ?? '';
     _selectedDate = session.createdAt;
     _draftSets.addAll(session.sets);
+    _sessionElapsed = Duration(minutes: session.durationMinutes);
   }
 
   @override
   void dispose() {
+    _sessionTimer?.cancel();
+    _restTimer?.cancel();
     _titleController.dispose();
     _durationController.dispose();
     _caloriesController.dispose();
@@ -135,6 +148,38 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                     label: Text(
                       '${strings.workoutDateLabel}: ${dateKeyFor(_selectedDate)}',
                     ),
+                  ),
+                  const SizedBox(height: 16),
+                  _TimerSummaryCard(
+                    title: strings.workoutSessionTimerTitle,
+                    timeText: _formatSessionDuration(_sessionElapsed),
+                    primaryLabel: _isSessionRunning
+                        ? strings.pauseTimerButton
+                        : (_sessionElapsed > Duration.zero
+                              ? strings.resumeTimerButton
+                              : strings.startTimerButton),
+                    onPrimaryPressed: _isSessionRunning
+                        ? _pauseSessionTimer
+                        : _startSessionTimer,
+                    secondaryLabel: strings.resetTimerButton,
+                    onSecondaryPressed: _sessionElapsed > Duration.zero
+                        ? _resetSessionTimer
+                        : null,
+                  ),
+                  const SizedBox(height: 12),
+                  _TimerSummaryCard(
+                    title: strings.restTimerTitle,
+                    timeText: _formatRestDuration(_restElapsed),
+                    primaryLabel: _isRestRunning
+                        ? strings.pauseTimerButton
+                        : (_restElapsed > Duration.zero
+                              ? strings.resumeTimerButton
+                              : strings.startRestButton),
+                    onPrimaryPressed:
+                        _isRestRunning ? _pauseRestTimer : _startRestTimer,
+                    secondaryLabel: strings.resetTimerButton,
+                    onSecondaryPressed:
+                        _restElapsed > Duration.zero ? _resetRestTimer : null,
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -598,6 +643,8 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
       }
       _reindexSets();
     });
+
+    _startRestTimer(reset: true);
   }
 
   List<String> _buildMuscleGroupOptions(String? existingMuscleGroup) {
@@ -655,6 +702,8 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
       );
       _reindexSets();
     });
+
+    _startRestTimer(reset: true);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -736,6 +785,93 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
     );
     context.go('/dashboard');
   }
+
+  void _startSessionTimer() {
+    _sessionTimer?.cancel();
+    _sessionStartedAt = DateTime.now().subtract(_sessionElapsed);
+    _sessionTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted || _sessionStartedAt == null) {
+        return;
+      }
+
+      setState(() {
+        _sessionElapsed = DateTime.now().difference(_sessionStartedAt!);
+        _syncDurationFieldWithTimer();
+      });
+    });
+    setState(() {});
+  }
+
+  void _pauseSessionTimer() {
+    _sessionTimer?.cancel();
+    _sessionTimer = null;
+    _sessionStartedAt = null;
+    setState(_syncDurationFieldWithTimer);
+  }
+
+  void _resetSessionTimer() {
+    _sessionTimer?.cancel();
+    _sessionTimer = null;
+    _sessionStartedAt = null;
+    setState(() {
+      _sessionElapsed = Duration.zero;
+      _durationController.text = '0';
+    });
+  }
+
+  void _startRestTimer({bool reset = false}) {
+    _restTimer?.cancel();
+    if (reset) {
+      _restElapsed = Duration.zero;
+    }
+    _restStartedAt = DateTime.now().subtract(_restElapsed);
+    _restTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted || _restStartedAt == null) {
+        return;
+      }
+
+      setState(() {
+        _restElapsed = DateTime.now().difference(_restStartedAt!);
+      });
+    });
+    setState(() {});
+  }
+
+  void _pauseRestTimer() {
+    _restTimer?.cancel();
+    _restTimer = null;
+    _restStartedAt = null;
+    setState(() {});
+  }
+
+  void _resetRestTimer() {
+    _restTimer?.cancel();
+    _restTimer = null;
+    _restStartedAt = null;
+    setState(() {
+      _restElapsed = Duration.zero;
+    });
+  }
+
+  void _syncDurationFieldWithTimer() {
+    _durationController.text = _sessionElapsed.inMinutes.toString();
+  }
+
+  String _formatSessionDuration(Duration value) {
+    final hours = value.inHours;
+    final minutes = value.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = value.inSeconds.remainder(60).toString().padLeft(2, '0');
+    if (hours > 0) {
+      return '$hours:$minutes:$seconds';
+    }
+    return '${value.inMinutes.toString().padLeft(2, '0')}:$seconds';
+  }
+
+  String _formatRestDuration(Duration value) {
+    final minutes = value.inMinutes.toString().padLeft(2, '0');
+    final seconds = value.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
 }
 
 class _SetDialogResult {
@@ -776,6 +912,59 @@ class _RoutineRecommendationCard extends StatelessWidget {
             Text(recommendation.nutritionFocus),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _TimerSummaryCard extends StatelessWidget {
+  const _TimerSummaryCard({
+    required this.title,
+    required this.timeText,
+    required this.primaryLabel,
+    required this.onPrimaryPressed,
+    required this.secondaryLabel,
+    required this.onSecondaryPressed,
+  });
+
+  final String title;
+  final String timeText;
+  final String primaryLabel;
+  final VoidCallback onPrimaryPressed;
+  final String secondaryLabel;
+  final VoidCallback? onSecondaryPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: Theme.of(context).textTheme.titleSmall),
+          const SizedBox(height: 8),
+          Text(timeText, style: Theme.of(context).textTheme.headlineMedium),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilledButton.tonal(
+                onPressed: onPrimaryPressed,
+                child: Text(primaryLabel),
+              ),
+              OutlinedButton(
+                onPressed: onSecondaryPressed,
+                child: Text(secondaryLabel),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
