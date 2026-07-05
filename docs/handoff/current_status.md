@@ -264,6 +264,8 @@ Resultado confirmado de esa prueba:
 - `supabase link` ya quedo ejecutado localmente en esta maquina y `functions list` confirmo `food-catalog-upsert` y `meal-photo-analyze` activas en remoto.
 - La app arranca tanto en `Edge` como en `Windows` con Supabase inicializado cuando recibe `--dart-define` reales.
 - En Windows ya existe automatizacion local para no repetir `--dart-define` manualmente en Android/web/desktop: `scripts/flutter/save_local_dart_defines.ps1`, `scripts/flutter/build_android_debug.ps1`, `scripts/flutter/build_android_release.ps1`, `scripts/flutter/run_android_debug.ps1`, `scripts/flutter/run_windows_debug.ps1` y `scripts/flutter/run_edge_debug.ps1`.
+- Se implemento barcode real en `Add meal`: campo manual, `Scan barcode` con camara en Android/iOS, lookup remoto por `Open Food Facts` y cache en `food_items` via nueva Edge Function `food-barcode-lookup`.
+- El mismo flujo de barcode ya quedo conectado tambien a `shared food catalog` para precargar productos empaquetados antes de guardar el item compartido.
 - El flujo web ya no se rompe al elegir foto desde galeria: `manual food entry` ahora soporta `data:` URLs y preview sin depender de `path_provider` para web.
 - Se agrego una galeria local-first de comidas con foto y resumen nutricional en `/food/gallery`, basada en la persistencia local ya existente.
 - El flujo de `gym tracker` ahora incluye cronometro de sesion y cronometro de descanso entre series dentro de la misma pantalla.
@@ -271,11 +273,14 @@ Resultado confirmado de esa prueba:
 - Se regenero `app-debug.apk` con ese flujo nuevo para probar en Android.
 - Tambien se regenero `app-debug.apk` con `SUPABASE_URL` y `SUPABASE_ANON_KEY` reales para destrabar `Analyze with AI` en Android.
 - Quedo preparado tambien el flujo de `flutter run -d windows`, `flutter run -d edge` y `flutter build apk --release` usando `--dart-define-from-file` sobre `mobile/fitness_app/dart_defines.local.json`.
+- En esta iteracion tambien se desplego `food-barcode-lookup` y se verifico con barcode real `737628064502`, devolviendo nombre, marca y macros desde `Open Food Facts`.
 
 Smoke tests remotos confirmados:
 
 - `food-catalog-upsert` respondio OK en `mode=extract`.
 - `meal-photo-analyze` ya no falla por `OPENAI_API_KEY` y ahora pega a OpenRouter.
+- `food-barcode-lookup` respondio `200 OK` en remoto con cache `food_items` + `Open Food Facts` para barcode empaquetado.
+- El fallback `USDA` quedo implementado en codigo dentro de `food-barcode-lookup`, pero el secret remoto `USDA_FDC_API_KEY` no aparece cargado en Supabase, asi que esa rama no se pudo validar todavia.
 - El error observado en `meal-photo-analyze` fue por imagen base64 invalida de prueba, lo cual confirma que la ruta nueva ya esta activa.
 - `food-catalog-upsert` tambien respondio `200 OK` con payload manual autenticado usando la anon key real.
 - `meal-photo-analyze` respondio autenticado y llego a OpenRouter; el riesgo pendiente real esta en probar con una foto valida y confirmar que no aparezcan limites de credito o proveedor.
@@ -291,15 +296,17 @@ Smoke tests remotos confirmados:
 ## Pendientes inmediatos
 
 1. Probar en Android que el nuevo cronometro de sesion y el cronometro de descanso de workout se comportan bien en una sesion real.
-2. Probar en Android con foto real que `manual food entry` guarda la foto, la muestra en la nueva galeria y deja lanzar `Analyze with AI`.
-3. Probar end-to-end la pantalla Flutter del catalogo compartido con una imagen real y la build Android/web ya configurada con Supabase.
-4. Probar end-to-end el boton `Analyze with AI` en `manual food entry` con una foto valida de comida.
-5. Validar en movil la UX nueva de workout: `muscle group -> exercise`, sets multiples, selector RPE y timers.
-6. Si OpenRouter devuelve respuestas incompletas en casos reales, ajustar prompt/parsing sin reabrir analisis ya cerrados.
-7. Reintroducir autenticacion en una proxima iteracion sin Auth0, probablemente sobre Supabase o guest identity persistente.
-8. Conectar `manual food entry` a persistencia remota cuando quede definido el modelo final de identidad.
-9. Conectar workouts manuales, resultados AI y objetivos diarios a persistencia remota cuando quede definido el modelo final de identidad.
-10. Seguir iterando la UX real cuando llegue el Figma.
+2. Probar en Android un producto real con `Scan barcode` y confirmar autocompletado correcto de nombre/macros.
+3. Cargar `USDA_FDC_API_KEY` en Supabase secrets y validar una ruta real donde `Open Food Facts` no tenga match pero USDA si.
+4. Probar en Android con foto real que `manual food entry` guarda la foto, la muestra en la nueva galeria y deja lanzar `Analyze with AI`.
+5. Probar end-to-end la pantalla Flutter del catalogo compartido con una imagen real y la build Android/web ya configurada con Supabase.
+6. Probar end-to-end el boton `Analyze with AI` en `manual food entry` con una foto valida de comida.
+7. Validar en movil la UX nueva de workout: `muscle group -> exercise`, sets multiples, selector RPE y timers.
+8. Si OpenRouter devuelve respuestas incompletas en casos reales, ajustar prompt/parsing sin reabrir analisis ya cerrados.
+9. Reintroducir autenticacion en una proxima iteracion sin Auth0, probablemente sobre Supabase o guest identity persistente.
+10. Conectar `manual food entry` a persistencia remota cuando quede definido el modelo final de identidad.
+11. Conectar workouts manuales, resultados AI y objetivos diarios a persistencia remota cuando quede definido el modelo final de identidad.
+12. Seguir iterando la UX real cuando llegue el Figma.
 
 ## Riesgos o notas
 
@@ -319,6 +326,7 @@ Smoke tests remotos confirmados:
 - `gym tracker` ahora incluye dos ayudas nuevas locales: cronometro de sesion y cronometro de descanso; por ahora no se persisten como eventos separados ni corren en background.
 - Si la build Android falla tras tocar NDK, correr `flutter clean` antes de volver a `flutter build apk --debug`.
 - Las edge functions `food-catalog-upsert` y `meal-photo-analyze` quedaron migradas localmente a OpenRouter y redeployadas en Supabase.
+- La nueva edge function `food-barcode-lookup` usa `Open Food Facts` como fuente primaria gratuita y cachea en `food_items`; todavia no existe fallback `USDA` en codigo.
 - Los secrets remotos vigentes para AI son `OPENROUTER_API_KEY` y `OPENROUTER_MODEL`; ya no corresponde documentar `OPENAI_API_KEY` como dependencia actual de estas funciones.
 - El modelo efectivamente adoptado y validado para esta iteracion es `qwen/qwen3-vl-8b-instruct` via OpenRouter.
 - La prueba end-to-end real del frontend con Supabase si sigue bloqueada en esta maquina hasta tener `SUPABASE_URL` y `SUPABASE_ANON_KEY` reales o un `SUPABASE_ACCESS_TOKEN` que permita recuperarlas por CLI.

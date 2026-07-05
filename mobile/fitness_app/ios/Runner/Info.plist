@@ -26,6 +26,10 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Myfit uses the camera to scan food barcodes and attach meal photos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Myfit uses your photo library to attach meal photos.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

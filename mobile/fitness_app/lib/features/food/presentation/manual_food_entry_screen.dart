@@ -12,8 +12,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/config/app_env.dart';
 import '../../../shared/app_language.dart';
 import '../../../shared/widgets/app_top_bar.dart';
+import '../application/barcode_lookup_service.dart';
 import '../application/manual_food_entries_controller.dart';
 import '../domain/manual_food_entry.dart';
+import 'barcode_scanner_screen.dart';
 
 class ManualFoodEntryScreen extends ConsumerStatefulWidget {
   const ManualFoodEntryScreen({super.key, this.entry});
@@ -27,6 +29,7 @@ class ManualFoodEntryScreen extends ConsumerStatefulWidget {
 
 class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
   final _nameController = TextEditingController();
+  final _barcodeController = TextEditingController();
   final _caloriesController = TextEditingController();
   final _proteinController = TextEditingController();
   final _carbsController = TextEditingController();
@@ -36,6 +39,7 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
   String _mealType = 'breakfast';
   String? _photoPath;
   bool _isAnalyzing = false;
+  bool _isLookingUpBarcode = false;
   double? _confidence;
 
   bool get _isEditing => widget.entry != null;
@@ -64,6 +68,7 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _barcodeController.dispose();
     _caloriesController.dispose();
     _proteinController.dispose();
     _carbsController.dispose();
@@ -102,6 +107,35 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
           TextField(
             controller: _nameController,
             decoration: InputDecoration(labelText: strings.foodNameLabel),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _barcodeController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(labelText: strings.barcodeLabel),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              FilledButton.tonalIcon(
+                onPressed: _isBusyForExternalActions || !_supportsBarcodeScan
+                    ? null
+                    : _scanBarcode,
+                icon: const Icon(Icons.qr_code_scanner_outlined),
+                label: Text(strings.scanBarcodeButton),
+              ),
+              OutlinedButton.icon(
+                onPressed: _isBusyForExternalActions ? null : _lookupBarcode,
+                icon: const Icon(Icons.search_outlined),
+                label: Text(
+                  _isLookingUpBarcode
+                      ? strings.barcodeLookupInProgress
+                      : strings.lookupBarcodeButton,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
@@ -427,6 +461,105 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
     }
   }
 
+  bool get _supportsBarcodeScan =>
+      !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+
+  bool get _isBusyForExternalActions => _isAnalyzing || _isLookingUpBarcode;
+
+  Future<void> _scanBarcode() async {
+    final strings = stringsFor(ref);
+    final barcode = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (_) => BarcodeScannerScreen(strings: strings),
+      ),
+    );
+
+    if (!mounted || barcode == null || barcode.trim().isEmpty) {
+      return;
+    }
+
+    _barcodeController.text = barcode.trim();
+    await _lookupBarcode();
+  }
+
+  Future<void> _lookupBarcode() async {
+    final strings = stringsFor(ref);
+
+    if (!AppEnv.hasSupabaseConfig) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(strings.missingSupabaseConfigMessage)),
+      );
+      return;
+    }
+
+    final barcode = _barcodeController.text.trim();
+    if (barcode.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(strings.barcodeLookupNeedsCode)),
+      );
+      return;
+    }
+
+    setState(() => _isLookingUpBarcode = true);
+    try {
+      final result =
+          await ref.read(barcodeLookupServiceProvider).lookup(barcode);
+
+      if (result == null) {
+        if (!mounted) {
+          return;
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(strings.barcodeLookupNoMatch)),
+        );
+        return;
+      }
+
+      _nameController.text = result.name;
+      if (result.caloriesPer100g != null) {
+        _caloriesController.text = result.caloriesPer100g!.round().toString();
+      }
+      if (result.proteinPer100g != null) {
+        _proteinController.text = result.proteinPer100g!.round().toString();
+      }
+      if (result.carbsPer100g != null) {
+        _carbsController.text = result.carbsPer100g!.round().toString();
+      }
+      if (result.fatPer100g != null) {
+        _fatController.text = result.fatPer100g!.round().toString();
+      }
+      if (result.sugarPer100g != null) {
+        _sugarController.text = result.sugarPer100g!.round().toString();
+      }
+      if (result.fiberPer100g != null) {
+        _fiberController.text = result.fiberPer100g!.round().toString();
+      }
+
+      setState(() => _confidence = result.confidence);
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(strings.barcodeLookupSuccess)),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString())),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLookingUpBarcode = false);
+      }
+    }
+  }
+
   Widget _buildPhotoPreview(AppStrings strings) {
     final photoPath = _photoPath;
     if (photoPath == null) {
@@ -479,9 +612,8 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
   }
 
   String _toDataUrl(Uint8List bytes, String? mimeType) {
-    final resolvedMimeType = mimeType?.trim().isNotEmpty == true
-        ? mimeType!
-        : 'image/jpeg';
+    final resolvedMimeType =
+        mimeType?.trim().isNotEmpty == true ? mimeType! : 'image/jpeg';
     return 'data:$resolvedMimeType;base64,${base64Encode(bytes)}';
   }
 

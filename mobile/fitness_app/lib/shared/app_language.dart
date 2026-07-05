@@ -548,6 +548,34 @@ class AppStrings {
       ? 'Log a meal manually with basic calories and protein.'
       : 'Registra una comida manualmente con calorias y proteina basicas.';
 
+  String get scanBarcodeButton =>
+      isEnglish ? 'Scan barcode' : 'Escanear codigo';
+
+  String get lookupBarcodeButton =>
+      isEnglish ? 'Lookup barcode' : 'Buscar codigo';
+
+  String get barcodeLookupInProgress =>
+      isEnglish ? 'Looking up barcode...' : 'Buscando codigo...';
+
+  String get barcodeLookupNeedsCode => isEnglish
+      ? 'Enter or scan a barcode first.'
+      : 'Ingresa o escanea un codigo primero.';
+
+  String get barcodeLookupNoMatch => isEnglish
+      ? 'No product found for that barcode yet.'
+      : 'Todavia no se encontro un producto para ese codigo.';
+
+  String get barcodeLookupSuccess => isEnglish
+      ? 'Barcode product loaded. Review the values before saving.'
+      : 'Producto por codigo cargado. Revisa los valores antes de guardar.';
+
+  String get barcodeScannerTitle =>
+      isEnglish ? 'Scan barcode' : 'Escanear codigo';
+
+  String get barcodeScannerHint => isEnglish
+      ? 'Point the camera at the product barcode.'
+      : 'Apunta la camara al codigo del producto.';
+
   String get foodNameLabel => isEnglish ? 'Food name' : 'Nombre de la comida';
 
   String get mealTypeLabel => isEnglish ? 'Meal type' : 'Tipo de comida';

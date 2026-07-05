@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +12,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/config/app_env.dart';
 import '../../../shared/app_language.dart';
 import '../../../shared/widgets/app_top_bar.dart';
+import '../application/barcode_lookup_service.dart';
+import 'barcode_scanner_screen.dart';
 
 class SharedFoodCatalogScreen extends ConsumerStatefulWidget {
   const SharedFoodCatalogScreen({super.key});
@@ -32,6 +37,7 @@ class _SharedFoodCatalogScreenState
   final _labelTextController = TextEditingController();
 
   bool _isBusy = false;
+  bool _isLookingUpBarcode = false;
   double? _qualityScore;
   String? _qualityReason;
   String? _imageBase64;
@@ -112,6 +118,29 @@ class _SharedFoodCatalogScreenState
             controller: _barcodeController,
             keyboardType: TextInputType.number,
             decoration: InputDecoration(labelText: strings.barcodeLabel),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              FilledButton.tonalIcon(
+                onPressed: _isBusyForBarcode || !_supportsBarcodeScan
+                    ? null
+                    : _scanBarcode,
+                icon: const Icon(Icons.qr_code_scanner_outlined),
+                label: Text(strings.scanBarcodeButton),
+              ),
+              OutlinedButton.icon(
+                onPressed: _isBusyForBarcode ? null : _lookupBarcode,
+                icon: const Icon(Icons.search_outlined),
+                label: Text(
+                  _isLookingUpBarcode
+                      ? strings.barcodeLookupInProgress
+                      : strings.lookupBarcodeButton,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           TextField(
@@ -247,6 +276,75 @@ class _SharedFoodCatalogScreenState
     } finally {
       if (mounted) {
         setState(() => _isBusy = false);
+      }
+    }
+  }
+
+  bool get _supportsBarcodeScan =>
+      !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+
+  bool get _isBusyForBarcode => _isBusy || _isLookingUpBarcode;
+
+  Future<void> _scanBarcode() async {
+    final strings = stringsFor(ref);
+    final barcode = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (_) => BarcodeScannerScreen(strings: strings),
+      ),
+    );
+
+    if (!mounted || barcode == null || barcode.trim().isEmpty) {
+      return;
+    }
+
+    _barcodeController.text = barcode.trim();
+    await _lookupBarcode();
+  }
+
+  Future<void> _lookupBarcode() async {
+    final strings = stringsFor(ref);
+
+    if (!AppEnv.hasSupabaseConfig) {
+      _showMessage(strings.missingSupabaseConfigMessage);
+      return;
+    }
+
+    final barcode = _barcodeController.text.trim();
+    if (barcode.isEmpty) {
+      _showMessage(strings.barcodeLookupNeedsCode);
+      return;
+    }
+
+    setState(() => _isLookingUpBarcode = true);
+    try {
+      final result =
+          await ref.read(barcodeLookupServiceProvider).lookup(barcode);
+
+      if (result == null) {
+        _showMessage(strings.barcodeLookupNoMatch);
+        return;
+      }
+
+      _nameController.text = result.name;
+      _brandController.text = result.brand ?? '';
+      _caloriesController.text = _numberText(result.caloriesPer100g);
+      _proteinController.text = _numberText(result.proteinPer100g);
+      _carbsController.text = _numberText(result.carbsPer100g);
+      _fatController.text = _numberText(result.fatPer100g);
+      _sugarController.text = _numberText(result.sugarPer100g);
+      _fiberController.text = _numberText(result.fiberPer100g);
+
+      setState(() {
+        _qualityScore = null;
+        _qualityReason = null;
+      });
+
+      _showMessage(strings.barcodeLookupSuccess);
+    } catch (error) {
+      _showMessage(error.toString());
+    } finally {
+      if (mounted) {
+        setState(() => _isLookingUpBarcode = false);
       }
     }
   }

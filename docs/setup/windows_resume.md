@@ -27,14 +27,18 @@ Desde la raiz del repo:
 npx supabase projects list
 npx supabase link --project-ref cyecalxewqcyxxglxloa --workdir backend --yes
 npx supabase functions list --project-ref cyecalxewqcyxxglxloa --workdir backend
+npx supabase functions deploy food-barcode-lookup --project-ref cyecalxewqcyxxglxloa --workdir backend
 ```
 
 Estado ya confirmado en Windows:
 
 - `food-catalog-upsert` activa.
 - `meal-photo-analyze` activa.
+- `food-barcode-lookup` activa.
 - `food-catalog-upsert` respondio `200 OK` con payload manual autenticado.
 - `meal-photo-analyze` respondio autenticado y llego a OpenRouter; queda pendiente validarlo con foto real.
+- `food-barcode-lookup` respondio `200 OK` con lookup real a `Open Food Facts` y cache en `food_items`.
+- `USDA_FDC_API_KEY` todavia no figura cargada en los secrets remotos de esta maquina/sesion; el fallback USDA quedo implementado en codigo pero no validado en remoto.
 
 ## 4. Flutter en Windows
 
@@ -122,6 +126,8 @@ Salida esperada:
 ## 6. Estado funcional actual de food
 
 - `manual food entry` ya soporta foto desde galeria/camara.
+- `manual food entry` ahora tambien soporta lookup por barcode y scanner real en Android/iOS.
+- `shared food catalog` ahora tambien soporta lookup por barcode y scanner real en Android/iOS para precargar nombre, marca y macros antes de guardar el producto compartido.
 - En web, la foto se guarda como `data:` URL para evitar el crash previo por `path_provider`.
 - Ya existe `/food/gallery` con:
   - foto,
@@ -150,3 +156,4 @@ Salida esperada:
 4. Confirmar que aparece en `/food/gallery`.
 5. Lanzar `Analyze with AI` con esa misma foto.
 6. Si falla, distinguir si el error es de formato de imagen o de credito/proveedor en OpenRouter.
+7. Probar un producto empaquetado real con `Scan barcode` o `Lookup barcode` y confirmar que autocompleta macros.
