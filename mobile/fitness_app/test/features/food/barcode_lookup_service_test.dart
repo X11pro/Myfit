@@ -17,15 +17,19 @@ void main() {
       'sugarPer100g': 3.2,
       'fiberPer100g': 0,
       'confidence': 0.94,
+      'nutritionQualityScore': 4.5,
+      'nutritionQualityReason': 'good protein per 100g',
     });
 
     expect(result.name, 'Greek Yogurt');
     expect(result.brand, 'Demo Brand');
     expect(result.source, 'open_food_facts');
     expect(result.sourceId, '1234567890123');
+    expect(result.cached, isFalse);
     expect(result.caloriesPer100g, 97);
     expect(result.proteinPer100g, 10.2);
     expect(result.confidence, 0.94);
+    expect(result.nutritionQualityScore, 4.5);
   });
 
   test('parseFood throws on missing product name', () {

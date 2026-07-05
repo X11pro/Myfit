@@ -13,6 +13,7 @@ import '../../../core/config/app_env.dart';
 import '../../../shared/app_language.dart';
 import '../../../shared/widgets/app_top_bar.dart';
 import '../application/barcode_lookup_service.dart';
+import '../domain/barcode_food_lookup_result.dart';
 import '../application/manual_food_entries_controller.dart';
 import '../domain/manual_food_entry.dart';
 import 'barcode_scanner_screen.dart';
@@ -41,6 +42,7 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
   bool _isAnalyzing = false;
   bool _isLookingUpBarcode = false;
   double? _confidence;
+  BarcodeFoodLookupResult? _barcodeResult;
 
   bool get _isEditing => widget.entry != null;
 
@@ -137,6 +139,10 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
               ),
             ],
           ),
+          if (_barcodeResult != null) ...[
+            const SizedBox(height: 16),
+            _buildBarcodeResultCard(strings),
+          ],
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             value: _mealType,
@@ -537,6 +543,7 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
       }
 
       setState(() => _confidence = result.confidence);
+      setState(() => _barcodeResult = result);
 
       if (!mounted) {
         return;
@@ -558,6 +565,57 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
         setState(() => _isLookingUpBarcode = false);
       }
     }
+  }
+
+  Widget _buildBarcodeResultCard(AppStrings strings) {
+    final result = _barcodeResult!;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              strings.barcodeResultTitle,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 4),
+            Text(strings.barcodeResultSubtitle),
+            const SizedBox(height: 12),
+            Text(
+              result.name,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            if ((result.brand ?? '').isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(result.brand!),
+            ],
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                Chip(
+                  label: Text(strings.barcodeSourceValue(result.source)),
+                ),
+                Chip(
+                  label: Text(result.cached
+                      ? strings.barcodeCachedLabel
+                      : strings.barcodeFreshLookupLabel),
+                ),
+                if ((result.sourceId ?? '').isNotEmpty)
+                  Chip(label: Text(result.sourceId!)),
+                if (result.confidence != null)
+                  Chip(
+                    label: Text(strings.aiConfidenceLabel(result.confidence!)),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildPhotoPreview(AppStrings strings) {

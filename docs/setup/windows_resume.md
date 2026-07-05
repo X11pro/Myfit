@@ -129,6 +129,7 @@ Salida esperada:
 - `manual food entry` ahora tambien soporta lookup por barcode y scanner real en Android/iOS.
 - `shared food catalog` ahora tambien soporta lookup por barcode y scanner real en Android/iOS para precargar nombre, marca y macros antes de guardar el producto compartido.
 - El fallback real hoy queda asi: `cache Supabase -> Open Food Facts -> USDA`.
+- Tanto `Add meal` como `shared food catalog` ahora muestran una card de resultado de barcode con fuente, cache/fresh lookup y confianza para revisar el match antes de guardar.
 - En web, la foto se guarda como `data:` URL para evitar el crash previo por `path_provider`.
 - Ya existe `/food/gallery` con:
   - foto,
@@ -158,3 +159,4 @@ Salida esperada:
 5. Lanzar `Analyze with AI` con esa misma foto.
 6. Si falla, distinguir si el error es de formato de imagen o de credito/proveedor en OpenRouter.
 7. Probar un producto empaquetado real con `Scan barcode` o `Lookup barcode` y confirmar que autocompleta macros.
+8. Confirmar visualmente que la nueva card de resultado de barcode muestra bien fuente, cache y confianza en Android.

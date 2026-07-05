@@ -29,10 +29,13 @@ class BarcodeLookupService {
       return null;
     }
 
-    return parseFood(food);
+    return parseFood(
+      food,
+      cached: payload['cached'] == true,
+    );
   }
 
-  BarcodeFoodLookupResult parseFood(Object? value) {
+  BarcodeFoodLookupResult parseFood(Object? value, {bool cached = false}) {
     final food = _responseMap(value);
     final name = food['name']?.toString().trim() ?? '';
     if (name.isEmpty) {
@@ -44,6 +47,7 @@ class BarcodeLookupService {
       brand: _asTrimmedString(food['brand']),
       source: _asTrimmedString(food['source']),
       sourceId: _asTrimmedString(food['sourceId']),
+      cached: cached,
       caloriesPer100g: _asDouble(food['caloriesPer100g']),
       proteinPer100g: _asDouble(food['proteinPer100g']),
       carbsPer100g: _asDouble(food['carbsPer100g']),
@@ -51,6 +55,8 @@ class BarcodeLookupService {
       sugarPer100g: _asDouble(food['sugarPer100g']),
       fiberPer100g: _asDouble(food['fiberPer100g']),
       confidence: _asDouble(food['confidence']),
+      nutritionQualityScore: _asDouble(food['nutritionQualityScore']),
+      nutritionQualityReason: _asTrimmedString(food['nutritionQualityReason']),
     );
   }
 

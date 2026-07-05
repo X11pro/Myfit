@@ -569,6 +569,34 @@ class AppStrings {
       ? 'Barcode product loaded. Review the values before saving.'
       : 'Producto por codigo cargado. Revisa los valores antes de guardar.';
 
+  String get barcodeResultTitle =>
+      isEnglish ? 'Barcode result' : 'Resultado del codigo';
+
+  String get barcodeResultSubtitle => isEnglish
+      ? 'Review the detected product before saving it.'
+      : 'Revisa el producto detectado antes de guardarlo.';
+
+  String get barcodeSourceLabel => isEnglish ? 'Source' : 'Fuente';
+
+  String get barcodeCachedLabel =>
+      isEnglish ? 'Cached in Myfit' : 'Cacheado en Myfit';
+
+  String get barcodeFreshLookupLabel =>
+      isEnglish ? 'Fresh lookup' : 'Busqueda nueva';
+
+  String barcodeSourceValue(String? source) {
+    switch (source) {
+      case 'open_food_facts':
+        return isEnglish ? 'Open Food Facts' : 'Open Food Facts';
+      case 'usda':
+        return isEnglish ? 'USDA FoodData Central' : 'USDA FoodData Central';
+      case 'shared_barcode':
+        return isEnglish ? 'Shared barcode' : 'Codigo compartido';
+      default:
+        return isEnglish ? 'Unknown source' : 'Fuente desconocida';
+    }
+  }
+
   String get barcodeScannerTitle =>
       isEnglish ? 'Scan barcode' : 'Escanear codigo';
 

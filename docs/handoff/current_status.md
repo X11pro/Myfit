@@ -266,6 +266,7 @@ Resultado confirmado de esa prueba:
 - En Windows ya existe automatizacion local para no repetir `--dart-define` manualmente en Android/web/desktop: `scripts/flutter/save_local_dart_defines.ps1`, `scripts/flutter/build_android_debug.ps1`, `scripts/flutter/build_android_release.ps1`, `scripts/flutter/run_android_debug.ps1`, `scripts/flutter/run_windows_debug.ps1` y `scripts/flutter/run_edge_debug.ps1`.
 - Se implemento barcode real en `Add meal`: campo manual, `Scan barcode` con camara en Android/iOS, lookup remoto por `Open Food Facts` y cache en `food_items` via nueva Edge Function `food-barcode-lookup`.
 - El mismo flujo de barcode ya quedo conectado tambien a `shared food catalog` para precargar productos empaquetados antes de guardar el item compartido.
+- La UI de barcode se pulo en `Add meal` y `shared food catalog` con una card de resultado visible que muestra nombre, marca, fuente, cache/fresh lookup, source id y confianza antes de guardar.
 - El flujo web ya no se rompe al elegir foto desde galeria: `manual food entry` ahora soporta `data:` URLs y preview sin depender de `path_provider` para web.
 - Se agrego una galeria local-first de comidas con foto y resumen nutricional en `/food/gallery`, basada en la persistencia local ya existente.
 - El flujo de `gym tracker` ahora incluye cronometro de sesion y cronometro de descanso entre series dentro de la misma pantalla.
@@ -274,6 +275,7 @@ Resultado confirmado de esa prueba:
 - Tambien se regenero `app-debug.apk` con `SUPABASE_URL` y `SUPABASE_ANON_KEY` reales para destrabar `Analyze with AI` en Android.
 - Quedo preparado tambien el flujo de `flutter run -d windows`, `flutter run -d edge` y `flutter build apk --release` usando `--dart-define-from-file` sobre `mobile/fitness_app/dart_defines.local.json`.
 - En esta iteracion tambien se desplego `food-barcode-lookup` y se verifico con barcode real `737628064502`, devolviendo nombre, marca y macros desde `Open Food Facts`.
+- Tambien se instalo la build debug mas reciente directamente en el telefono `SM S916B` por `flutter run --no-resident` y se confirmo en logs `Supabase init completed`; el error previo de `SUPABASE_URL/SUPABASE_ANON_KEY` venia de una instalacion vieja del APK.
 
 Smoke tests remotos confirmados:
 
@@ -296,7 +298,7 @@ Smoke tests remotos confirmados:
 ## Pendientes inmediatos
 
 1. Probar en Android que el nuevo cronometro de sesion y el cronometro de descanso de workout se comportan bien en una sesion real.
-2. Probar en Android un producto real con `Scan barcode` y confirmar autocompletado correcto de nombre/macros.
+2. Probar en Android varios productos reales con `Scan barcode` y confirmar autocompletado correcto de nombre/macros tanto para `Open Food Facts` como para `USDA` cuando corresponda.
 3. Probar en Android con foto real que `manual food entry` guarda la foto, la muestra en la nueva galeria y deja lanzar `Analyze with AI`.
 4. Probar end-to-end la pantalla Flutter del catalogo compartido con una imagen real y la build Android/web ya configurada con Supabase.
 5. Probar end-to-end el boton `Analyze with AI` en `manual food entry` con una foto valida de comida.
@@ -325,7 +327,7 @@ Smoke tests remotos confirmados:
 - `gym tracker` ahora incluye dos ayudas nuevas locales: cronometro de sesion y cronometro de descanso; por ahora no se persisten como eventos separados ni corren en background.
 - Si la build Android falla tras tocar NDK, correr `flutter clean` antes de volver a `flutter build apk --debug`.
 - Las edge functions `food-catalog-upsert` y `meal-photo-analyze` quedaron migradas localmente a OpenRouter y redeployadas en Supabase.
-- La nueva edge function `food-barcode-lookup` usa `Open Food Facts` como fuente primaria gratuita y cachea en `food_items`; todavia no existe fallback `USDA` en codigo.
+- La nueva edge function `food-barcode-lookup` usa `Open Food Facts` como fuente primaria gratuita, cachea en `food_items` y ya incluye fallback `USDA` validado en remoto.
 - Los secrets remotos vigentes para AI son `OPENROUTER_API_KEY` y `OPENROUTER_MODEL`; ya no corresponde documentar `OPENAI_API_KEY` como dependencia actual de estas funciones.
 - El modelo efectivamente adoptado y validado para esta iteracion es `qwen/qwen3-vl-8b-instruct` via OpenRouter.
 - La prueba end-to-end real del frontend con Supabase si sigue bloqueada en esta maquina hasta tener `SUPABASE_URL` y `SUPABASE_ANON_KEY` reales o un `SUPABASE_ACCESS_TOKEN` que permita recuperarlas por CLI.

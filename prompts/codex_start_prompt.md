@@ -29,6 +29,9 @@ Contexto inmediato:
 - En Windows ya se valido `SUPABASE_ACCESS_TOKEN`, `SUPABASE_URL` y `SUPABASE_ANON_KEY` durante una sesion real, pero deben recargarse manualmente al retomar porque no quedaron persistidos.
 - `food-catalog-upsert` ya respondio `200 OK` autenticado y `meal-photo-analyze` ya llego a OpenRouter; lo pendiente es validar foto real en Flutter/Android y vigilar posibles limites de credito/proveedor.
 - El APK debug mas reciente esta en mobile/fitness_app/build/app/outputs/flutter-apk/app-debug.apk.
+- `Add meal` y `shared food catalog` ya tienen scanner de barcode + lookup `Open Food Facts -> USDA` + cache en Supabase + card visual de resultado.
+- En Windows ya existe `dart_defines.local.json` ignorado por Git y scripts en `scripts/flutter/` para build/run sin repetir flags.
+- El telefono Android `SM S916B` ya quedo probado con instalacion directa por `flutter run --no-resident`; si reaparece un error de `SUPABASE_URL/SUPABASE_ANON_KEY`, sospechar primero una instalacion vieja antes que un bug del codigo.
 
 Tareas al retomar:
 1. Revisar el estado real del repo sin revertir cambios ajenos.
@@ -36,13 +39,14 @@ Tareas al retomar:
 3. Confirmar que el ultimo punto implementado incluye top bar global + fix de Log Workout + NDK 28 + metricas de progreso de fuerza + reps junto a sets + `Repeat last` + sugerencias de ejercicios recientes + flujo `muscle group -> exercise` + sets multiples + `RPE` visual persistido.
 4. Ejecutar flutter pub get, flutter analyze y flutter test.
 5. Verificar primero si la shell actual ya tiene `SUPABASE_URL`, `SUPABASE_ANON_KEY` y opcionalmente `SUPABASE_ACCESS_TOKEN`; si faltan, recargarlas manualmente sin escribirlas en archivos del repo.
-6. Ejecutar la prueba real del catalogo compartido y `Analyze with AI` con `--dart-define` para `SUPABASE_URL` y `SUPABASE_ANON_KEY`.
+6. Ejecutar la prueba real del catalogo compartido y `Analyze with AI` con la build Android/web ya configurada con Supabase.
 7. Priorizar en Android el flujo: guardar foto real -> verla en `/food/gallery` -> lanzar `Analyze with AI`.
-8. Validar con una foto real que OpenRouter responde bien desde Flutter y, si hay respuestas incompletas, ajustar prompt/parsing sin reabrir analisis ya cerrados.
-9. Validar en Android el comportamiento real de los nuevos timers de workout.
-10. Validar en movil la nueva UX de workout antes de seguir con cambios mayores en progreso o analitica.
-11. Seguir desde ahi sin reiniciar nada desde cero.
-12. Mantener respuestas en espanol.
+8. Probar varios productos reales por barcode y distinguir si entran por cache, `Open Food Facts` o `USDA`.
+9. Validar con una foto real que OpenRouter responde bien desde Flutter y, si hay respuestas incompletas, ajustar prompt/parsing sin reabrir analisis ya cerrados.
+10. Validar en Android el comportamiento real de los nuevos timers de workout.
+11. Validar en movil la nueva UX de workout antes de seguir con cambios mayores en progreso o analitica.
+12. Seguir desde ahi sin reiniciar nada desde cero.
+13. Mantener respuestas en espanol.
 
 No reinicies el proyecto desde cero. Continua desde la estructura y commits ya existentes.
 
