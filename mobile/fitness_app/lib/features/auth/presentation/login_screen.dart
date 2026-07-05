@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/config/app_env.dart';
 import '../../../shared/app_language.dart';
@@ -33,6 +34,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final controller = ref.read(authControllerProvider);
     final isConfigured = AppEnv.hasSupabaseConfig;
     final isBusy = appState.isLoading;
+    final isAuthenticated = appState.isAuthenticated;
     final strings = stringsFor(ref);
 
     return Scaffold(
@@ -54,55 +56,106 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 24),
-              Text(
-                isConfigured
-                    ? strings.loginDescription
-                    : strings.loginMissingConfig,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 24),
-              TextField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                autofillHints: const [AutofillHints.email],
-                enabled: isConfigured && !isBusy,
-                decoration: InputDecoration(
-                  labelText: strings.emailLabel,
-                  hintText: strings.emailHint,
+              if (isAuthenticated) ...[
+                Text(
+                  strings.signedInDescription(appState.authEmail),
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
-              ),
-              if (_codeSent) ...[
                 const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () => context.go(
+                      appState.isOnboardingComplete
+                          ? '/dashboard'
+                          : '/onboarding',
+                    ),
+                    child: Text(strings.openProfileOrDashboardButton),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: isBusy
+                        ? null
+                        : () async {
+                            try {
+                              await controller.signOut();
+                            } catch (error) {
+                              _showMessage(
+                                  strings.verifyCodeErrorMessage(error));
+                            }
+                          },
+                    child: Text(strings.signOutButton),
+                  ),
+                ),
+              ] else ...[
+                Text(
+                  isConfigured
+                      ? strings.loginDescription
+                      : strings.loginMissingConfig,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 24),
                 TextField(
-                  controller: _codeController,
-                  keyboardType: TextInputType.number,
-                  enabled: !isBusy,
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  autofillHints: const [AutofillHints.email],
+                  enabled: isConfigured && !isBusy,
                   decoration: InputDecoration(
-                    labelText: strings.accessCodeLabel,
-                    hintText: strings.accessCodeHint,
+                    labelText: strings.emailLabel,
+                    hintText: strings.emailHint,
+                  ),
+                ),
+                if (_codeSent) ...[
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _codeController,
+                    keyboardType: TextInputType.number,
+                    enabled: !isBusy,
+                    decoration: InputDecoration(
+                      labelText: strings.accessCodeLabel,
+                      hintText: strings.accessCodeHint,
+                    ),
+                  ),
+                ],
+              ],
+              const Spacer(),
+              if (!isAuthenticated)
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: !isConfigured || isBusy
+                        ? null
+                        : () async {
+                            if (_codeSent) {
+                              await _verifyCode(controller);
+                              return;
+                            }
+
+                            await _sendCode(controller);
+                          },
+                    child: Text(_codeSent
+                        ? strings.verifyCodeButton
+                        : strings.receiveAccessCodeButton),
+                  ),
+                ),
+              if (!isAuthenticated) ...[
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => context.go(
+                      appState.isOnboardingComplete
+                          ? '/dashboard'
+                          : '/onboarding',
+                    ),
+                    child: Text(strings.continueGuest),
                   ),
                 ),
               ],
-              const Spacer(),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: !isConfigured || isBusy
-                      ? null
-                      : () async {
-                          if (_codeSent) {
-                            await _verifyCode(controller);
-                            return;
-                          }
-
-                          await _sendCode(controller);
-                        },
-                  child: Text(_codeSent
-                      ? strings.verifyCodeButton
-                      : strings.receiveAccessCodeButton),
-                ),
-              ),
-              if (_codeSent) ...[
+              if (_codeSent && !isAuthenticated) ...[
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,

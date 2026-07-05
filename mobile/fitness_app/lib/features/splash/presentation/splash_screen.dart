@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/config/app_env.dart';
 import '../../../shared/app_language.dart';
 import '../../../shared/app_state.dart';
 import '../../../shared/widgets/app_top_bar.dart';
@@ -14,6 +15,8 @@ class SplashScreen extends ConsumerWidget {
     final strings = stringsFor(ref);
     final appState = ref.watch(appStateProvider);
     final language = ref.watch(appLanguageProvider);
+    final showAuthButton =
+        AppEnv.hasSupabaseConfig && !appState.isAuthenticated;
 
     return Scaffold(
       appBar: AppTopBar(title: strings.welcomeScreenTitle, strings: strings),
@@ -50,8 +53,22 @@ class SplashScreen extends ConsumerWidget {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 16),
-              Text(strings.welcomeDescription),
+              Text(
+                appState.isAuthenticated
+                    ? strings.signedInDescription(appState.authEmail)
+                    : strings.welcomeDescription,
+              ),
               const Spacer(),
+              if (showAuthButton) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => context.go('/auth'),
+                    child: Text(strings.signInWithEmailButton),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(

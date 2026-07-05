@@ -134,8 +134,7 @@ class AppStrings {
 
   String get startTimerButton => isEnglish ? 'Start timer' : 'Iniciar timer';
 
-  String get startRestButton =>
-      isEnglish ? 'Start rest' : 'Iniciar descanso';
+  String get startRestButton => isEnglish ? 'Start rest' : 'Iniciar descanso';
 
   String get pauseTimerButton => isEnglish ? 'Pause' : 'Pausar';
 

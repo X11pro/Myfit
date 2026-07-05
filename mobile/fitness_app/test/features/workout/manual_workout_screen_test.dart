@@ -16,6 +16,9 @@ void main() {
   testWidgets('adds multiple identical sets from the add set dialog', (
     WidgetTester tester,
   ) async {
+    await tester.binding.setSurfaceSize(const Size(1080, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
     final router = GoRouter(
       routes: [
         GoRoute(
@@ -36,6 +39,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.text('Add set'));
     await tester.tap(find.text('Add set'));
     await tester.pumpAndSettle();
 

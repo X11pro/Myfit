@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/auth/presentation/login_screen.dart';
 import '../features/dashboard/presentation/dashboard_screen.dart';
 import '../features/dashboard/presentation/progress_screen.dart';
 import '../features/food/domain/manual_food_entry.dart';
@@ -24,6 +25,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
           path: '/onboarding',
           builder: (context, state) => const OnboardingScreen()),
+      GoRoute(path: '/auth', builder: (context, state) => const LoginScreen()),
       GoRoute(
           path: '/dashboard',
           builder: (context, state) => const DashboardScreen()),
@@ -62,6 +64,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       if (state.matchedLocation == '/dashboard' &&
           !appState.isOnboardingComplete) {
         return '/onboarding';
+      }
+
+      if (state.matchedLocation == '/onboarding' &&
+          appState.isOnboardingComplete) {
+        return '/dashboard';
       }
 
       return null;

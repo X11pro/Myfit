@@ -71,6 +71,8 @@
 - Integracion de musica o playlists con `Spotify` u otro servicio compatible.
 - Vinculacion con smartwatch o smart ring para mejorar precision de datos de entrenamiento y recuperacion.
 
+Ver detalle y orden sugerido en `docs/product/future_backlog.md`.
+
 ## Notas de prioridad
 
 - Alta despues del flujo core actual: cronometro total de entrenamiento.
