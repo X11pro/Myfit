@@ -31,6 +31,7 @@ DerivedData/
 .env
 .env.*
 !.env.example
+**/dart_defines.local.json
 
 # IDE
 .vscode/

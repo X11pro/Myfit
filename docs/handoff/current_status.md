@@ -263,11 +263,13 @@ Resultado confirmado de esa prueba:
 - En Windows ya se valido `SUPABASE_ACCESS_TOKEN`, `SUPABASE_URL` y `SUPABASE_ANON_KEY` reales durante la sesion, pero no quedaron persistidos en archivos del repo.
 - `supabase link` ya quedo ejecutado localmente en esta maquina y `functions list` confirmo `food-catalog-upsert` y `meal-photo-analyze` activas en remoto.
 - La app arranca tanto en `Edge` como en `Windows` con Supabase inicializado cuando recibe `--dart-define` reales.
+- En Windows ya existe automatizacion local para no repetir `--dart-define` manualmente en Android: `scripts/flutter/save_local_dart_defines.ps1`, `scripts/flutter/build_android_debug.ps1` y `scripts/flutter/run_android_debug.ps1`.
 - El flujo web ya no se rompe al elegir foto desde galeria: `manual food entry` ahora soporta `data:` URLs y preview sin depender de `path_provider` para web.
 - Se agrego una galeria local-first de comidas con foto y resumen nutricional en `/food/gallery`, basada en la persistencia local ya existente.
 - El flujo de `gym tracker` ahora incluye cronometro de sesion y cronometro de descanso entre series dentro de la misma pantalla.
 - El cronometro de sesion sincroniza el campo `Duration (min)` y el cronometro de descanso arranca automaticamente al agregar o repetir un set.
 - Se regenero `app-debug.apk` con ese flujo nuevo para probar en Android.
+- Tambien se regenero `app-debug.apk` con `SUPABASE_URL` y `SUPABASE_ANON_KEY` reales para destrabar `Analyze with AI` en Android.
 
 Smoke tests remotos confirmados:
 
@@ -287,17 +289,16 @@ Smoke tests remotos confirmados:
 
 ## Pendientes inmediatos
 
-1. Conseguir `SUPABASE_URL` y `SUPABASE_ANON_KEY` reales o un `SUPABASE_ACCESS_TOKEN` valido en esta maquina para desbloquear la prueba E2E real.
-2. Probar en Android que el nuevo cronometro de sesion y el cronometro de descanso de workout se comportan bien en una sesion real.
-3. Probar en Android con foto real que `manual food entry` guarda la foto, la muestra en la nueva galeria y deja lanzar `Analyze with AI`.
-4. Probar end-to-end la pantalla Flutter del catalogo compartido con una imagen real y `--dart-define` para Supabase.
-5. Probar end-to-end el boton `Analyze with AI` en `manual food entry` con una foto valida de comida.
-6. Validar en movil la UX nueva de workout: `muscle group -> exercise`, sets multiples, selector RPE y timers.
-7. Si OpenRouter devuelve respuestas incompletas en casos reales, ajustar prompt/parsing sin reabrir analisis ya cerrados.
-8. Reintroducir autenticacion en una proxima iteracion sin Auth0, probablemente sobre Supabase o guest identity persistente.
-9. Conectar `manual food entry` a persistencia remota cuando quede definido el modelo final de identidad.
-10. Conectar workouts manuales, resultados AI y objetivos diarios a persistencia remota cuando quede definido el modelo final de identidad.
-11. Seguir iterando la UX real cuando llegue el Figma.
+1. Probar en Android que el nuevo cronometro de sesion y el cronometro de descanso de workout se comportan bien en una sesion real.
+2. Probar en Android con foto real que `manual food entry` guarda la foto, la muestra en la nueva galeria y deja lanzar `Analyze with AI`.
+3. Probar end-to-end la pantalla Flutter del catalogo compartido con una imagen real y la build Android/web ya configurada con Supabase.
+4. Probar end-to-end el boton `Analyze with AI` en `manual food entry` con una foto valida de comida.
+5. Validar en movil la UX nueva de workout: `muscle group -> exercise`, sets multiples, selector RPE y timers.
+6. Si OpenRouter devuelve respuestas incompletas en casos reales, ajustar prompt/parsing sin reabrir analisis ya cerrados.
+7. Reintroducir autenticacion en una proxima iteracion sin Auth0, probablemente sobre Supabase o guest identity persistente.
+8. Conectar `manual food entry` a persistencia remota cuando quede definido el modelo final de identidad.
+9. Conectar workouts manuales, resultados AI y objetivos diarios a persistencia remota cuando quede definido el modelo final de identidad.
+10. Seguir iterando la UX real cuando llegue el Figma.
 
 ## Riesgos o notas
 
@@ -330,6 +331,7 @@ Smoke tests remotos confirmados:
 - La nueva galeria de comidas es local-first; todavia no sube fotos ni meals a Supabase Storage/Postgres.
 - En web se corrigio el flujo de foto guardando `data:` URLs localmente; eso resuelve preview/AI, pero puede crecer mas que un path local y no es el target principal a largo plazo.
 - No persistir API keys en `docs/`, `prompts/`, `.env.example` ni commits. Recargarlas solo como variables de entorno o secrets de Supabase.
+- `mobile/fitness_app/dart_defines.local.json` queda ignorado por Git y es el lugar local recomendado para recordar `SUPABASE_URL` y `SUPABASE_ANON_KEY` en esta maquina sin volver a escribir `--dart-define` a mano.
 
 ## Regla persistente del usuario
 

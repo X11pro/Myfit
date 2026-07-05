@@ -58,7 +58,32 @@ mobile/fitness_app/build/windows/x64/runner/Debug/fitness_app.exe
 
 ## 5. Android debug APK
 
-Desde `mobile/fitness_app`:
+Forma recomendada desde la raiz del repo:
+
+1. Generar una sola vez el archivo local no versionado:
+
+```powershell
+.\scripts\flutter\save_local_dart_defines.ps1
+```
+
+Ese script crea `mobile/fitness_app/dart_defines.local.json` usando:
+
+- `SUPABASE_URL` + `SUPABASE_ANON_KEY` si ya existen en la shell, o
+- `SUPABASE_ACCESS_TOKEN` para recuperar la anon key por CLI y reconstruir la URL del proyecto.
+
+2. Compilar siempre el APK debug funcional con:
+
+```powershell
+.\scripts\flutter\build_android_debug.ps1
+```
+
+3. Si quieres correr directo en Android por USB/emulador:
+
+```powershell
+.\scripts\flutter\run_android_debug.ps1
+```
+
+Alternativa manual desde `mobile/fitness_app`:
 
 ```powershell
 flutter build apk --debug --dart-define=SUPABASE_URL=$env:SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$env:SUPABASE_ANON_KEY
@@ -67,6 +92,7 @@ flutter build apk --debug --dart-define=SUPABASE_URL=$env:SUPABASE_URL --dart-de
 Salida esperada:
 
 - `build/app/outputs/flutter-apk/app-debug.apk`
+- Si usas los scripts, no hace falta volver a pegar `--dart-define` en cada build.
 
 ## 6. Estado funcional actual de food
 
