@@ -172,6 +172,10 @@ async function persistFood(
 
 async function fetchOpenFoodFacts(barcode: string): Promise<NormalizedFood | null> {
   const response = await fetch(`https://world.openfoodfacts.org/api/v2/product/${barcode}.json`)
+  if (response.status === 404) {
+    return null
+  }
+
   if (!response.ok) {
     throw new Error(`Open Food Facts lookup failed with status ${response.status}.`)
   }

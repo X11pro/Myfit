@@ -38,7 +38,7 @@ Estado ya confirmado en Windows:
 - `food-catalog-upsert` respondio `200 OK` con payload manual autenticado.
 - `meal-photo-analyze` respondio autenticado y llego a OpenRouter; queda pendiente validarlo con foto real.
 - `food-barcode-lookup` respondio `200 OK` con lookup real a `Open Food Facts` y cache en `food_items`.
-- `USDA_FDC_API_KEY` todavia no figura cargada en los secrets remotos de esta maquina/sesion; el fallback USDA quedo implementado en codigo pero no validado en remoto.
+- `USDA_FDC_API_KEY` ya quedo cargada en los secrets remotos y el fallback USDA se valido con el barcode `030034954949`, devolviendo `source=usda`.
 
 ## 4. Flutter en Windows
 
@@ -128,6 +128,7 @@ Salida esperada:
 - `manual food entry` ya soporta foto desde galeria/camara.
 - `manual food entry` ahora tambien soporta lookup por barcode y scanner real en Android/iOS.
 - `shared food catalog` ahora tambien soporta lookup por barcode y scanner real en Android/iOS para precargar nombre, marca y macros antes de guardar el producto compartido.
+- El fallback real hoy queda asi: `cache Supabase -> Open Food Facts -> USDA`.
 - En web, la foto se guarda como `data:` URL para evitar el crash previo por `path_provider`.
 - Ya existe `/food/gallery` con:
   - foto,

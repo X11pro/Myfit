@@ -280,7 +280,7 @@ Smoke tests remotos confirmados:
 - `food-catalog-upsert` respondio OK en `mode=extract`.
 - `meal-photo-analyze` ya no falla por `OPENAI_API_KEY` y ahora pega a OpenRouter.
 - `food-barcode-lookup` respondio `200 OK` en remoto con cache `food_items` + `Open Food Facts` para barcode empaquetado.
-- El fallback `USDA` quedo implementado en codigo dentro de `food-barcode-lookup`, pero el secret remoto `USDA_FDC_API_KEY` no aparece cargado en Supabase, asi que esa rama no se pudo validar todavia.
+- El fallback `USDA` ya quedo implementado y validado en remoto dentro de `food-barcode-lookup` despues de cargar `USDA_FDC_API_KEY`; caso confirmado con barcode `030034954949`, devolviendo `source=usda`.
 - El error observado en `meal-photo-analyze` fue por imagen base64 invalida de prueba, lo cual confirma que la ruta nueva ya esta activa.
 - `food-catalog-upsert` tambien respondio `200 OK` con payload manual autenticado usando la anon key real.
 - `meal-photo-analyze` respondio autenticado y llego a OpenRouter; el riesgo pendiente real esta en probar con una foto valida y confirmar que no aparezcan limites de credito o proveedor.
@@ -297,16 +297,15 @@ Smoke tests remotos confirmados:
 
 1. Probar en Android que el nuevo cronometro de sesion y el cronometro de descanso de workout se comportan bien en una sesion real.
 2. Probar en Android un producto real con `Scan barcode` y confirmar autocompletado correcto de nombre/macros.
-3. Cargar `USDA_FDC_API_KEY` en Supabase secrets y validar una ruta real donde `Open Food Facts` no tenga match pero USDA si.
-4. Probar en Android con foto real que `manual food entry` guarda la foto, la muestra en la nueva galeria y deja lanzar `Analyze with AI`.
-5. Probar end-to-end la pantalla Flutter del catalogo compartido con una imagen real y la build Android/web ya configurada con Supabase.
-6. Probar end-to-end el boton `Analyze with AI` en `manual food entry` con una foto valida de comida.
-7. Validar en movil la UX nueva de workout: `muscle group -> exercise`, sets multiples, selector RPE y timers.
-8. Si OpenRouter devuelve respuestas incompletas en casos reales, ajustar prompt/parsing sin reabrir analisis ya cerrados.
-9. Reintroducir autenticacion en una proxima iteracion sin Auth0, probablemente sobre Supabase o guest identity persistente.
-10. Conectar `manual food entry` a persistencia remota cuando quede definido el modelo final de identidad.
-11. Conectar workouts manuales, resultados AI y objetivos diarios a persistencia remota cuando quede definido el modelo final de identidad.
-12. Seguir iterando la UX real cuando llegue el Figma.
+3. Probar en Android con foto real que `manual food entry` guarda la foto, la muestra en la nueva galeria y deja lanzar `Analyze with AI`.
+4. Probar end-to-end la pantalla Flutter del catalogo compartido con una imagen real y la build Android/web ya configurada con Supabase.
+5. Probar end-to-end el boton `Analyze with AI` en `manual food entry` con una foto valida de comida.
+6. Validar en movil la UX nueva de workout: `muscle group -> exercise`, sets multiples, selector RPE y timers.
+7. Si OpenRouter devuelve respuestas incompletas en casos reales, ajustar prompt/parsing sin reabrir analisis ya cerrados.
+8. Reintroducir autenticacion en una proxima iteracion sin Auth0, probablemente sobre Supabase o guest identity persistente.
+9. Conectar `manual food entry` a persistencia remota cuando quede definido el modelo final de identidad.
+10. Conectar workouts manuales, resultados AI y objetivos diarios a persistencia remota cuando quede definido el modelo final de identidad.
+11. Seguir iterando la UX real cuando llegue el Figma.
 
 ## Riesgos o notas
 
