@@ -263,13 +263,14 @@ Resultado confirmado de esa prueba:
 - En Windows ya se valido `SUPABASE_ACCESS_TOKEN`, `SUPABASE_URL` y `SUPABASE_ANON_KEY` reales durante la sesion, pero no quedaron persistidos en archivos del repo.
 - `supabase link` ya quedo ejecutado localmente en esta maquina y `functions list` confirmo `food-catalog-upsert` y `meal-photo-analyze` activas en remoto.
 - La app arranca tanto en `Edge` como en `Windows` con Supabase inicializado cuando recibe `--dart-define` reales.
-- En Windows ya existe automatizacion local para no repetir `--dart-define` manualmente en Android: `scripts/flutter/save_local_dart_defines.ps1`, `scripts/flutter/build_android_debug.ps1` y `scripts/flutter/run_android_debug.ps1`.
+- En Windows ya existe automatizacion local para no repetir `--dart-define` manualmente en Android/web/desktop: `scripts/flutter/save_local_dart_defines.ps1`, `scripts/flutter/build_android_debug.ps1`, `scripts/flutter/build_android_release.ps1`, `scripts/flutter/run_android_debug.ps1`, `scripts/flutter/run_windows_debug.ps1` y `scripts/flutter/run_edge_debug.ps1`.
 - El flujo web ya no se rompe al elegir foto desde galeria: `manual food entry` ahora soporta `data:` URLs y preview sin depender de `path_provider` para web.
 - Se agrego una galeria local-first de comidas con foto y resumen nutricional en `/food/gallery`, basada en la persistencia local ya existente.
 - El flujo de `gym tracker` ahora incluye cronometro de sesion y cronometro de descanso entre series dentro de la misma pantalla.
 - El cronometro de sesion sincroniza el campo `Duration (min)` y el cronometro de descanso arranca automaticamente al agregar o repetir un set.
 - Se regenero `app-debug.apk` con ese flujo nuevo para probar en Android.
 - Tambien se regenero `app-debug.apk` con `SUPABASE_URL` y `SUPABASE_ANON_KEY` reales para destrabar `Analyze with AI` en Android.
+- Quedo preparado tambien el flujo de `flutter run -d windows`, `flutter run -d edge` y `flutter build apk --release` usando `--dart-define-from-file` sobre `mobile/fitness_app/dart_defines.local.json`.
 
 Smoke tests remotos confirmados:
 
@@ -332,6 +333,7 @@ Smoke tests remotos confirmados:
 - En web se corrigio el flujo de foto guardando `data:` URLs localmente; eso resuelve preview/AI, pero puede crecer mas que un path local y no es el target principal a largo plazo.
 - No persistir API keys en `docs/`, `prompts/`, `.env.example` ni commits. Recargarlas solo como variables de entorno o secrets de Supabase.
 - `mobile/fitness_app/dart_defines.local.json` queda ignorado por Git y es el lugar local recomendado para recordar `SUPABASE_URL` y `SUPABASE_ANON_KEY` en esta maquina sin volver a escribir `--dart-define` a mano.
+- Desde ahora el punto de entrada recomendado en Windows es `scripts/flutter/`; no depender de memorizar flags manuales para `android`, `windows` o `edge`.
 
 ## Regla persistente del usuario
 

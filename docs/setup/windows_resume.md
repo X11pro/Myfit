@@ -44,10 +44,22 @@ Para correr en web:
 flutter run -d edge --dart-define=SUPABASE_URL=$env:SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$env:SUPABASE_ANON_KEY
 ```
 
+Alternativa automatizada desde la raiz del repo:
+
+```powershell
+.\scripts\flutter\run_edge_debug.ps1
+```
+
 Para correr en desktop Windows:
 
 ```powershell
 flutter run -d windows --dart-define=SUPABASE_URL=$env:SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$env:SUPABASE_ANON_KEY
+```
+
+Alternativa automatizada desde la raiz del repo:
+
+```powershell
+.\scripts\flutter\run_windows_debug.ps1
 ```
 
 Si el debug pierde conexion pero el binario ya arranco, tambien puedes abrir:
@@ -77,6 +89,12 @@ Ese script crea `mobile/fitness_app/dart_defines.local.json` usando:
 .\scripts\flutter\build_android_debug.ps1
 ```
 
+Si quieres generar release APK local:
+
+```powershell
+.\scripts\flutter\build_android_release.ps1
+```
+
 3. Si quieres correr directo en Android por USB/emulador:
 
 ```powershell
@@ -93,6 +111,13 @@ Salida esperada:
 
 - `build/app/outputs/flutter-apk/app-debug.apk`
 - Si usas los scripts, no hace falta volver a pegar `--dart-define` en cada build.
+- Scripts disponibles en Windows:
+  - `save_local_dart_defines.ps1`
+  - `build_android_debug.ps1`
+  - `build_android_release.ps1`
+  - `run_android_debug.ps1`
+  - `run_windows_debug.ps1`
+  - `run_edge_debug.ps1`
 
 ## 6. Estado funcional actual de food
 
