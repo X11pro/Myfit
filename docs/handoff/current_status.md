@@ -276,6 +276,7 @@ Resultado confirmado de esa prueba:
 - Quedo preparado tambien el flujo de `flutter run -d windows`, `flutter run -d edge` y `flutter build apk --release` usando `--dart-define-from-file` sobre `mobile/fitness_app/dart_defines.local.json`.
 - En esta iteracion tambien se desplego `food-barcode-lookup` y se verifico con barcode real `737628064502`, devolviendo nombre, marca y macros desde `Open Food Facts`.
 - Tambien se instalo la build debug mas reciente directamente en el telefono `SM S916B` por `flutter run --no-resident` y se confirmo en logs `Supabase init completed`; el error previo de `SUPABASE_URL/SUPABASE_ANON_KEY` venia de una instalacion vieja del APK.
+- Se agregaron `docs/product/status_map.md`, `docs/product/status_map_visual.md` y `prompts/notebooklm_status_map_diagram_prompt.md` para entregar a otra IA un mapa estructurado y una vista Mermaid local del estado del producto.
 
 Smoke tests remotos confirmados:
 
@@ -343,6 +344,7 @@ Smoke tests remotos confirmados:
 - No persistir API keys en `docs/`, `prompts/`, `.env.example` ni commits. Recargarlas solo como variables de entorno o secrets de Supabase.
 - `mobile/fitness_app/dart_defines.local.json` queda ignorado por Git y es el lugar local recomendado para recordar `SUPABASE_URL` y `SUPABASE_ANON_KEY` en esta maquina sin volver a escribir `--dart-define` a mano.
 - Desde ahora el punto de entrada recomendado en Windows es `scripts/flutter/`; no depender de memorizar flags manuales para `android`, `windows` o `edge`.
+- Si se necesita un diagrama entendible del producto para terceros o para NotebookLM, usar `docs/product/status_map.md` como fuente estructurada y `docs/product/status_map_visual.md` como referencia visual local.
 
 ## Regla persistente del usuario
 

@@ -160,3 +160,11 @@ Salida esperada:
 6. Si falla, distinguir si el error es de formato de imagen o de credito/proveedor en OpenRouter.
 7. Probar un producto empaquetado real con `Scan barcode` o `Lookup barcode` y confirmar que autocompleta macros.
 8. Confirmar visualmente que la nueva card de resultado de barcode muestra bien fuente, cache y confianza en Android.
+
+## 8. Mapa visual del producto
+
+Si necesitas pasar el estado del producto a otra IA o generar un diagrama externo:
+
+- fuente estructurada: `docs/product/status_map.md`
+- referencia visual local: `docs/product/status_map_visual.md`
+- prompt listo para NotebookLM: `prompts/notebooklm_status_map_diagram_prompt.md`
