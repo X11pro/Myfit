@@ -163,6 +163,8 @@ Estado confirmado al cerrar esta sesion:
 - `manual food entry` ya soporta preview web con `data:` URLs para fotos elegidas desde galeria.
 - Ya existe una galeria local-first de comidas en `/food/gallery` con foto, fecha, macros, confianza, editar y eliminar.
 - Se regenero `mobile/fitness_app/build/app/outputs/flutter-apk/app-debug.apk` con la galeria incluida.
+- En `SM S916B` ya quedaron probados los timers de workout, el preview automatico del sonido REST al seleccionar alerta y la vibracion al llegar a `0`.
+- El package `vibration` ya esta agregado y funcionando en Android real.
 
 ## 9. Primer objetivo al volver
 
@@ -172,6 +174,7 @@ Seguir el guest flow actual y avanzar estas piezas en orden:
 - prueba real de `Analyze with AI` ya migrado a OpenRouter,
 - prueba real en Android de la nueva galeria local de comidas,
 - validar UX del modulo gym/progreso ya implementado,
+- integrar al dashboard/analisis los tiempos `total / activo / descanso` del workout,
 - partir del ultimo punto ya hecho: metricas de fuerza con `peso maximo`, `volumen` y `1RM estimado`,
 - revisar si la siguiente mejora de gym debe ser duplicar set anterior, autocompletar ejercicios recientes o resumen por ejercicio,
 - prueba real del catalogo compartido con OCR/AI ya migrado a OpenRouter,
@@ -199,6 +202,8 @@ Estado funcional actual de la app:
 - dropdown de ejercicios populares por grupo muscular con opcion de custom exercise,
 - `sets` multiples desde el dialogo,
 - selector visual de `RPE` con persistencia por set,
+- cronometro general de entrenamiento con inicio/fin manual,
+- cronometro REST con countdown, overtime, sonido seleccionable, preview automatico y vibracion opcional,
 - dashboard pulido con CTA principal, secciones plegables y grafico de linea/area,
 - ingles por defecto verificado y cambio consistente a espanol desde `EN / ESP`,
 - pantalla para aportar productos al catalogo compartido,
@@ -259,6 +264,24 @@ flutter run -d android \
   --dart-define="SUPABASE_URL=$SUPABASE_URL" \
   --dart-define="SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY"
 ```
+
+Si vas a reinstalar la build debug en `SM S916B` y aparece un error de ABI, usar:
+
+```bash
+cd mobile/fitness_app
+flutter build apk --debug --target-platform android-arm64
+flutter install --debug -d "adb-RZCW82F6TRL-J7io0E._adb-tls-connect._tcp"
+flutter run -d "adb-RZCW82F6TRL-J7io0E._adb-tls-connect._tcp"
+```
+
+La prueba manual minima recomendada al retomar Android es:
+
+1. abrir `Gym tracker`,
+2. entrar a workout manual,
+3. activar sonido/vibracion REST si hace falta,
+4. cambiar el sonido y confirmar preview automatico,
+5. poner REST en `1` segundo,
+6. confirmar countdown, sonido y vibracion al llegar a `0`.
 
 Si `deno` esta disponible en CachyOS, conviene correr tambien antes del deploy:
 

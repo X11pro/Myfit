@@ -19,6 +19,8 @@ Contexto inmediato:
 - Ya existe carga rapida minima en workout: `Repeat last` + sugerencias de ejercicios recientes.
 - El dialogo de workout ya fue mejorado para usar `muscle group -> exercise`, crear multiples sets iguales y capturar `RPE` visual con persistencia por set.
 - `gym tracker` ya incluye cronometro de sesion y cronometro de descanso; el de sesion sincroniza `Duration (min)` y el de descanso arranca automaticamente cuando se agrega o repite un set.
+- El workout manual ahora guarda `totalDurationSeconds`, `activeDurationSeconds` y `restDurationSeconds` por sesion.
+- El timer REST ya fue probado en `SM S916B` con sonido seleccionable, preview automatico al cambiar la opcion y vibracion opcional al llegar a `0`.
 - El flujo Flutter de AI/comida ahora valida configuracion Supabase y maneja respuestas incompletas del backend.
 - `manual food entry` ya corrige el caso web para fotos elegidas desde galeria usando `data:` URLs cuando hace falta.
 - Ya existe una galeria local-first de comidas en `/food/gallery` con foto, fecha, resumen nutricional, confianza AI, editar y eliminar.
@@ -32,6 +34,9 @@ Contexto inmediato:
 - `Add meal` y `shared food catalog` ya tienen scanner de barcode + lookup `Open Food Facts -> USDA` + cache en Supabase + card visual de resultado.
 - En Windows ya existe `dart_defines.local.json` ignorado por Git y scripts en `scripts/flutter/` para build/run sin repetir flags.
 - El telefono Android `SM S916B` ya quedo probado con instalacion directa por `flutter run --no-resident`; si reaparece un error de `SUPABASE_URL/SUPABASE_ANON_KEY`, sospechar primero una instalacion vieja antes que un bug del codigo.
+- Si reaparece `INSTALL_FAILED_NO_MATCHING_ABIS` al instalar debug en `SM S916B`, recompilar con `flutter build apk --debug --target-platform android-arm64`.
+- La rutina recomendada por goal debe verse en ingles cuando la app esta en ingles; no reintroducir textos hardcodeados en espanol en esa parte.
+- Todavia NO es el mejor momento para una mejora total de UI/UX; primero cerrar auth + sync remoto y conectar los tiempos `total / activo / descanso` al dashboard/analisis.
 
 Tareas al retomar:
 1. Revisar el estado real del repo sin revertir cambios ajenos.
@@ -43,10 +48,11 @@ Tareas al retomar:
 7. Priorizar en Android el flujo: guardar foto real -> verla en `/food/gallery` -> lanzar `Analyze with AI`.
 8. Probar varios productos reales por barcode y distinguir si entran por cache, `Open Food Facts` o `USDA`.
 9. Validar con una foto real que OpenRouter responde bien desde Flutter y, si hay respuestas incompletas, ajustar prompt/parsing sin reabrir analisis ya cerrados.
-10. Validar en Android el comportamiento real de los nuevos timers de workout.
-11. Validar en movil la nueva UX de workout antes de seguir con cambios mayores en progreso o analitica.
-12. Seguir desde ahi sin reiniciar nada desde cero.
-13. Mantener respuestas en espanol.
+10. Verificar que los tres tiempos de workout ya persistidos se integren al dashboard/analisis antes de discutir rediseño total.
+11. Priorizar auth real + persistencia remota de meals/workouts/weight como bloqueante de `v1.0`.
+12. Validar en Android barcode real y foto AI real con Supabase configurado.
+13. Seguir desde ahi sin reiniciar nada desde cero.
+14. Mantener respuestas en espanol.
 
 No reinicies el proyecto desde cero. Continua desde la estructura y commits ya existentes.
 

@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../shared/app_language.dart';
 import '../../../shared/app_state.dart';
 import '../../workout/application/manual_workout_controller.dart';
 import '../../workout/domain/gym_set_entry.dart';
@@ -36,7 +37,7 @@ final workoutRecommendationProvider = Provider<GoalRecommendation?>((ref) {
     return null;
   }
 
-  return recommendationForGoal(goal);
+  return recommendationForGoal(goal, ref.watch(appLanguageProvider));
 });
 
 final strengthExerciseFilterProvider = StateProvider<String?>((ref) => null);
@@ -241,63 +242,118 @@ int calorieAdjustmentForGoal(String goal) {
   }
 }
 
-GoalRecommendation recommendationForGoal(String goal) {
+GoalRecommendation recommendationForGoal(
+  String goal, [
+  AppLanguage language = AppLanguage.en,
+]) {
+  final isEnglish = language == AppLanguage.en;
+
   switch (goal) {
     case 'lose_fat':
-      return const GoalRecommendation(
-        headline: 'Prioriza gasto util y volumen sostenible.',
-        routineName: 'Full body 3 dias + caminata',
-        exercises: [
-          'Sentadilla goblet 4x10',
-          'Press banca o flexiones 4x8-12',
-          'Remo mancuerna 4x10',
-          'Peso muerto rumano 3x10',
-          '15-25 min cardio suave',
-        ],
-        nutritionFocus: 'Deficit moderado, proteina alta y azucar controlada.',
+      return GoalRecommendation(
+        headline: isEnglish
+            ? 'Prioritize useful energy expenditure and sustainable volume.'
+            : 'Prioriza gasto util y volumen sostenible.',
+        routineName: isEnglish
+            ? 'Full body 3 days + walking'
+            : 'Full body 3 dias + caminata',
+        exercises: isEnglish
+            ? const [
+                'Goblet squat 4x10',
+                'Bench press or push-ups 4x8-12',
+                'Dumbbell row 4x10',
+                'Romanian deadlift 3x10',
+                '15-25 min easy cardio',
+              ]
+            : const [
+                'Sentadilla goblet 4x10',
+                'Press banca o flexiones 4x8-12',
+                'Remo mancuerna 4x10',
+                'Peso muerto rumano 3x10',
+                '15-25 min cardio suave',
+              ],
+        nutritionFocus: isEnglish
+            ? 'Moderate deficit, high protein, and controlled sugar intake.'
+            : 'Deficit moderado, proteina alta y azucar controlada.',
       );
     case 'gain_muscle':
-      return const GoalRecommendation(
-        headline: 'Busca progresion de cargas y volumen por grupo muscular.',
-        routineName: 'Upper / Lower 4 dias',
-        exercises: [
-          'Press banca 4x6-8',
-          'Dominadas o jalon 4x8-10',
-          'Sentadilla 4x6-8',
-          'Hip thrust 4x8-10',
-          'Press hombro 3x8-10',
-        ],
-        nutritionFocus:
-            'Ligero superavit, proteina estable y carbs alrededor del entreno.',
+      return GoalRecommendation(
+        headline: isEnglish
+            ? 'Aim for load progression and enough volume per muscle group.'
+            : 'Busca progresion de cargas y volumen por grupo muscular.',
+        routineName:
+            isEnglish ? 'Upper / Lower 4 days' : 'Upper / Lower 4 dias',
+        exercises: isEnglish
+            ? const [
+                'Bench press 4x6-8',
+                'Pull-ups or lat pulldown 4x8-10',
+                'Squat 4x6-8',
+                'Hip thrust 4x8-10',
+                'Shoulder press 3x8-10',
+              ]
+            : const [
+                'Press banca 4x6-8',
+                'Dominadas o jalon 4x8-10',
+                'Sentadilla 4x6-8',
+                'Hip thrust 4x8-10',
+                'Press hombro 3x8-10',
+              ],
+        nutritionFocus: isEnglish
+            ? 'Light surplus, stable protein intake, and carbs around training.'
+            : 'Ligero superavit, proteina estable y carbs alrededor del entreno.',
       );
     case 'recomp':
-      return const GoalRecommendation(
-        headline: 'Mantén intensidad y cuida la adherencia semanal.',
-        routineName: 'Push / Pull / Legs 3-5 dias',
-        exercises: [
-          'Press inclinado 4x8',
-          'Remo barra 4x8',
-          'Prensa 4x10',
-          'Peso muerto rumano 3x8',
-          'Elevaciones laterales 3x15',
-        ],
-        nutritionFocus:
-            'Calorias cerca de mantenimiento y proteina alta todos los dias.',
+      return GoalRecommendation(
+        headline: isEnglish
+            ? 'Keep intensity high and protect week-to-week adherence.'
+            : 'Mantén intensidad y cuida la adherencia semanal.',
+        routineName: isEnglish
+            ? 'Push / Pull / Legs 3-5 days'
+            : 'Push / Pull / Legs 3-5 dias',
+        exercises: isEnglish
+            ? const [
+                'Incline press 4x8',
+                'Barbell row 4x8',
+                'Leg press 4x10',
+                'Romanian deadlift 3x8',
+                'Lateral raises 3x15',
+              ]
+            : const [
+                'Press inclinado 4x8',
+                'Remo barra 4x8',
+                'Prensa 4x10',
+                'Peso muerto rumano 3x8',
+                'Elevaciones laterales 3x15',
+              ],
+        nutritionFocus: isEnglish
+            ? 'Calories near maintenance and high protein every day.'
+            : 'Calorias cerca de mantenimiento y proteina alta todos los dias.',
       );
     case 'maintain':
     default:
-      return const GoalRecommendation(
-        headline: 'Entrena para mantener fuerza y consistencia.',
-        routineName: 'Full body 2-3 dias',
-        exercises: [
-          'Sentadilla 3x8',
-          'Press banca 3x8',
-          'Remo 3x10',
-          'Bisagra de cadera 3x10',
-          'Core 3x12-15',
-        ],
-        nutritionFocus:
-            'Mantenimiento, proteina suficiente y comidas regulares.',
+      return GoalRecommendation(
+        headline: isEnglish
+            ? 'Train to maintain strength and consistency.'
+            : 'Entrena para mantener fuerza y consistencia.',
+        routineName: isEnglish ? 'Full body 2-3 days' : 'Full body 2-3 dias',
+        exercises: isEnglish
+            ? const [
+                'Squat 3x8',
+                'Bench press 3x8',
+                'Row 3x10',
+                'Hip hinge 3x10',
+                'Core 3x12-15',
+              ]
+            : const [
+                'Sentadilla 3x8',
+                'Press banca 3x8',
+                'Remo 3x10',
+                'Bisagra de cadera 3x10',
+                'Core 3x12-15',
+              ],
+        nutritionFocus: isEnglish
+            ? 'Maintenance calories, enough protein, and regular meals.'
+            : 'Mantenimiento, proteina suficiente y comidas regulares.',
       );
   }
 }

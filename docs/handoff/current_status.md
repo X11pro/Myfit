@@ -2,7 +2,7 @@
 
 ## Resumen
 
-El repo quedo listo para continuar en CachyOS con una app Flutter usable sin login obligatorio, idioma ingles por defecto, cambio consistente a espanol desde el selector `EN / ESP`, dark mode activo, top bar global con `back/home/menu`, comidas manuales persistidas localmente, resumen diario por fecha, peso diario, macros extendidas locales, registro manual de gym con sets/peso por fecha, edicion de entrenamientos, objetivos diarios segun goal, pantalla separada de progreso con filtro por ejercicio y metricas de fuerza mas utiles, y backend de catalogo compartido + analisis AI por foto ya migrado a OpenRouter.
+El repo quedo listo para continuar en CachyOS con una app Flutter usable sin login obligatorio, idioma ingles por defecto, cambio consistente a espanol desde el selector `EN / ESP`, dark mode activo, top bar global con `back/home/menu`, comidas manuales persistidas localmente, resumen diario por fecha, peso diario, macros extendidas locales, registro manual de gym con sets/peso por fecha, edicion de entrenamientos, objetivos diarios segun goal, pantalla separada de progreso con filtro por ejercicio y metricas de fuerza mas utiles, backend de catalogo compartido + analisis AI por foto ya migrado a OpenRouter, y timers de workout validados en dispositivo con alertas de sonido/vibracion.
 
 Ultimo estado exacto antes de pausar:
 
@@ -13,6 +13,7 @@ Ultimo estado exacto antes de pausar:
 - El proveedor elegido para esta iteracion es `OpenRouter` con `qwen/qwen3-vl-8b-instruct` por disponibilidad real validada.
 - La prueba end-to-end real quedo pendiente por falta de variables `SUPABASE_URL` y `SUPABASE_ANON_KEY` en la shell actual y por faltar cargar/deployar los secrets de OpenRouter en Supabase.
 - La API key real no esta guardada en el repo y debe recargarse manualmente como variable de entorno al retomar.
+- En el telefono Android `SM S916B` ya quedaron probados en flujo real: instalacion debug, arranque app, timer de descanso, preview automatico de sonido al seleccionar alerta y vibracion al llegar `REST` a `0`.
 
 ## Estado de codigo
 
@@ -147,6 +148,28 @@ Ultimo estado exacto antes de pausar:
   - verificacion explicita de persistencia local de `RPE` por set.
 - `mobile/fitness_app/test/features/workout/manual_workout_screen_test.dart`
   - test del flujo UI para crear multiples sets iguales desde el dialogo.
+- `mobile/fitness_app/lib/features/workout/domain/manual_workout_session.dart`
+  - nuevos campos persistidos para `totalDurationSeconds`, `activeDurationSeconds` y `restDurationSeconds`.
+- `mobile/fitness_app/lib/features/workout/application/manual_workout_controller.dart`
+  - compatibilidad local-first para guardar y leer los nuevos tiempos sin romper sesiones viejas.
+- `mobile/fitness_app/lib/features/workout/presentation/manual_workout_screen.dart`
+  - cronometro general manual de entrenamiento,
+  - timer REST con countdown negativo y overtime positivo,
+  - guardado real de `tiempo total`, `tiempo activo` y `tiempo de descanso`,
+  - alerta de sonido seleccionable,
+  - vibracion opcional al llegar `REST` a `0`,
+  - preview automatico del sonido al cambiar la opcion elegida,
+  - estado visual del boton REST en rojo/verde segun countdown u overtime.
+- `mobile/fitness_app/lib/features/dashboard/application/daily_targets_calculator.dart`
+  - las rutinas recomendadas por goal ya salen en ingles cuando la app esta en ingles; no quedan hardcodeadas solo en espanol.
+- `mobile/fitness_app/lib/shared/app_language.dart`
+  - nuevos textos para alertas REST, sonido, vibracion y labels relacionados.
+- `mobile/fitness_app/pubspec.yaml`
+  - nuevas dependencias `audioplayers` y `vibration` para alertas de descanso en Android.
+- `mobile/fitness_app/test/features/workout/manual_workout_screen_test.dart`
+  - tests nuevos para countdown REST, persistencia de settings de alerta y guardado de tiempos.
+- `mobile/fitness_app/test/features/dashboard/daily_targets_calculator_test.dart`
+  - ajuste para verificar que la recomendacion por defecto sale en ingles.
 - `backend/supabase/functions/_shared/openrouter.ts`
   - helper comun para llamadas a OpenRouter con imagen + JSON.
 - `backend/supabase/functions/food-catalog-upsert/index.ts`
@@ -258,6 +281,30 @@ flutter build apk --debug --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_
 Resultado confirmado de esa prueba:
 
 - `flutter analyze` sigue OK.
+
+## Verificaciones hechas en la sesion mas reciente de Android/workout
+
+En la sesion mas reciente en CachyOS se ejecuto correctamente:
+
+```bash
+flutter pub get
+dart format lib test
+flutter analyze
+flutter test test/features/workout/manual_workout_screen_test.dart
+flutter test test/features/workout/manual_workout_controller_test.dart
+flutter test test/features/dashboard/daily_targets_calculator_test.dart
+flutter build apk --debug --target-platform android-arm64
+flutter install --debug -d "adb-RZCW82F6TRL-J7io0E._adb-tls-connect._tcp"
+flutter run -d "adb-RZCW82F6TRL-J7io0E._adb-tls-connect._tcp"
+```
+
+Resultado confirmado:
+
+- El primer intento de instalacion debug fallo por `INSTALL_FAILED_NO_MATCHING_ABIS` porque el APK viejo solo traia `x86_64`; se resolvio recompilando para `android-arm64`.
+- La app debug quedo instalada y abierta correctamente en `SM S916B`.
+- El preview automatico del sonido REST al cambiar selector quedo probado en dispositivo.
+- La vibracion REST al llegar a `0` quedo confirmada por el usuario en dispositivo.
+- El flujo actual de workout timer/rest timer se considera funcional en Android real.
 - `flutter test` sigue OK.
 - La app Flutter arranca en Linux y llega a inicializar Supabase cuando se le pasan `--dart-define`.
 - En Windows ya se valido `SUPABASE_ACCESS_TOKEN`, `SUPABASE_URL` y `SUPABASE_ANON_KEY` reales durante la sesion, pero no quedaron persistidos en archivos del repo.
@@ -298,17 +345,15 @@ Smoke tests remotos confirmados:
 
 ## Pendientes inmediatos
 
-1. Probar en Android que el nuevo cronometro de sesion y el cronometro de descanso de workout se comportan bien en una sesion real.
-2. Probar en Android varios productos reales con `Scan barcode` y confirmar autocompletado correcto de nombre/macros tanto para `Open Food Facts` como para `USDA` cuando corresponda.
-3. Probar en Android con foto real que `manual food entry` guarda la foto, la muestra en la nueva galeria y deja lanzar `Analyze with AI`.
-4. Probar end-to-end la pantalla Flutter del catalogo compartido con una imagen real y la build Android/web ya configurada con Supabase.
-5. Probar end-to-end el boton `Analyze with AI` en `manual food entry` con una foto valida de comida.
-6. Validar en movil la UX nueva de workout: `muscle group -> exercise`, sets multiples, selector RPE y timers.
-7. Si OpenRouter devuelve respuestas incompletas en casos reales, ajustar prompt/parsing sin reabrir analisis ya cerrados.
-8. Reintroducir autenticacion en una proxima iteracion sin Auth0, probablemente sobre Supabase o guest identity persistente.
-9. Conectar `manual food entry` a persistencia remota cuando quede definido el modelo final de identidad.
-10. Conectar workouts manuales, resultados AI y objetivos diarios a persistencia remota cuando quede definido el modelo final de identidad.
-11. Seguir iterando la UX real cuando llegue el Figma.
+1. Probar en Android varios productos reales con `Scan barcode` y confirmar autocompletado correcto de nombre/macros tanto para `Open Food Facts` como para `USDA` cuando corresponda.
+2. Probar en Android con foto real que `manual food entry` guarda la foto, la muestra en la nueva galeria y deja lanzar `Analyze with AI`.
+3. Probar end-to-end la pantalla Flutter del catalogo compartido con una imagen real y la build Android/web ya configurada con Supabase.
+4. Probar end-to-end el boton `Analyze with AI` en `manual food entry` con una foto valida de comida.
+5. Reintroducir autenticacion en una proxima iteracion sin Auth0, probablemente sobre Supabase o guest identity persistente.
+6. Conectar `manual food entry` a persistencia remota cuando quede definido el modelo final de identidad.
+7. Conectar workouts manuales, resultados AI y objetivos diarios a persistencia remota cuando quede definido el modelo final de identidad.
+8. Integrar los tres tiempos de workout (`total / activo / descanso`) al dashboard y al analisis general antes de evaluar el mejor momento para la mejora total de UI/UX.
+9. Revisar bloqueantes concretos hacia `v1.0`: auth real, sync remoto, pruebas E2E reales, release signing, privacy policy y export/delete de datos.
 
 ## Riesgos o notas
 
@@ -326,6 +371,7 @@ Smoke tests remotos confirmados:
 - La pantalla de progreso de fuerza ahora deja alternar entre `peso maximo`, `volumen` y `1RM estimado`; `1RM` es solo una estimacion educativa.
 - El dashboard y el historial de workout ya muestran `repeticiones` junto a `sets`, lo que mejora la lectura rapida de carga total.
 - `gym tracker` ahora incluye dos ayudas nuevas locales: cronometro de sesion y cronometro de descanso; por ahora no se persisten como eventos separados ni corren en background.
+- El modulo workout ya guarda `totalDurationSeconds`, `activeDurationSeconds` y `restDurationSeconds` por sesion; todavia falta explotarlos en dashboard/analitica.
 - Si la build Android falla tras tocar NDK, correr `flutter clean` antes de volver a `flutter build apk --debug`.
 - Las edge functions `food-catalog-upsert` y `meal-photo-analyze` quedaron migradas localmente a OpenRouter y redeployadas en Supabase.
 - La nueva edge function `food-barcode-lookup` usa `Open Food Facts` como fuente primaria gratuita, cachea en `food_items` y ya incluye fallback `USDA` validado en remoto.
@@ -345,6 +391,9 @@ Smoke tests remotos confirmados:
 - `mobile/fitness_app/dart_defines.local.json` queda ignorado por Git y es el lugar local recomendado para recordar `SUPABASE_URL` y `SUPABASE_ANON_KEY` en esta maquina sin volver a escribir `--dart-define` a mano.
 - Desde ahora el punto de entrada recomendado en Windows es `scripts/flutter/`; no depender de memorizar flags manuales para `android`, `windows` o `edge`.
 - Si se necesita un diagrama entendible del producto para terceros o para NotebookLM, usar `docs/product/status_map.md` como fuente estructurada y `docs/product/status_map_visual.md` como referencia visual local.
+- La rutina recomendada por goal debe mantenerse en ingles cuando el idioma de app este en ingles; ya no asumir textos hardcodeados en espanol en esa parte del dashboard/workout.
+- Para instalar debug en el `SM S916B`, si aparece `INSTALL_FAILED_NO_MATCHING_ABIS`, recompilar con `flutter build apk --debug --target-platform android-arm64` antes de reinstalar.
+- El mejor momento para una mejora total de UI/UX aun no es ahora; primero cerrar auth + sync remoto y conectar los tres tiempos de workout al analisis/dashboard.
 
 ## Regla persistente del usuario
 

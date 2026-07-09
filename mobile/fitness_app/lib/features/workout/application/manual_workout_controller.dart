@@ -60,16 +60,30 @@ class ManualWorkoutSessionsNotifier
     required String title,
     required DateTime date,
     required int durationMinutes,
+    int? totalDurationSeconds,
+    int? activeDurationSeconds,
+    int? restDurationSeconds,
     required int estimatedActiveCalories,
     required List<GymSetEntry> sets,
     String? notes,
   }) async {
+    final resolvedTotalDurationSeconds =
+        totalDurationSeconds ?? durationMinutes * 60;
+    final resolvedRestDurationSeconds = restDurationSeconds ?? 0;
+    final resolvedActiveDurationSeconds = activeDurationSeconds ??
+        (resolvedTotalDurationSeconds >= resolvedRestDurationSeconds
+            ? resolvedTotalDurationSeconds - resolvedRestDurationSeconds
+            : 0);
+
     state = [
       ManualWorkoutSession(
         id: DateTime.now().microsecondsSinceEpoch.toString(),
         title: title,
         dateKey: dateKeyFor(date),
         durationMinutes: durationMinutes,
+        totalDurationSeconds: resolvedTotalDurationSeconds,
+        activeDurationSeconds: resolvedActiveDurationSeconds,
+        restDurationSeconds: resolvedRestDurationSeconds,
         estimatedActiveCalories: estimatedActiveCalories,
         createdAt: date,
         sets: sets,
@@ -86,10 +100,21 @@ class ManualWorkoutSessionsNotifier
     required String title,
     required DateTime date,
     required int durationMinutes,
+    int? totalDurationSeconds,
+    int? activeDurationSeconds,
+    int? restDurationSeconds,
     required int estimatedActiveCalories,
     required List<GymSetEntry> sets,
     String? notes,
   }) async {
+    final resolvedTotalDurationSeconds =
+        totalDurationSeconds ?? durationMinutes * 60;
+    final resolvedRestDurationSeconds = restDurationSeconds ?? 0;
+    final resolvedActiveDurationSeconds = activeDurationSeconds ??
+        (resolvedTotalDurationSeconds >= resolvedRestDurationSeconds
+            ? resolvedTotalDurationSeconds - resolvedRestDurationSeconds
+            : 0);
+
     state = [
       for (final entry in state)
         if (entry.id == id)
@@ -98,6 +123,9 @@ class ManualWorkoutSessionsNotifier
             title: title,
             dateKey: dateKeyFor(date),
             durationMinutes: durationMinutes,
+            totalDurationSeconds: resolvedTotalDurationSeconds,
+            activeDurationSeconds: resolvedActiveDurationSeconds,
+            restDurationSeconds: resolvedRestDurationSeconds,
             estimatedActiveCalories: estimatedActiveCalories,
             createdAt: date,
             sets: sets,

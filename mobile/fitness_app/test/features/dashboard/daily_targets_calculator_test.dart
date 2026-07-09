@@ -35,7 +35,8 @@ void main() {
     expect(calorieAdjustmentForGoal('gain_muscle'), 200);
 
     final recommendation = recommendationForGoal('gain_muscle');
-    expect(recommendation.routineName, 'Upper / Lower 4 dias');
+    expect(recommendation.routineName, 'Upper / Lower 4 days');
+    expect(recommendation.exercises.first, 'Bench press 4x6-8');
     expect(recommendation.exercises, isNotEmpty);
   });
 

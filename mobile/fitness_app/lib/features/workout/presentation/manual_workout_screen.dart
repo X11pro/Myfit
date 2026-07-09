@@ -1,8 +1,13 @@
 import 'dart:async';
+import 'dart:math' as math;
+import 'dart:typed_data';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vibration/vibration.dart';
 
 import '../../../shared/app_language.dart';
 import '../../../shared/widgets/app_top_bar.dart';
@@ -23,8 +28,31 @@ class ManualWorkoutScreen extends ConsumerStatefulWidget {
 }
 
 class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
+  static const _restAlertEnabledStorageKey =
+      'manual_workout_rest_alert_enabled';
+  static const _restAlertVibrationStorageKey =
+      'manual_workout_rest_alert_vibration_enabled';
+  static const _restAlertVolumeStorageKey = 'manual_workout_rest_alert_volume';
+  static const _restAlertSoundStorageKey = 'manual_workout_rest_alert_sound';
   static const _rpeOptions = <double>[6, 7, 7.5, 8, 8.5, 9, 9.5, 10];
   static const _customExerciseValue = '__custom_exercise__';
+  static final Map<_RestAlertSoundProfile, Uint8List> _restAlertSoundBytes = {
+    _RestAlertSoundProfile.whistle: _buildRestAlertSoundBytes(
+      startFrequency: 1350,
+      endFrequency: 1700,
+      durationMs: 280,
+    ),
+    _RestAlertSoundProfile.chirp: _buildRestAlertSoundBytes(
+      startFrequency: 1100,
+      endFrequency: 2200,
+      durationMs: 220,
+    ),
+    _RestAlertSoundProfile.ping: _buildRestAlertSoundBytes(
+      startFrequency: 920,
+      endFrequency: 920,
+      durationMs: 360,
+    ),
+  };
   static const _muscleGroupExercises = <String, List<String>>{
     'Chest': ['Bench press', 'Incline dumbbell press', 'Chest fly', 'Dips'],
     'Back': ['Pull up', 'Barbell row', 'Lat pulldown', 'Seated cable row'],
@@ -55,24 +83,47 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
   final _durationController = TextEditingController();
   final _caloriesController = TextEditingController();
   final _notesController = TextEditingController();
+  final _restGoalController = TextEditingController(text: '90');
   DateTime _selectedDate = DateTime.now();
   final List<GymSetEntry> _draftSets = [];
   Timer? _sessionTimer;
   Timer? _restTimer;
-  DateTime? _sessionStartedAt;
-  DateTime? _restStartedAt;
+  AudioPlayer? _restAlertPlayer;
   Duration _sessionElapsed = Duration.zero;
-  Duration _restElapsed = Duration.zero;
+  Duration _restAccumulated = Duration.zero;
+  Duration _restCurrentElapsed = Duration.zero;
+  bool _restBlinkOn = false;
+  bool _restAlertEnabled = false;
+  bool _restVibrationEnabled = false;
+  double _restAlertVolume = 0.7;
+  _RestAlertSoundProfile _restAlertSound = _RestAlertSoundProfile.whistle;
+  bool _restAlertPlayedForCurrentCycle = false;
 
   bool get _isEditing => widget.session != null;
   bool get _isSessionRunning => _sessionTimer != null;
   bool get _isRestRunning => _restTimer != null;
+  Duration get _restTargetDuration {
+    final seconds = int.tryParse(_restGoalController.text.trim()) ?? 0;
+    return Duration(seconds: math.max(0, seconds));
+  }
+
+  Duration get _totalRestElapsed =>
+      _restAccumulated + (_isRestRunning ? _restCurrentElapsed : Duration.zero);
+
+  Duration get _activeTrainingElapsed {
+    final difference = _sessionElapsed - _totalRestElapsed;
+    return difference.isNegative ? Duration.zero : difference;
+  }
+
+  bool get _isRestOverTarget =>
+      _isRestRunning && _restCurrentElapsed >= _restTargetDuration;
 
   @override
   void initState() {
     super.initState();
 
     final session = widget.session;
+    unawaited(_loadRestAlertPreferences());
     if (session == null) {
       _titleController.text =
           AppStrings(ref.read(appLanguageProvider)).defaultWorkoutTitle;
@@ -85,7 +136,9 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
     _notesController.text = session.notes ?? '';
     _selectedDate = session.createdAt;
     _draftSets.addAll(session.sets);
-    _sessionElapsed = Duration(minutes: session.durationMinutes);
+    _sessionElapsed = Duration(seconds: session.totalDurationSeconds);
+    _restAccumulated = Duration(seconds: session.restDurationSeconds);
+    _durationController.text = _sessionElapsed.inMinutes.toString();
   }
 
   @override
@@ -96,6 +149,8 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
     _durationController.dispose();
     _caloriesController.dispose();
     _notesController.dispose();
+    _restGoalController.dispose();
+    unawaited(_restAlertPlayer?.dispose());
     super.dispose();
   }
 
@@ -151,15 +206,19 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                   ),
                   const SizedBox(height: 16),
                   _TimerSummaryCard(
-                    title: strings.workoutSessionTimerTitle,
+                    title: strings.workoutTimelineTitle,
                     timeText: _formatSessionDuration(_sessionElapsed),
+                    primaryKey: const Key('workout-session-button'),
+                    detailLines: [
+                      '${strings.totalGymTimeLabel}: ${_formatSessionDuration(_sessionElapsed)}',
+                      '${strings.activeTrainingTimeLabel}: ${_formatSessionDuration(_activeTrainingElapsed)}',
+                      '${strings.totalRestTimeLabel}: ${_formatSessionDuration(_totalRestElapsed)}',
+                    ],
                     primaryLabel: _isSessionRunning
-                        ? strings.pauseTimerButton
-                        : (_sessionElapsed > Duration.zero
-                              ? strings.resumeTimerButton
-                              : strings.startTimerButton),
+                        ? strings.stopTimerButton
+                        : strings.startTimerButton,
                     onPrimaryPressed: _isSessionRunning
-                        ? _pauseSessionTimer
+                        ? _stopSessionTimer
                         : _startSessionTimer,
                     secondaryLabel: strings.resetTimerButton,
                     onSecondaryPressed: _sessionElapsed > Duration.zero
@@ -169,18 +228,107 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                   const SizedBox(height: 12),
                   _TimerSummaryCard(
                     title: strings.restTimerTitle,
-                    timeText: _formatRestDuration(_restElapsed),
-                    primaryLabel: _isRestRunning
-                        ? strings.pauseTimerButton
-                        : (_restElapsed > Duration.zero
-                              ? strings.resumeTimerButton
-                              : strings.startRestButton),
-                    onPrimaryPressed:
-                        _isRestRunning ? _pauseRestTimer : _startRestTimer,
+                    timeText: _formatRestCycleDuration(),
+                    primaryKey: const Key('rest-toggle-button'),
+                    detailLines: [
+                      '${strings.currentRestCycleLabel}: ${_formatRestCycleDuration()}',
+                      '${strings.totalRestTimeLabel}: ${_formatSessionDuration(_totalRestElapsed)}',
+                      _restStateLabel(strings),
+                    ],
+                    leading: TextField(
+                      key: const Key('rest-goal-seconds-field'),
+                      controller: _restGoalController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: strings.restGoalSecondsLabel,
+                      ),
+                    ),
+                    footer: Column(
+                      children: [
+                        SwitchListTile(
+                          key: const Key('rest-alert-toggle'),
+                          contentPadding: EdgeInsets.zero,
+                          value: _restAlertEnabled,
+                          onChanged: _setRestAlertEnabled,
+                          title: Text(strings.restSoundToggleLabel),
+                          subtitle: Text(strings.restSoundToggleHelp),
+                          secondary: const Icon(
+                            Icons.notifications_active_outlined,
+                          ),
+                        ),
+                        SwitchListTile(
+                          key: const Key('rest-vibration-toggle'),
+                          contentPadding: EdgeInsets.zero,
+                          value: _restVibrationEnabled,
+                          onChanged: _setRestVibrationEnabled,
+                          title: Text(strings.restVibrationToggleLabel),
+                          subtitle: Text(strings.restVibrationToggleHelp),
+                          secondary: const Icon(Icons.vibration_outlined),
+                        ),
+                        DropdownButtonFormField<_RestAlertSoundProfile>(
+                          key: const Key('rest-sound-dropdown'),
+                          value: _restAlertSound,
+                          decoration: InputDecoration(
+                            labelText: strings.restSoundProfileLabel,
+                            helperText: strings.restSoundProfileHelp,
+                          ),
+                          items: _RestAlertSoundProfile.values
+                              .map(
+                                (profile) => DropdownMenuItem(
+                                  value: profile,
+                                  child: Text(
+                                      _labelForRestSound(profile, strings)),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (value) {
+                            if (value != null) {
+                              _setRestAlertSound(value, preview: true);
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(strings.restAlertVolumeLabel),
+                                  Text(
+                                    strings.restAlertVolumeValueLabel(
+                                      (_restAlertVolume * 100).round(),
+                                    ),
+                                    style:
+                                        Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Expanded(
+                              child: Slider(
+                                key: const Key('rest-volume-slider'),
+                                value: _restAlertVolume,
+                                onChanged: _setRestAlertVolume,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    primaryLabel: strings.restButton,
+                    onPrimaryPressed: _toggleRestTimer,
+                    primaryBackgroundColor: _restPrimaryColor(context),
+                    primaryForegroundColor: Colors.white,
+                    blinkPrimary: _isRestRunning,
+                    primaryVisible: !_isRestRunning || _restBlinkOn,
                     secondaryLabel: strings.resetTimerButton,
-                    onSecondaryPressed:
-                        _restElapsed > Duration.zero ? _resetRestTimer : null,
+                    onSecondaryPressed: _totalRestElapsed > Duration.zero
+                        ? _resetRestTimer
+                        : null,
                   ),
+                  const SizedBox(height: 8),
+                  Text(strings.nextRestHint),
                   const SizedBox(height: 16),
                   Row(
                     children: [
@@ -262,6 +410,7 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton(
+                      key: const Key('save-workout-button'),
                       onPressed: _saveWorkout,
                       child: Text(
                         _isEditing
@@ -644,7 +793,10 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
       _reindexSets();
     });
 
-    _startRestTimer(reset: true);
+    if (_isRestRunning) {
+      _finishRestCycle();
+    }
+    _startRestTimer();
   }
 
   List<String> _buildMuscleGroupOptions(String? existingMuscleGroup) {
@@ -703,7 +855,10 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
       _reindexSets();
     });
 
-    _startRestTimer(reset: true);
+    if (_isRestRunning) {
+      _finishRestCycle();
+    }
+    _startRestTimer();
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -744,6 +899,26 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
       return;
     }
 
+    if (_isRestRunning) {
+      _finishRestCycle();
+    }
+
+    if (_isSessionRunning) {
+      _stopSessionTimer();
+    }
+
+    final effectiveTotalDuration = _sessionElapsed > Duration.zero
+        ? _sessionElapsed
+        : Duration(minutes: duration);
+    final effectiveRestDuration = _totalRestElapsed > effectiveTotalDuration
+        ? effectiveTotalDuration
+        : _totalRestElapsed;
+    final effectiveActiveDuration =
+        effectiveTotalDuration - effectiveRestDuration;
+    final effectiveDurationMinutes = effectiveTotalDuration.inMinutes > 0
+        ? effectiveTotalDuration.inMinutes
+        : duration;
+
     final notifier = ref.read(manualWorkoutSessionsProvider.notifier);
     final notes = _notesController.text.trim().isEmpty
         ? null
@@ -754,7 +929,10 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
         id: widget.session!.id,
         title: title,
         date: _selectedDate,
-        durationMinutes: duration,
+        durationMinutes: effectiveDurationMinutes,
+        totalDurationSeconds: effectiveTotalDuration.inSeconds,
+        activeDurationSeconds: effectiveActiveDuration.inSeconds,
+        restDurationSeconds: effectiveRestDuration.inSeconds,
         estimatedActiveCalories: calories,
         sets: List<GymSetEntry>.from(_draftSets),
         notes: notes,
@@ -763,7 +941,10 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
       await notifier.addSession(
         title: title,
         date: _selectedDate,
-        durationMinutes: duration,
+        durationMinutes: effectiveDurationMinutes,
+        totalDurationSeconds: effectiveTotalDuration.inSeconds,
+        activeDurationSeconds: effectiveActiveDuration.inSeconds,
+        restDurationSeconds: effectiveRestDuration.inSeconds,
         estimatedActiveCalories: calories,
         sets: List<GymSetEntry>.from(_draftSets),
         notes: notes,
@@ -788,73 +969,242 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
 
   void _startSessionTimer() {
     _sessionTimer?.cancel();
-    _sessionStartedAt = DateTime.now().subtract(_sessionElapsed);
     _sessionTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted || _sessionStartedAt == null) {
+      if (!mounted) {
         return;
       }
 
       setState(() {
-        _sessionElapsed = DateTime.now().difference(_sessionStartedAt!);
+        _sessionElapsed += const Duration(seconds: 1);
         _syncDurationFieldWithTimer();
       });
     });
     setState(() {});
   }
 
-  void _pauseSessionTimer() {
+  void _stopSessionTimer() {
+    _finishRestCycle();
     _sessionTimer?.cancel();
     _sessionTimer = null;
-    _sessionStartedAt = null;
     setState(_syncDurationFieldWithTimer);
   }
 
   void _resetSessionTimer() {
     _sessionTimer?.cancel();
     _sessionTimer = null;
-    _sessionStartedAt = null;
+    _restTimer?.cancel();
+    _restTimer = null;
     setState(() {
       _sessionElapsed = Duration.zero;
+      _restAccumulated = Duration.zero;
+      _restCurrentElapsed = Duration.zero;
+      _restBlinkOn = false;
       _durationController.text = '0';
     });
   }
 
-  void _startRestTimer({bool reset = false}) {
-    _restTimer?.cancel();
-    if (reset) {
-      _restElapsed = Duration.zero;
+  void _toggleRestTimer() {
+    if (_isRestRunning) {
+      _finishRestCycle();
+      return;
     }
-    _restStartedAt = DateTime.now().subtract(_restElapsed);
-    _restTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted || _restStartedAt == null) {
+
+    _startRestTimer();
+  }
+
+  void _startRestTimer() {
+    _restTimer?.cancel();
+    _restCurrentElapsed = Duration.zero;
+    _restAlertPlayedForCurrentCycle = false;
+    _restTimer = Timer.periodic(const Duration(milliseconds: 500), (_) {
+      if (!mounted) {
         return;
       }
 
       setState(() {
-        _restElapsed = DateTime.now().difference(_restStartedAt!);
+        _restCurrentElapsed += const Duration(milliseconds: 500);
+        _restBlinkOn = !_restBlinkOn;
       });
+
+      _maybePlayRestAlert();
     });
-    setState(() {});
+    setState(() {
+      _restBlinkOn = true;
+    });
   }
 
-  void _pauseRestTimer() {
+  void _finishRestCycle() {
     _restTimer?.cancel();
     _restTimer = null;
-    _restStartedAt = null;
-    setState(() {});
+    setState(() {
+      _restAccumulated += _restCurrentElapsed;
+      _restCurrentElapsed = Duration.zero;
+      _restBlinkOn = false;
+    });
   }
 
   void _resetRestTimer() {
     _restTimer?.cancel();
     _restTimer = null;
-    _restStartedAt = null;
     setState(() {
-      _restElapsed = Duration.zero;
+      _restAccumulated = Duration.zero;
+      _restCurrentElapsed = Duration.zero;
+      _restBlinkOn = false;
+      _restAlertPlayedForCurrentCycle = false;
     });
+  }
+
+  Future<void> _loadRestAlertPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    final enabled = prefs.getBool(_restAlertEnabledStorageKey) ?? false;
+    final vibration = prefs.getBool(_restAlertVibrationStorageKey) ?? false;
+    final volume = prefs.getDouble(_restAlertVolumeStorageKey) ?? 0.7;
+    final soundId = prefs.getString(_restAlertSoundStorageKey);
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _restAlertEnabled = enabled;
+      _restVibrationEnabled = vibration;
+      _restAlertVolume = volume.clamp(0.0, 1.0);
+      _restAlertSound = _restAlertSoundProfileFromId(soundId);
+    });
+  }
+
+  Future<void> _setRestAlertEnabled(bool value) async {
+    setState(() {
+      _restAlertEnabled = value;
+    });
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_restAlertEnabledStorageKey, value);
+  }
+
+  Future<void> _setRestVibrationEnabled(bool value) async {
+    setState(() {
+      _restVibrationEnabled = value;
+    });
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_restAlertVibrationStorageKey, value);
+  }
+
+  Future<void> _setRestAlertSound(
+    _RestAlertSoundProfile value, {
+    bool preview = false,
+  }) async {
+    setState(() {
+      _restAlertSound = value;
+    });
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_restAlertSoundStorageKey, value.id);
+
+    if (preview) {
+      await _playCurrentRestAlertSound();
+    }
+  }
+
+  Future<void> _setRestAlertVolume(double value) async {
+    final clamped = value.clamp(0.0, 1.0);
+    setState(() {
+      _restAlertVolume = clamped;
+    });
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_restAlertVolumeStorageKey, clamped);
+  }
+
+  Future<void> _maybePlayRestAlert() async {
+    if (!_restAlertEnabled || _restAlertPlayedForCurrentCycle) {
+      return;
+    }
+
+    final target = _restTargetDuration;
+    if (target <= Duration.zero || _restCurrentElapsed < target) {
+      return;
+    }
+
+    _restAlertPlayedForCurrentCycle = true;
+    await _playCurrentRestAlertSound();
+
+    if (_restVibrationEnabled) {
+      await _triggerRestVibration();
+    }
+  }
+
+  Future<void> _playCurrentRestAlertSound() async {
+    _restAlertPlayer ??= AudioPlayer();
+
+    try {
+      await _restAlertPlayer!.stop();
+      await _restAlertPlayer!.setVolume(_restAlertVolume);
+      await _restAlertPlayer!.play(
+        BytesSource(_restAlertSoundBytes[_restAlertSound]!),
+      );
+    } catch (_) {
+      // Ignore audio failures to avoid blocking workout logging.
+    }
+  }
+
+  Future<void> _triggerRestVibration() async {
+    try {
+      final hasVibrator = await Vibration.hasVibrator();
+      if (!hasVibrator) {
+        return;
+      }
+
+      await Vibration.vibrate(duration: 180, amplitude: 180);
+    } catch (_) {
+      // Ignore vibration failures to avoid blocking workout logging.
+    }
+  }
+
+  String _labelForRestSound(
+    _RestAlertSoundProfile profile,
+    AppStrings strings,
+  ) {
+    switch (profile) {
+      case _RestAlertSoundProfile.whistle:
+        return strings.restSoundWhistleLabel;
+      case _RestAlertSoundProfile.chirp:
+        return strings.restSoundChirpLabel;
+      case _RestAlertSoundProfile.ping:
+        return strings.restSoundPingLabel;
+    }
+  }
+
+  _RestAlertSoundProfile _restAlertSoundProfileFromId(String? id) {
+    for (final profile in _RestAlertSoundProfile.values) {
+      if (profile.id == id) {
+        return profile;
+      }
+    }
+
+    return _RestAlertSoundProfile.whistle;
   }
 
   void _syncDurationFieldWithTimer() {
     _durationController.text = _sessionElapsed.inMinutes.toString();
+  }
+
+  String _restStateLabel(AppStrings strings) {
+    if (_isRestRunning) {
+      return _isRestOverTarget
+          ? strings.restOvertimeState
+          : strings.restCountdownState;
+    }
+
+    return strings.restIdleState;
+  }
+
+  Color _restPrimaryColor(BuildContext context) {
+    if (!_isRestRunning) {
+      return Theme.of(context).colorScheme.primary;
+    }
+
+    return _isRestOverTarget ? Colors.green : Colors.red;
   }
 
   String _formatSessionDuration(Duration value) {
@@ -871,6 +1221,15 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
     final minutes = value.inMinutes.toString().padLeft(2, '0');
     final seconds = value.inSeconds.remainder(60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
+  }
+
+  String _formatRestCycleDuration() {
+    final target = _restTargetDuration;
+    final delta = _isRestOverTarget
+        ? _restCurrentElapsed - target
+        : target - _restCurrentElapsed;
+    final sign = _isRestOverTarget ? '+' : '-';
+    return '$sign${_formatRestDuration(delta)}';
   }
 }
 
@@ -921,16 +1280,32 @@ class _TimerSummaryCard extends StatelessWidget {
   const _TimerSummaryCard({
     required this.title,
     required this.timeText,
+    this.detailLines = const [],
+    this.leading,
+    this.footer,
+    this.primaryKey,
     required this.primaryLabel,
     required this.onPrimaryPressed,
+    this.primaryBackgroundColor,
+    this.primaryForegroundColor,
+    this.blinkPrimary = false,
+    this.primaryVisible = true,
     required this.secondaryLabel,
     required this.onSecondaryPressed,
   });
 
   final String title;
   final String timeText;
+  final List<String> detailLines;
+  final Widget? leading;
+  final Widget? footer;
+  final Key? primaryKey;
   final String primaryLabel;
   final VoidCallback onPrimaryPressed;
+  final Color? primaryBackgroundColor;
+  final Color? primaryForegroundColor;
+  final bool blinkPrimary;
+  final bool primaryVisible;
   final String secondaryLabel;
   final VoidCallback? onSecondaryPressed;
 
@@ -949,14 +1324,39 @@ class _TimerSummaryCard extends StatelessWidget {
           Text(title, style: Theme.of(context).textTheme.titleSmall),
           const SizedBox(height: 8),
           Text(timeText, style: Theme.of(context).textTheme.headlineMedium),
+          if (detailLines.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            for (final line in detailLines)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(line),
+              ),
+          ],
+          if (leading != null) ...[
+            const SizedBox(height: 12),
+            leading!,
+          ],
+          if (footer != null) ...[
+            const SizedBox(height: 8),
+            footer!,
+          ],
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
-              FilledButton.tonal(
-                onPressed: onPrimaryPressed,
-                child: Text(primaryLabel),
+              AnimatedOpacity(
+                duration: const Duration(milliseconds: 200),
+                opacity: blinkPrimary ? (primaryVisible ? 1 : 0.35) : 1,
+                child: FilledButton(
+                  key: primaryKey,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: primaryBackgroundColor,
+                    foregroundColor: primaryForegroundColor,
+                  ),
+                  onPressed: onPrimaryPressed,
+                  child: Text(primaryLabel),
+                ),
               ),
               OutlinedButton(
                 onPressed: onSecondaryPressed,
@@ -968,6 +1368,60 @@ class _TimerSummaryCard extends StatelessWidget {
       ),
     );
   }
+}
+
+enum _RestAlertSoundProfile {
+  whistle('whistle'),
+  chirp('chirp'),
+  ping('ping');
+
+  const _RestAlertSoundProfile(this.id);
+
+  final String id;
+}
+
+Uint8List _buildRestAlertSoundBytes({
+  required double startFrequency,
+  required double endFrequency,
+  required int durationMs,
+}) {
+  const sampleRate = 22050;
+  final sampleCount = sampleRate * durationMs ~/ 1000;
+  final dataLength = sampleCount * 2;
+  final byteData = ByteData(44 + dataLength);
+
+  void writeString(int offset, String value) {
+    for (var index = 0; index < value.length; index++) {
+      byteData.setUint8(offset + index, value.codeUnitAt(index));
+    }
+  }
+
+  writeString(0, 'RIFF');
+  byteData.setUint32(4, 36 + dataLength, Endian.little);
+  writeString(8, 'WAVE');
+  writeString(12, 'fmt ');
+  byteData.setUint32(16, 16, Endian.little);
+  byteData.setUint16(20, 1, Endian.little);
+  byteData.setUint16(22, 1, Endian.little);
+  byteData.setUint32(24, sampleRate, Endian.little);
+  byteData.setUint32(28, sampleRate * 2, Endian.little);
+  byteData.setUint16(32, 2, Endian.little);
+  byteData.setUint16(34, 16, Endian.little);
+  writeString(36, 'data');
+  byteData.setUint32(40, dataLength, Endian.little);
+
+  for (var index = 0; index < sampleCount; index++) {
+    final time = index / sampleRate;
+    final progress = index / sampleCount;
+    final frequency =
+        startFrequency + ((endFrequency - startFrequency) * progress);
+    final envelope = math.sin(math.pi * progress);
+    final sample = math.sin(2 * math.pi * frequency * time) * envelope * 0.45;
+    final pcm = (sample * 32767).round().clamp(-32768, 32767);
+    byteData.setInt16(44 + (index * 2), pcm, Endian.little);
+  }
+
+  return byteData.buffer.asUint8List();
 }
 
 class _DraftSetTile extends ConsumerWidget {
@@ -1042,6 +1496,20 @@ class _WorkoutHistoryCard extends ConsumerWidget {
                         session.totalSets,
                         session.totalReps,
                       )),
+                      const SizedBox(height: 4),
+                      Text(
+                        strings.workoutTimeSummary(
+                          total: _formatTimelineDuration(
+                            Duration(seconds: session.totalDurationSeconds),
+                          ),
+                          active: _formatTimelineDuration(
+                            Duration(seconds: session.activeDurationSeconds),
+                          ),
+                          rest: _formatTimelineDuration(
+                            Duration(seconds: session.restDurationSeconds),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -1103,5 +1571,17 @@ class _WorkoutHistoryCard extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  String _formatTimelineDuration(Duration value) {
+    final hours = value.inHours;
+    final minutes = value.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = value.inSeconds.remainder(60).toString().padLeft(2, '0');
+
+    if (hours > 0) {
+      return '$hours:$minutes:$seconds';
+    }
+
+    return '${value.inMinutes.toString().padLeft(2, '0')}:$seconds';
   }
 }

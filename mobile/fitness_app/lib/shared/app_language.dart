@@ -129,18 +129,86 @@ class AppStrings {
   String get workoutSessionTimerTitle =>
       isEnglish ? 'Workout timer' : 'Cronometro de entrenamiento';
 
+  String get workoutTimelineTitle =>
+      isEnglish ? 'Workout timeline' : 'Tiempos del entrenamiento';
+
   String get restTimerTitle =>
       isEnglish ? 'Rest timer' : 'Cronometro de descanso';
 
-  String get startTimerButton => isEnglish ? 'Start timer' : 'Iniciar timer';
+  String get startTimerButton =>
+      isEnglish ? 'Start workout' : 'Iniciar entrenamiento';
+
+  String get stopTimerButton =>
+      isEnglish ? 'Stop workout' : 'Finalizar entrenamiento';
 
   String get startRestButton => isEnglish ? 'Start rest' : 'Iniciar descanso';
+
+  String get restButton => 'REST';
 
   String get pauseTimerButton => isEnglish ? 'Pause' : 'Pausar';
 
   String get resumeTimerButton => isEnglish ? 'Resume' : 'Reanudar';
 
   String get resetTimerButton => isEnglish ? 'Reset' : 'Reiniciar';
+
+  String get totalGymTimeLabel =>
+      isEnglish ? 'Total gym time' : 'Tiempo total en gym';
+
+  String get activeTrainingTimeLabel =>
+      isEnglish ? 'Active training' : 'Tiempo entrenando';
+
+  String get totalRestTimeLabel =>
+      isEnglish ? 'Total rest' : 'Tiempo de descanso';
+
+  String get restGoalSecondsLabel =>
+      isEnglish ? 'Rest target (sec)' : 'Descanso objetivo (seg)';
+
+  String get restSoundToggleLabel =>
+      isEnglish ? 'Rest sound alert' : 'Sonido de alerta en descanso';
+
+  String get restSoundToggleHelp => isEnglish
+      ? 'Play a short whistle when the countdown reaches zero.'
+      : 'Reproduce un silbido corto cuando la cuenta regresiva llega a cero.';
+
+  String get restVibrationToggleLabel =>
+      isEnglish ? 'Rest vibration alert' : 'Vibracion de alerta en descanso';
+
+  String get restVibrationToggleHelp => isEnglish
+      ? 'Vibrate once when the rest countdown reaches zero.'
+      : 'Vibra una vez cuando la cuenta regresiva del descanso llega a cero.';
+
+  String get restSoundProfileLabel =>
+      isEnglish ? 'Alert sound' : 'Sonido de alerta';
+
+  String get restSoundProfileHelp => isEnglish
+      ? 'Choose which sound plays when rest time ends.'
+      : 'Elige que sonido se reproduce cuando termina el descanso.';
+
+  String get restAlertVolumeLabel =>
+      isEnglish ? 'Alert volume' : 'Volumen de alerta';
+
+  String restAlertVolumeValueLabel(int percent) =>
+      isEnglish ? '$percent% volume' : '$percent% de volumen';
+
+  String get restSoundWhistleLabel => isEnglish ? 'Whistle' : 'Silbido';
+
+  String get restSoundChirpLabel => isEnglish ? 'Chirp' : 'Chirrido';
+
+  String get restSoundPingLabel => isEnglish ? 'Ping' : 'Ping';
+
+  String get currentRestCycleLabel =>
+      isEnglish ? 'Current rest cycle' : 'Descanso actual';
+
+  String get nextRestHint => isEnglish
+      ? 'Press REST at the start of each break.'
+      : 'Apreta REST al empezar cada descanso.';
+
+  String get restCountdownState =>
+      isEnglish ? 'Counting down' : 'Cuenta regresiva';
+
+  String get restOvertimeState => isEnglish ? 'Over target' : 'Tiempo excedido';
+
+  String get restIdleState => isEnglish ? 'Ready' : 'Listo';
 
   String get loggedSetsTitle => isEnglish ? 'Logged sets' : 'Sets cargados';
 
@@ -258,6 +326,17 @@ class AppStrings {
 
   String workoutDateSetsSummary(String dateKey, int setCount, int repsCount) =>
       '$dateKey • ${setsCountLabel(setCount)} • ${repsCountLabel(repsCount)}';
+
+  String workoutTimeSummary({
+    required String total,
+    required String active,
+    required String rest,
+  }) {
+    if (isEnglish) {
+      return 'Total $total • Active $active • Rest $rest';
+    }
+    return 'Total $total • Activo $active • Descanso $rest';
+  }
 
   String draftSetSubtitle({
     required int reps,
