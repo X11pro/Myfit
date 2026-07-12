@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -11,28 +13,32 @@ class BarcodeLookupService {
   const BarcodeLookupService();
 
   Future<BarcodeFoodLookupResult?> lookup(String barcode) async {
-    final response = await Supabase.instance.client.functions.invoke(
-      'food-barcode-lookup',
-      body: {
-        'barcode': barcode,
-      },
-    );
+    try {
+      final response = await Supabase.instance.client.functions.invoke(
+        'food-barcode-lookup',
+        body: {
+          'barcode': barcode,
+        },
+      );
 
-    final payload = _responseMap(response.data);
-    final errorMessage = payload['error']?.toString();
-    if (errorMessage != null && errorMessage.trim().isNotEmpty) {
-      throw StateError(errorMessage);
+      final payload = _responseMap(response.data);
+      final errorMessage = payload['error']?.toString();
+      if (errorMessage != null && errorMessage.trim().isNotEmpty) {
+        throw BarcodeLookupException(errorMessage);
+      }
+
+      final food = payload['food'];
+      if (food == null) {
+        return null;
+      }
+
+      return parseFood(
+        food,
+        cached: payload['cached'] == true,
+      );
+    } on FunctionException catch (error) {
+      throw BarcodeLookupException(_messageFromFunctionException(error));
     }
-
-    final food = payload['food'];
-    if (food == null) {
-      return null;
-    }
-
-    return parseFood(
-      food,
-      cached: payload['cached'] == true,
-    );
   }
 
   BarcodeFoodLookupResult parseFood(Object? value, {bool cached = false}) {
@@ -61,6 +67,11 @@ class BarcodeLookupService {
   }
 
   Map<String, dynamic> _responseMap(Object? data) {
+    if (data is String) {
+      final decoded = jsonDecode(data);
+      return _responseMap(decoded);
+    }
+
     if (data is Map<String, dynamic>) {
       return data;
     }
@@ -70,6 +81,32 @@ class BarcodeLookupService {
     }
 
     throw const FormatException('Invalid function response.');
+  }
+
+  String _messageFromFunctionException(FunctionException error) {
+    final details = error.details;
+    if (details == null) {
+      return error.reasonPhrase?.trim().isNotEmpty == true
+          ? error.reasonPhrase!.trim()
+          : 'Barcode lookup failed.';
+    }
+
+    try {
+      final payload = _responseMap(details);
+      final message = payload['error']?.toString().trim();
+      if (message != null && message.isNotEmpty) {
+        return message;
+      }
+    } catch (_) {
+      final text = details.toString().trim();
+      if (text.isNotEmpty) {
+        return text;
+      }
+    }
+
+    return error.reasonPhrase?.trim().isNotEmpty == true
+        ? error.reasonPhrase!.trim()
+        : 'Barcode lookup failed.';
   }
 
   String? _asTrimmedString(Object? value) {
@@ -91,4 +128,13 @@ class BarcodeLookupService {
 
     return null;
   }
+}
+
+class BarcodeLookupException implements Exception {
+  const BarcodeLookupException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
 }

@@ -46,7 +46,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     final strings = stringsFor(ref);
 
     return Scaffold(
-      appBar: AppTopBar(title: strings.setupProfile, strings: strings),
+      appBar: AppTopBar(
+        title: strings.setupProfile,
+        strings: strings,
+        backPath: '/splash',
+      ),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [

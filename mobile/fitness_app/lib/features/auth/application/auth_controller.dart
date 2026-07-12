@@ -2,6 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/app_env.dart';
+import '../../dashboard/application/daily_weight_controller.dart';
+import '../../food/application/manual_food_entries_controller.dart';
+import '../../workout/application/manual_workout_controller.dart';
 import '../../../shared/app_state.dart';
 
 final authControllerProvider = Provider<AuthController>((ref) {
@@ -63,5 +66,11 @@ class AuthController {
     }
 
     await Supabase.instance.client.auth.signOut();
+  }
+
+  Future<void> clearLocalSyncedData() async {
+    _ref.invalidate(dailyWeightEntriesProvider);
+    _ref.invalidate(manualFoodEntriesProvider);
+    _ref.invalidate(manualWorkoutSessionsProvider);
   }
 }

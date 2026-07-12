@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -81,6 +82,7 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
 
   final _titleController = TextEditingController();
   final _durationController = TextEditingController();
+  final _durationFocusNode = FocusNode();
   final _caloriesController = TextEditingController();
   final _notesController = TextEditingController();
   final _restGoalController = TextEditingController(text: '90');
@@ -147,6 +149,7 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
     _restTimer?.cancel();
     _titleController.dispose();
     _durationController.dispose();
+    _durationFocusNode.dispose();
     _caloriesController.dispose();
     _notesController.dispose();
     _restGoalController.dispose();
@@ -335,10 +338,15 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                       Expanded(
                         child: TextField(
                           controller: _durationController,
+                          focusNode: _durationFocusNode,
                           keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly
+                          ],
                           decoration: InputDecoration(
                             labelText: strings.durationMinutesLabel,
                           ),
+                          onChanged: _handleManualDurationChanged,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -999,7 +1007,7 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
       _restAccumulated = Duration.zero;
       _restCurrentElapsed = Duration.zero;
       _restBlinkOn = false;
-      _durationController.text = '0';
+      _durationController.clear();
     });
   }
 
@@ -1186,7 +1194,21 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
   }
 
   void _syncDurationFieldWithTimer() {
+    if (_durationFocusNode.hasFocus) {
+      return;
+    }
     _durationController.text = _sessionElapsed.inMinutes.toString();
+  }
+
+  void _handleManualDurationChanged(String value) {
+    if (_isSessionRunning) {
+      return;
+    }
+
+    final minutes = int.tryParse(value.trim()) ?? 0;
+    setState(() {
+      _sessionElapsed = Duration(minutes: minutes);
+    });
   }
 
   String _restStateLabel(AppStrings strings) {

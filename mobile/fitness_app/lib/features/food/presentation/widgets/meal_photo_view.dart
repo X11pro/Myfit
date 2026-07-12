@@ -50,6 +50,10 @@ class MealPhotoView extends StatelessWidget {
       return MemoryImage(_dataUrlBytes(value));
     }
 
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+      return NetworkImage(value);
+    }
+
     return FileImage(File(value));
   }
 

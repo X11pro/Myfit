@@ -165,6 +165,11 @@ Estado confirmado al cerrar esta sesion:
 - Se regenero `mobile/fitness_app/build/app/outputs/flutter-apk/app-debug.apk` con la galeria incluida.
 - En `SM S916B` ya quedaron probados los timers de workout, el preview automatico del sonido REST al seleccionar alerta y la vibracion al llegar a `0`.
 - El package `vibration` ya esta agregado y funcionando en Android real.
+- La app nueva `release` usa package `com.x11pro.myfit`.
+- El warning de `16 KB compatibility` desaparecio cuando se desinstalo la app vieja `debug` `com.example.fitness_app` y se dejo solo la nueva `release`.
+- `MainActivity` ya esta alineada con el package nuevo; no reintroducir `com.example.fitness_app`.
+- `app-release.apk` ya compila localmente y pasa `zipalign -P 16`.
+- `user-data-manage` ya fue desplegada en Supabase para `export/delete` minimo real por usuario autenticado.
 
 ## 9. Primer objetivo al volver
 
@@ -175,6 +180,7 @@ Seguir el guest flow actual y avanzar estas piezas en orden:
 - prueba real en Android de la nueva galeria local de comidas,
 - validar UX del modulo gym/progreso ya implementado,
 - integrar al dashboard/analisis los tiempos `total / activo / descanso` del workout,
+- ejecutar QA real Android con el checklist nuevo antes de entrar al rediseño total,
 - partir del ultimo punto ya hecho: metricas de fuerza con `peso maximo`, `volumen` y `1RM estimado`,
 - revisar si la siguiente mejora de gym debe ser duplicar set anterior, autocompletar ejercicios recientes o resumen por ejercicio,
 - prueba real del catalogo compartido con OCR/AI ya migrado a OpenRouter,
@@ -204,6 +210,8 @@ Estado funcional actual de la app:
 - selector visual de `RPE` con persistencia por set,
 - cronometro general de entrenamiento con inicio/fin manual,
 - cronometro REST con countdown, overtime, sonido seleccionable, preview automatico y vibracion opcional,
+- meal photos remotas en Storage para usuarios autenticados,
+- export/delete remoto minimo ya disponible desde auth screen,
 - dashboard pulido con CTA principal, secciones plegables y grafico de linea/area,
 - ingles por defecto verificado y cambio consistente a espanol desde `EN / ESP`,
 - pantalla para aportar productos al catalogo compartido,
@@ -263,6 +271,22 @@ cd mobile/fitness_app
 flutter run -d android \
   --dart-define="SUPABASE_URL=$SUPABASE_URL" \
   --dart-define="SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY"
+```
+
+Para release local de verificacion:
+
+```bash
+cd mobile/fitness_app
+flutter build apk --release --target-platform android-arm64
+"$HOME/Android/Sdk/build-tools/36.0.0/zipalign" -c -P 16 -v 4 build/app/outputs/flutter-apk/app-release.apk
+adb install -r build/app/outputs/flutter-apk/app-release.apk
+```
+
+Si el telefono muestra un warning viejo, revisar primero si siguen instaladas ambas apps:
+
+```bash
+adb shell pm list packages | rg "fitness_app|myfit"
+adb uninstall com.example.fitness_app
 ```
 
 Si vas a reinstalar la build debug en `SM S916B` y aparece un error de ABI, usar:

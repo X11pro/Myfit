@@ -278,7 +278,7 @@ class _SharedFoodCatalogScreenState
         _qualityReason = food['nutritionQualityReason']?.toString();
       });
     } catch (error) {
-      _showMessage(error.toString());
+      _showMessage(_userFacingError(error, strings));
     } finally {
       if (mounted) {
         setState(() => _isBusy = false);
@@ -491,7 +491,7 @@ class _SharedFoodCatalogScreenState
       return Map<String, dynamic>.from(data);
     }
 
-    throw StateError('Invalid function response.');
+    throw StateError(stringsFor(ref).invalidServerResponseMessage);
   }
 
   Map<String, dynamic> _nestedMap(
@@ -516,6 +516,24 @@ class _SharedFoodCatalogScreenState
     if (error != null) {
       throw StateError(error.toString());
     }
+  }
+
+  String _userFacingError(Object error, AppStrings strings) {
+    final message = error.toString();
+    final normalized = message.toLowerCase();
+
+    if (normalized.contains('socketexception') ||
+        normalized.contains('failed host lookup') ||
+        normalized.contains('connection closed') ||
+        normalized.contains('timeout')) {
+      return strings.internetConnectionError;
+    }
+
+    if (normalized.contains('invalid response')) {
+      return strings.invalidServerResponseMessage;
+    }
+
+    return strings.remoteSaveFailedMessage;
   }
 
   void _showMessage(String message) {

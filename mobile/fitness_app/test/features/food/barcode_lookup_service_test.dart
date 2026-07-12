@@ -40,4 +40,23 @@ void main() {
       throwsFormatException,
     );
   });
+
+  test('parseFood accepts JSON string payloads', () {
+    final result = service.parseFood('''
+      {
+        "name": "Protein Bar",
+        "brand": "Demo",
+        "source": "open_food_facts",
+        "sourceId": "7891234567890",
+        "caloriesPer100g": 380,
+        "proteinPer100g": 24,
+        "confidence": 0.91
+      }
+    ''');
+
+    expect(result.name, 'Protein Bar');
+    expect(result.brand, 'Demo');
+    expect(result.sourceId, '7891234567890');
+    expect(result.confidence, 0.91);
+  });
 }

@@ -78,13 +78,16 @@ class SplashScreen extends ConsumerWidget {
                         : '/onboarding',
                   ),
                   child: Text(
-                    appState.isOnboardingComplete
-                        ? strings.continueGuest
-                        : strings.setupProfile,
+                    appState.isAuthenticated
+                        ? strings.openProfileOrDashboardButton
+                        : (appState.isOnboardingComplete
+                            ? strings.continueGuest
+                            : strings.setupProfile),
                   ),
                 ),
               ),
-              if (!appState.isOnboardingComplete) ...[
+              if (!appState.isAuthenticated &&
+                  !appState.isOnboardingComplete) ...[
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,

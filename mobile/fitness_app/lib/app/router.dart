@@ -15,9 +15,7 @@ import '../features/workout/presentation/manual_workout_screen.dart';
 import '../shared/app_state.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final appState = ref.watch(appStateProvider);
-
-  return GoRouter(
+  final router = GoRouter(
     initialLocation: '/splash',
     routes: [
       GoRoute(
@@ -26,6 +24,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           path: '/onboarding',
           builder: (context, state) => const OnboardingScreen()),
       GoRoute(path: '/auth', builder: (context, state) => const LoginScreen()),
+      GoRoute(
+        path: '/auth/verify',
+        builder: (context, state) => LoginScreen(
+          initialEmail: state.uri.queryParameters['email'] ?? '',
+          startInCodeMode: true,
+        ),
+      ),
       GoRoute(
           path: '/dashboard',
           builder: (context, state) => const DashboardScreen()),
@@ -57,6 +62,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
     ],
     redirect: (_, state) {
+      final appState = ref.read(appStateProvider);
+
       if (state.matchedLocation == '/') {
         return '/splash';
       }
@@ -74,4 +81,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
   );
+
+  ref.listen<AppState>(appStateProvider, (_, __) {
+    router.refresh();
+  });
+
+  ref.onDispose(router.dispose);
+
+  return router;
 });

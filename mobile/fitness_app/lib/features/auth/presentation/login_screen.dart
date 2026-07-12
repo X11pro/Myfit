@@ -1,15 +1,23 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/config/app_env.dart';
+import '../application/account_data_service.dart';
 import '../../../shared/app_language.dart';
 import '../../../shared/app_state.dart';
 import '../../../shared/widgets/app_top_bar.dart';
 import '../application/auth_controller.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen(
+      {super.key, this.initialEmail = '', this.startInCodeMode = false});
+
+  final String initialEmail;
+  final bool startInCodeMode;
 
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
@@ -18,8 +26,18 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _codeController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
   bool _codeSent = false;
   String? _submittedEmail;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController.text = widget.initialEmail;
+    _submittedEmail =
+        widget.initialEmail.trim().isEmpty ? null : widget.initialEmail.trim();
+    _codeSent = widget.startInCodeMode;
+  }
 
   @override
   void dispose() {
@@ -38,14 +56,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final strings = stringsFor(ref);
 
     return Scaffold(
-      appBar: AppTopBar(title: 'Myfit', strings: strings),
+      appBar: AppTopBar(
+        title: 'Myfit',
+        strings: strings,
+        backPath: _codeSent ? '/auth' : '/splash',
+      ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding: EdgeInsets.fromLTRB(
+              24,
+              24,
+              24,
+              24 + MediaQuery.of(context).viewInsets.bottom,
+            ),
             children: [
-              const Spacer(),
               Text(
                 'Myfit',
                 style: Theme.of(context).textTheme.displaySmall,
@@ -90,6 +116,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     child: Text(strings.signOutButton),
                   ),
                 ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: isBusy ? null : () => _exportMyData(strings),
+                    child: Text(strings.exportMyDataButton),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: isBusy
+                        ? null
+                        : () => _confirmDeleteMyData(strings, controller),
+                    child: Text(strings.deleteMyDataButton),
+                  ),
+                ),
               ] else ...[
                 Text(
                   isConfigured
@@ -102,7 +146,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   autofillHints: const [AutofillHints.email],
-                  enabled: isConfigured && !isBusy,
+                  enabled: isConfigured && !_codeSent && !isBusy,
                   decoration: InputDecoration(
                     labelText: strings.emailLabel,
                     hintText: strings.emailHint,
@@ -113,6 +157,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   TextField(
                     controller: _codeController,
                     keyboardType: TextInputType.number,
+                    maxLength: 8,
                     enabled: !isBusy,
                     decoration: InputDecoration(
                       labelText: strings.accessCodeLabel,
@@ -120,9 +165,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                 ],
-              ],
-              const Spacer(),
-              if (!isAuthenticated)
+                const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
@@ -141,7 +184,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         : strings.receiveAccessCodeButton),
                   ),
                 ),
-              if (!isAuthenticated) ...[
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
@@ -154,23 +196,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     child: Text(strings.continueGuest),
                   ),
                 ),
-              ],
-              if (_codeSent && !isAuthenticated) ...[
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: isBusy
-                        ? null
-                        : () {
-                            setState(() {
-                              _codeSent = false;
-                              _codeController.clear();
-                            });
-                          },
-                    child: Text(strings.changeEmailButton),
+                if (_codeSent) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: isBusy ? null : () => context.go('/auth'),
+                      child: Text(strings.changeEmailButton),
+                    ),
                   ),
-                ),
+                ],
               ],
             ],
           ),
@@ -195,11 +230,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         return;
       }
 
-      setState(() {
-        _codeSent = true;
-        _submittedEmail = email;
-      });
+      _submittedEmail = email;
       _showMessage(strings.codeSentMessage);
+      if (!mounted) {
+        return;
+      }
+
+      context.go('/auth/verify?email=${Uri.encodeComponent(email)}');
     } catch (error) {
       _showMessage(strings.sendCodeErrorMessage(error));
     }
@@ -215,7 +252,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
 
-    if (token.length != 6) {
+    if (token.length < 6 || token.length > 8) {
       _showMessage(strings.invalidAccessCodeMessage);
       return;
     }
@@ -224,6 +261,89 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await controller.verifySignInCode(email: email, token: token);
     } catch (error) {
       _showMessage(strings.verifyCodeErrorMessage(error));
+    }
+  }
+
+  Future<void> _exportMyData(AppStrings strings) async {
+    try {
+      final payload = await ref.read(accountDataServiceProvider).exportMyData();
+      final text = const JsonEncoder.withIndent('  ').convert(payload);
+      if (!mounted) {
+        return;
+      }
+
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(strings.exportMyDataButton),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: SelectableText('${strings.exportReadyMessage}\n\n$text'),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(strings.cancelButton),
+            ),
+            FilledButton(
+              onPressed: () async {
+                final navigator = Navigator.of(dialogContext);
+                await Clipboard.setData(ClipboardData(text: text));
+                if (!mounted || !navigator.mounted) {
+                  return;
+                }
+                navigator.pop();
+                _showMessage(strings.dataCopiedMessage);
+              },
+              child: Text(strings.copyExportButton),
+            ),
+          ],
+        ),
+      );
+    } catch (error) {
+      _showMessage(error.toString());
+    }
+  }
+
+  Future<void> _confirmDeleteMyData(
+    AppStrings strings,
+    AuthController controller,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(strings.deleteMyDataButton),
+        content: Text(strings.deleteMyDataWarning),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(strings.cancelButton),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(strings.deleteMyDataConfirm),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    try {
+      await ref.read(accountDataServiceProvider).deleteMyData();
+      await controller.clearLocalSyncedData();
+      await controller.signOut();
+      if (!mounted) {
+        return;
+      }
+      _showMessage(strings.dataDeletedMessage);
+      context.go('/splash');
+    } catch (error) {
+      _showMessage(error.toString());
     }
   }
 

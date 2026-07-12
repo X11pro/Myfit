@@ -12,6 +12,8 @@ class ManualFoodEntry {
     required this.createdAt,
     this.confidence,
     this.photoPath,
+    this.remotePhotoId,
+    this.remotePhotoStoragePath,
   });
 
   final String id;
@@ -26,6 +28,8 @@ class ManualFoodEntry {
   final DateTime createdAt;
   final double? confidence;
   final String? photoPath;
+  final String? remotePhotoId;
+  final String? remotePhotoStoragePath;
 
   Map<String, dynamic> toJson() {
     return {
@@ -41,6 +45,8 @@ class ManualFoodEntry {
       'createdAt': createdAt.toIso8601String(),
       'confidence': confidence,
       'photoPath': photoPath,
+      'remotePhotoId': remotePhotoId,
+      'remotePhotoStoragePath': remotePhotoStoragePath,
     };
   }
 
@@ -58,6 +64,8 @@ class ManualFoodEntry {
       createdAt: DateTime.parse(json['createdAt'] as String),
       confidence: (json['confidence'] as num?)?.toDouble(),
       photoPath: json['photoPath'] as String?,
+      remotePhotoId: json['remotePhotoId'] as String?,
+      remotePhotoStoragePath: json['remotePhotoStoragePath'] as String?,
     );
   }
 }

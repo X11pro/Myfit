@@ -7,16 +7,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/app_env.dart';
 import '../../../shared/app_language.dart';
+import '../../../shared/app_state.dart';
 import '../../../shared/widgets/app_top_bar.dart';
 import '../application/barcode_lookup_service.dart';
-import '../domain/barcode_food_lookup_result.dart';
 import '../application/manual_food_entries_controller.dart';
+import '../domain/barcode_food_lookup_result.dart';
 import '../domain/manual_food_entry.dart';
 import 'barcode_scanner_screen.dart';
+import 'widgets/meal_photo_view.dart';
 
 class ManualFoodEntryScreen extends ConsumerStatefulWidget {
   const ManualFoodEntryScreen({super.key, this.entry});
@@ -295,6 +298,7 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
     }
 
     final notifier = ref.read(manualFoodEntriesProvider.notifier);
+    final remotePhoto = await _prepareRemotePhotoForSave();
 
     if (_isEditing) {
       await notifier.updateEntry(
@@ -308,7 +312,9 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
         sugarGrams: sugar,
         fiberGrams: fiber,
         confidence: _confidence,
-        photoPath: _photoPath,
+        photoPath: remotePhoto.photoPath,
+        remotePhotoId: remotePhoto.remotePhotoId,
+        remotePhotoStoragePath: remotePhoto.remotePhotoStoragePath,
       );
     } else {
       await notifier.addEntry(
@@ -321,7 +327,9 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
         sugarGrams: sugar,
         fiberGrams: fiber,
         confidence: _confidence,
-        photoPath: _photoPath,
+        photoPath: remotePhoto.photoPath,
+        remotePhotoId: remotePhoto.remotePhotoId,
+        remotePhotoStoragePath: remotePhoto.remotePhotoStoragePath,
       );
     }
 
@@ -330,6 +338,101 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
     }
 
     context.go('/dashboard');
+  }
+
+  Future<_PreparedRemotePhoto> _prepareRemotePhotoForSave() async {
+    final entry = widget.entry;
+    final isAuthenticated = AppEnv.hasSupabaseConfig &&
+        ref.read(appStateProvider).isAuthenticated &&
+        Supabase.instance.client.auth.currentUser != null;
+
+    if (!isAuthenticated) {
+      return _PreparedRemotePhoto(
+        photoPath: _photoPath,
+        remotePhotoId: entry?.remotePhotoId,
+        remotePhotoStoragePath: entry?.remotePhotoStoragePath,
+      );
+    }
+
+    if (_photoPath == null) {
+      await _deleteExistingRemotePhoto();
+      return const _PreparedRemotePhoto();
+    }
+
+    final currentPhotoPath = _photoPath!;
+    final existingRemoteStoragePath = entry?.remotePhotoStoragePath;
+    final existingRemotePhotoId = entry?.remotePhotoId;
+    final currentIsRemoteUrl = currentPhotoPath.startsWith('http');
+
+    if (currentIsRemoteUrl &&
+        existingRemoteStoragePath != null &&
+        existingRemotePhotoId != null) {
+      return _PreparedRemotePhoto(
+        photoPath: currentPhotoPath,
+        remotePhotoId: existingRemotePhotoId,
+        remotePhotoStoragePath: existingRemoteStoragePath,
+      );
+    }
+
+    await _deleteExistingRemotePhoto();
+
+    final bytes = await _loadPhotoBytes(currentPhotoPath);
+    final user = Supabase.instance.client.auth.currentUser!;
+    final storagePath =
+        '${user.id}/meal_${DateTime.now().microsecondsSinceEpoch}.jpg';
+
+    await Supabase.instance.client.storage.from('meal-photos').uploadBinary(
+          storagePath,
+          bytes,
+          fileOptions:
+              const FileOptions(contentType: 'image/jpeg', upsert: true),
+        );
+
+    final photoRecord = await Supabase.instance.client
+        .from('meal_photos')
+        .insert({
+          'user_id': user.id,
+          'storage_path': storagePath,
+          'confidence': _confidence,
+        })
+        .select('id, storage_path')
+        .single();
+
+    final signedUrl = await ref
+        .read(manualFoodEntriesProvider.notifier)
+        .createSignedMealPhotoUrl(storagePath);
+
+    return _PreparedRemotePhoto(
+      photoPath: signedUrl,
+      remotePhotoId: photoRecord['id'] as String,
+      remotePhotoStoragePath: photoRecord['storage_path'] as String,
+    );
+  }
+
+  Future<void> _deleteExistingRemotePhoto() async {
+    final entry = widget.entry;
+    final storagePath = entry?.remotePhotoStoragePath;
+    final remotePhotoId = entry?.remotePhotoId;
+    if (storagePath == null && remotePhotoId == null) {
+      return;
+    }
+
+    try {
+      if (storagePath != null && storagePath.trim().isNotEmpty) {
+        await Supabase.instance.client.storage.from('meal-photos').remove([
+          storagePath,
+        ]);
+      }
+
+      if (remotePhotoId != null && remotePhotoId.trim().isNotEmpty) {
+        await Supabase.instance.client
+            .from('meal_photos')
+            .delete()
+            .eq('id', remotePhotoId);
+      }
+    } catch (_) {
+      // Best effort cleanup; do not block meal save on old photo cleanup issues.
+    }
   }
 
   Future<void> _pickPhoto(ImageSource source) async {
@@ -458,7 +561,7 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString())),
+        SnackBar(content: Text(_userFacingError(error, strings))),
       );
     } finally {
       if (mounted) {
@@ -558,7 +661,7 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString())),
+        SnackBar(content: Text(_userFacingError(error, strings))),
       );
     } finally {
       if (mounted) {
@@ -624,35 +727,31 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
       return const SizedBox.shrink();
     }
 
-    ImageProvider imageProvider;
-    if (_isDataUrl(photoPath)) {
-      imageProvider = MemoryImage(_dataUrlBytes(photoPath));
-    } else {
-      imageProvider = FileImage(File(photoPath));
-    }
-
-    return Image(
-      image: imageProvider,
+    return MealPhotoView(
+      photoPath: photoPath,
       height: 180,
       width: double.infinity,
-      fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) {
-        return Container(
-          height: 180,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          ),
-          child: Text(strings.noMealsYet),
-        );
-      },
+      placeholder: Container(
+        height: 180,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        ),
+        child: Text(strings.noMealsYet),
+      ),
     );
   }
 
   Future<Uint8List> _loadPhotoBytes(String photoPath) async {
     if (_isDataUrl(photoPath)) {
       return _dataUrlBytes(photoPath);
+    }
+
+    if (photoPath.startsWith('http')) {
+      final byteData =
+          await NetworkAssetBundle(Uri.parse(photoPath)).load(photoPath);
+      return byteData.buffer.asUint8List();
     }
 
     return File(photoPath).readAsBytes();
@@ -684,7 +783,7 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
       return Map<String, dynamic>.from(data);
     }
 
-    throw StateError('Invalid function response.');
+    throw StateError(stringsFor(ref).invalidServerResponseMessage);
   }
 
   Map<String, dynamic> _nestedMap(
@@ -710,4 +809,44 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
       throw StateError(error.toString());
     }
   }
+
+  String _userFacingError(Object error, AppStrings strings) {
+    final message = error.toString();
+    final normalized = message.toLowerCase();
+
+    if (normalized.contains('socketexception') ||
+        normalized.contains('failed host lookup') ||
+        normalized.contains('connection closed') ||
+        normalized.contains('timeout')) {
+      return strings.internetConnectionError;
+    }
+
+    if (normalized.contains('meal photo') ||
+        normalized.contains('storage') ||
+        normalized.contains('upload')) {
+      return strings.photoUploadFailedMessage;
+    }
+
+    if (normalized.contains('analysis') || normalized.contains('ai')) {
+      return strings.aiAnalysisFailedMessage;
+    }
+
+    if (normalized.contains('invalid response')) {
+      return strings.invalidServerResponseMessage;
+    }
+
+    return strings.remoteSaveFailedMessage;
+  }
+}
+
+class _PreparedRemotePhoto {
+  const _PreparedRemotePhoto({
+    this.photoPath,
+    this.remotePhotoId,
+    this.remotePhotoStoragePath,
+  });
+
+  final String? photoPath;
+  final String? remotePhotoId;
+  final String? remotePhotoStoragePath;
 }

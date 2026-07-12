@@ -36,7 +36,7 @@ class AppStrings {
 
   String get accessCodeLabel => isEnglish ? 'Access code' : 'Codigo de acceso';
 
-  String get accessCodeHint => isEnglish ? '6 digits' : '6 digitos';
+  String get accessCodeHint => isEnglish ? '6-8 digits' : '6-8 digitos';
 
   String get verifyCodeButton => isEnglish ? 'Verify code' : 'Verificar codigo';
 
@@ -60,12 +60,33 @@ class AppStrings {
       ? 'The email is no longer valid. Try again.'
       : 'El email ya no es valido. Vuelve a intentarlo.';
 
-  String get invalidAccessCodeMessage =>
-      isEnglish ? 'Enter the 6-digit code.' : 'Ingresa el codigo de 6 digitos.';
+  String get invalidAccessCodeMessage => isEnglish
+      ? 'Enter the 6-8 digit code.'
+      : 'Ingresa el codigo de 6 a 8 digitos.';
 
   String verifyCodeErrorMessage(Object error) => isEnglish
       ? 'Could not verify the code: $error'
       : 'No se pudo verificar el codigo: $error';
+
+  String get internetConnectionError => isEnglish
+      ? 'Check your internet connection and try again.'
+      : 'Revisa tu conexion a internet e intenta de nuevo.';
+
+  String get remoteSaveFailedMessage => isEnglish
+      ? 'Could not save your data to the server right now.'
+      : 'No se pudieron guardar tus datos en el servidor ahora mismo.';
+
+  String get photoUploadFailedMessage => isEnglish
+      ? 'Could not upload the meal photo right now.'
+      : 'No se pudo subir la foto de la comida en este momento.';
+
+  String get aiAnalysisFailedMessage => isEnglish
+      ? 'Could not complete the AI analysis right now.'
+      : 'No se pudo completar el analisis con IA en este momento.';
+
+  String get invalidServerResponseMessage => isEnglish
+      ? 'The server returned an invalid response.'
+      : 'El servidor devolvio una respuesta invalida.';
 
   String get missingSupabaseConfigMessage => isEnglish
       ? 'Missing SUPABASE_URL and SUPABASE_ANON_KEY.'
@@ -82,6 +103,31 @@ class AppStrings {
       isEnglish ? 'Open app' : 'Abrir app';
 
   String get signOutButton => isEnglish ? 'Sign out' : 'Cerrar sesion';
+
+  String get exportMyDataButton =>
+      isEnglish ? 'Export my data' : 'Exportar mis datos';
+
+  String get deleteMyDataButton =>
+      isEnglish ? 'Delete my data' : 'Borrar mis datos';
+
+  String get deleteMyDataWarning => isEnglish
+      ? 'This deletes your remote Myfit data. This action cannot be undone.'
+      : 'Esto borra tus datos remotos de Myfit. Esta accion no se puede deshacer.';
+
+  String get deleteMyDataConfirm => isEnglish ? 'Delete data' : 'Borrar datos';
+
+  String get exportReadyMessage => isEnglish
+      ? 'Your data export is ready below. You can copy it.'
+      : 'La exportacion de tus datos esta lista abajo. Puedes copiarla.';
+
+  String get copyExportButton => isEnglish ? 'Copy export' : 'Copiar export';
+
+  String get dataCopiedMessage =>
+      isEnglish ? 'Data copied.' : 'Datos copiados.';
+
+  String get dataDeletedMessage => isEnglish
+      ? 'Your remote data was deleted.'
+      : 'Tus datos remotos fueron borrados.';
 
   String get welcomeScreenTitle => isEnglish ? 'Welcome' : 'Bienvenida';
 
@@ -119,10 +165,10 @@ class AppStrings {
   String get workoutDateLabel => isEnglish ? 'Date' : 'Fecha';
 
   String get durationMinutesLabel =>
-      isEnglish ? 'Duration (min)' : 'Duracion (min)';
+      isEnglish ? 'Duration (min, optional)' : 'Duracion (min, opcional)';
 
   String get workoutCaloriesLabel =>
-      isEnglish ? 'Calories burned' : 'Calorias quemadas';
+      isEnglish ? 'Calories burned (optional)' : 'Calorias quemadas (opcional)';
 
   String get notesLabel => isEnglish ? 'Notes' : 'Notas';
 

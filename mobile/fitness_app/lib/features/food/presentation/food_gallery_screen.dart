@@ -115,12 +115,20 @@ class _FoodGalleryCard extends ConsumerWidget {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    _MacroChip(label: strings.caloriesLabel, value: '${entry.calories} kcal'),
-                    _MacroChip(label: strings.protein, value: '${entry.proteinGrams} g'),
-                    _MacroChip(label: strings.carbs, value: '${entry.carbsGrams} g'),
-                    _MacroChip(label: strings.fat, value: '${entry.fatGrams} g'),
-                    _MacroChip(label: strings.sugar, value: '${entry.sugarGrams} g'),
-                    _MacroChip(label: strings.fiber, value: '${entry.fiberGrams} g'),
+                    _MacroChip(
+                        label: strings.caloriesLabel,
+                        value: '${entry.calories} kcal'),
+                    _MacroChip(
+                        label: strings.protein,
+                        value: '${entry.proteinGrams} g'),
+                    _MacroChip(
+                        label: strings.carbs, value: '${entry.carbsGrams} g'),
+                    _MacroChip(
+                        label: strings.fat, value: '${entry.fatGrams} g'),
+                    _MacroChip(
+                        label: strings.sugar, value: '${entry.sugarGrams} g'),
+                    _MacroChip(
+                        label: strings.fiber, value: '${entry.fiberGrams} g'),
                     if (entry.confidence != null)
                       _MacroChip(
                         label: strings.confidence,
@@ -133,7 +141,8 @@ class _FoodGalleryCard extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () => context.push('/food/manual', extra: entry),
+                        onPressed: () =>
+                            context.push('/food/manual', extra: entry),
                         child: Text(strings.editMealButton),
                       ),
                     ),

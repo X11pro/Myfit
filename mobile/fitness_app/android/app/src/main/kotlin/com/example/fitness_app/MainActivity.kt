@@ -1,4 +1,4 @@
-package com.example.fitness_app // Asegúrate de que coincida con tu paquete actual
+package com.x11pro.myfit
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -2,18 +2,18 @@
 
 ## Resumen
 
-El repo quedo listo para continuar en CachyOS con una app Flutter usable sin login obligatorio, idioma ingles por defecto, cambio consistente a espanol desde el selector `EN / ESP`, dark mode activo, top bar global con `back/home/menu`, comidas manuales persistidas localmente, resumen diario por fecha, peso diario, macros extendidas locales, registro manual de gym con sets/peso por fecha, edicion de entrenamientos, objetivos diarios segun goal, pantalla separada de progreso con filtro por ejercicio y metricas de fuerza mas utiles, backend de catalogo compartido + analisis AI por foto ya migrado a OpenRouter, y timers de workout validados en dispositivo con alertas de sonido/vibracion.
+El repo quedo listo para continuar en CachyOS con una app Flutter guest-first pero ya muy cerca de `v1.0`: auth OTP funcional, persistencia remota base para `weight + manual meals + meal photos + manual workouts`, export/delete remoto minimo, release Android base saneada, idioma ingles por defecto, selector `EN / ESP`, dark mode, top bar global, barcode/AI/comida conectados a Supabase/OpenRouter, y timers de workout ya probados en dispositivo.
 
 Ultimo estado exacto antes de pausar:
 
-- UX de workout manual mejorada con `Repeat last` para duplicar el ultimo set y sugerencias de ejercicios recientes.
-- Flujo Flutter de catalogo compartido y `Analyze with AI` reforzado para validar configuracion de Supabase y tolerar respuestas incompletas del backend.
-- `flutter analyze` y `flutter test` pasaron correctamente en la app Flutter.
-- La migracion de backend desde OpenAI a OpenRouter ya quedo implementada localmente en `food-catalog-upsert` y `meal-photo-analyze`.
-- El proveedor elegido para esta iteracion es `OpenRouter` con `qwen/qwen3-vl-8b-instruct` por disponibilidad real validada.
-- La prueba end-to-end real quedo pendiente por falta de variables `SUPABASE_URL` y `SUPABASE_ANON_KEY` en la shell actual y por faltar cargar/deployar los secrets de OpenRouter en Supabase.
-- La API key real no esta guardada en el repo y debe recargarse manualmente como variable de entorno al retomar.
-- En el telefono Android `SM S916B` ya quedaron probados en flujo real: instalacion debug, arranque app, timer de descanso, preview automatico de sonido al seleccionar alerta y vibracion al llegar `REST` a `0`.
+- `manual meals`, `meal photos`, `daily weight` y `manual workouts` ya tienen base hibrida `guest local / auth remoto`.
+- La nueva Edge Function `user-data-manage` ya esta desplegada y ofrece `export` + `delete` remoto por usuario autenticado.
+- La release Android ya usa `applicationId = com.x11pro.myfit`, label `Myfit` y package nativo corregido en `MainActivity`.
+- El warning de Samsung sobre `16 KB compatibility` desaparecio cuando se desinstalo la app vieja `debug` (`com.example.fitness_app`) y se dejo solo la app nueva `release` (`com.x11pro.myfit`).
+- `Duration (min)` del workout manual ya no se pisa mientras se edita y `Duration (min)` / `Calories burned` quedaron marcados como opcionales.
+- El flujo de auth ya no rebota a splash al pedir OTP, el back funciona mejor y el welcome autenticado muestra `Open app`.
+- `flutter analyze` y `flutter test` pasaron correctamente despues de todos estos cambios.
+- El siguiente punto exacto NO es rediseñar UI/UX total todavia: primero hay que ejecutar QA real guiada en Android y confirmar `export/delete + rehidratacion real`.
 
 ## Estado de codigo
 
@@ -33,13 +33,16 @@ Ultimo estado exacto antes de pausar:
 - Bootstrap de Supabase preparado en `lib/core/bootstrap.dart`.
 - Migracion inicial SQL creada en `backend/supabase/migrations/20260612_000001_initial_schema.sql`.
 - Segunda migracion creada y aplicada en remoto: `backend/supabase/migrations/20260620_000002_food_items_shared_catalog.sql`.
+- Migraciones nuevas ya aplicadas en remoto:
+  - `backend/supabase/migrations/20260711_000003_manual_workout_remote_fields.sql`
+  - `backend/supabase/migrations/20260711120001_meal_photos_storage.sql`
 - ExecPlans relevantes:
   - `.agent/plans/20260612_supabase_auth_profiles_execplan.md`
   - `.agent/plans/20260620_manual_food_entry_execplan.md`
   - `.agent/plans/20260627_gym_diet_progress_execplan.md`
   - `.agent/plans/2026-06-28-gym-progress-metrics.md`
 
-## Cambios implementados en esta sesion
+## Cambios implementados en esta etapa reciente
 
 - `mobile/fitness_app/lib/features/splash/presentation/splash_screen.dart`
   - bienvenida en dark mode,
@@ -96,10 +99,21 @@ Ultimo estado exacto antes de pausar:
   - accesos rapidos globales desde menu a dashboard, profile, meal, workout, progress y welcome.
 - `mobile/fitness_app/lib/features/auth/`
   - login screen alineada con ingles por defecto y traduccion al espanol via `AppStrings`.
+- `mobile/fitness_app/lib/features/auth/presentation/login_screen.dart`
+  - split implicito `email -> verify code` por ruta,
+  - fix de back navigation,
+  - layout estable con teclado,
+  - acciones nuevas `Export my data` y `Delete my data` para usuarios autenticados.
+- `mobile/fitness_app/lib/features/auth/application/account_data_service.dart`
+  - cliente Flutter para invocar `user-data-manage`.
+- `mobile/fitness_app/lib/features/auth/application/auth_controller.dart`
+  - helper para limpiar providers sincronizados localmente al borrar datos remotos.
 - `mobile/fitness_app/lib/shared/app_language.dart`
   - limpieza de textos mezclados EN/ES para dashboard, auth y workout,
   - helpers de localizacion para labels de sets, reps y progreso,
-  - nuevos labels para metricas de fuerza y `reps today`.
+  - nuevos labels para metricas de fuerza y `reps today`,
+  - mensajes mas claros para errores de red/servidor,
+  - textos de export/delete y labels opcionales en workout.
 - `backend/supabase/functions/food-catalog-upsert/index.ts`
   - edge function para extraer datos desde OCR/AI y guardar `food_items` compartidos.
 - `backend/supabase/functions/meal-photo-analyze/index.ts`
@@ -142,7 +156,18 @@ Ultimo estado exacto antes de pausar:
 - `mobile/fitness_app/lib/features/food/presentation/manual_food_entry_screen.dart`
   - validacion previa de configuracion Supabase,
   - manejo mas robusto de respuesta AI,
-  - normalizacion de `confidence` entre `0` y `1`.
+  - normalizacion de `confidence` entre `0` y `1`,
+  - subida remota de `meal photos` a Storage para usuarios autenticados,
+  - signed URL remota para preview de foto,
+  - cleanup best-effort de fotos viejas.
+- `mobile/fitness_app/lib/features/food/application/manual_food_entries_controller.dart`
+  - persistencia hibrida local/remota,
+  - sync remoto de `meal_entries`,
+  - soporte para `photo_id`, `remotePhotoId` y `remotePhotoStoragePath`.
+- `mobile/fitness_app/lib/features/food/domain/manual_food_entry.dart`
+  - nuevos campos `remotePhotoId` y `remotePhotoStoragePath`.
+- `mobile/fitness_app/lib/features/food/presentation/widgets/meal_photo_view.dart`
+  - soporte para `NetworkImage` ademas de `FileImage` y `data:`.
 - `mobile/fitness_app/test/features/workout/manual_workout_controller_test.dart`
   - test nuevo para sugerencias de ejercicios recientes sin duplicados,
   - verificacion explicita de persistencia local de `RPE` por set.
@@ -159,7 +184,12 @@ Ultimo estado exacto antes de pausar:
   - alerta de sonido seleccionable,
   - vibracion opcional al llegar `REST` a `0`,
   - preview automatico del sonido al cambiar la opcion elegida,
-  - estado visual del boton REST en rojo/verde segun countdown u overtime.
+  - estado visual del boton REST en rojo/verde segun countdown u overtime,
+  - fix para que `Duration (min)` no se sobreescriba mientras el usuario tipea.
+- `mobile/fitness_app/lib/features/dashboard/application/daily_weight_controller.dart`
+  - persistencia hibrida local/remota para peso diario.
+- `mobile/fitness_app/lib/features/workout/application/manual_workout_controller.dart`
+  - persistencia hibrida local/remota para workouts manuales y sets.
 - `mobile/fitness_app/lib/features/dashboard/application/daily_targets_calculator.dart`
   - las rutinas recomendadas por goal ya salen en ingles cuando la app esta en ingles; no quedan hardcodeadas solo en espanol.
 - `mobile/fitness_app/lib/shared/app_language.dart`
@@ -177,6 +207,16 @@ Ultimo estado exacto antes de pausar:
   - correcciones TS/Deno minimas para deploy limpio.
 - `backend/supabase/functions/meal-photo-analyze/index.ts`
   - migracion real de OpenAI a OpenRouter con parsing JSON mas robusto.
+- `backend/supabase/functions/user-data-manage/index.ts`
+  - export/delete minimo real de datos por usuario autenticado.
+- `docs/release/android_release_checklist.md`
+  - checklist de release Android base.
+- `docs/legal/privacy_policy_draft.md`
+  - borrador inicial de politica de privacidad.
+- `docs/legal/data_export_delete.md`
+  - notas tecnicas y funcionales de export/delete.
+- `docs/qa/android_real_device_checklist.md`
+  - checklist de QA real Android para cerrar antes de `v1.0`.
 - `docs/research/free_food_photo_llm_recommendation.md`
   - contiene referencia vieja a `Qwen2.5-VL-7B-Instruct`; el modelo realmente adoptado en esta iteracion es `qwen/qwen3-vl-8b-instruct` via OpenRouter.
 
@@ -248,7 +288,7 @@ flutter analyze
 flutter test
 ```
 
-## Verificaciones hechas en esta sesion
+## Verificaciones hechas en esta etapa reciente
 
 En esta sesion se ejecuto correctamente:
 
@@ -256,6 +296,9 @@ En esta sesion se ejecuto correctamente:
 npx supabase secrets set OPENROUTER_API_KEY=... OPENROUTER_MODEL=qwen/qwen3-vl-8b-instruct --project-ref cyecalxewqcyxxglxloa
 npx supabase functions deploy food-catalog-upsert --project-ref cyecalxewqcyxxglxloa --workdir backend
 npx supabase functions deploy meal-photo-analyze --project-ref cyecalxewqcyxxglxloa --workdir backend
+npx supabase migration repair --status reverted 20260711 --linked --workdir backend
+npx supabase db push --linked --workdir backend
+npx supabase functions deploy user-data-manage --project-ref cyecalxewqcyxxglxloa --workdir backend
 ```
 
 En la sesion mas reciente tambien se ejecuto correctamente:
@@ -281,6 +324,10 @@ flutter build apk --debug --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_
 Resultado confirmado de esa prueba:
 
 - `flutter analyze` sigue OK.
+- `flutter test` sigue OK en toda la app.
+- El APK `release` ahora compila correctamente y pasa `zipalign -P 16`.
+- El warning `16 KB compatibility` desaparecio en `SM S916B` cuando se dejo solo la app nueva `release` `com.x11pro.myfit` y se desinstalo la vieja `com.example.fitness_app`.
+- La release instalada ya no deberia confundirse con la debug vieja.
 
 ## Verificaciones hechas en la sesion mas reciente de Android/workout
 
@@ -345,15 +392,15 @@ Smoke tests remotos confirmados:
 
 ## Pendientes inmediatos
 
-1. Probar en Android varios productos reales con `Scan barcode` y confirmar autocompletado correcto de nombre/macros tanto para `Open Food Facts` como para `USDA` cuando corresponda.
-2. Probar en Android con foto real que `manual food entry` guarda la foto, la muestra en la nueva galeria y deja lanzar `Analyze with AI`.
-3. Probar end-to-end la pantalla Flutter del catalogo compartido con una imagen real y la build Android/web ya configurada con Supabase.
-4. Probar end-to-end el boton `Analyze with AI` en `manual food entry` con una foto valida de comida.
-5. Reintroducir autenticacion en una proxima iteracion sin Auth0, probablemente sobre Supabase o guest identity persistente.
-6. Conectar `manual food entry` a persistencia remota cuando quede definido el modelo final de identidad.
-7. Conectar workouts manuales, resultados AI y objetivos diarios a persistencia remota cuando quede definido el modelo final de identidad.
-8. Integrar los tres tiempos de workout (`total / activo / descanso`) al dashboard y al analisis general antes de evaluar el mejor momento para la mejora total de UI/UX.
-9. Revisar bloqueantes concretos hacia `v1.0`: auth real, sync remoto, pruebas E2E reales, release signing, privacy policy y export/delete de datos.
+1. Ejecutar QA real guiada en `SM S916B` con `docs/qa/android_real_device_checklist.md`.
+2. Confirmar en Android que `Export my data` y `Delete my data` funcionan de punta a punta con `user-data-manage`.
+3. Probar en Android varios productos reales con `Scan barcode` y confirmar autocompletado correcto de nombre/macros tanto para `Open Food Facts` como para `USDA` cuando corresponda.
+4. Probar en Android con foto real que `manual food entry` guarda la foto remota, la muestra en gallery y deja lanzar `Analyze with AI`.
+5. Probar end-to-end la pantalla Flutter del catalogo compartido con una imagen real y la build Android/web ya configurada con Supabase.
+6. Integrar los tres tiempos de workout (`total / activo / descanso`) al dashboard y al analisis general.
+7. Preparar firma release real y volver a generar build release firmada para pre-publicacion.
+8. Publicar version final de privacy policy y cerrar contacto/proceso de soporte para export/delete.
+9. Reevaluar en ese punto si ya conviene abrir la mejora total de UI/UX; ese sigue siendo el siguiente gran paso despues de QA real + cierre release/legal.
 
 ## Riesgos o notas
 
@@ -394,6 +441,7 @@ Smoke tests remotos confirmados:
 - La rutina recomendada por goal debe mantenerse en ingles cuando el idioma de app este en ingles; ya no asumir textos hardcodeados en espanol en esa parte del dashboard/workout.
 - Para instalar debug en el `SM S916B`, si aparece `INSTALL_FAILED_NO_MATCHING_ABIS`, recompilar con `flutter build apk --debug --target-platform android-arm64` antes de reinstalar.
 - El mejor momento para una mejora total de UI/UX aun no es ahora; primero cerrar auth + sync remoto y conectar los tres tiempos de workout al analisis/dashboard.
+- Desde este punto exacto, el siguiente bloque de trabajo debe continuar desde `QA real Android + export/delete real + cierre release/legal`, no reiniciar sobre auth/persistencia base porque eso ya quedo avanzado.
 
 ## Regla persistente del usuario
 

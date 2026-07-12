@@ -19,10 +19,12 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
     super.key,
     required this.title,
     required this.strings,
+    this.backPath,
   });
 
   final String title;
   final AppStrings strings;
+  final String? backPath;
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -91,6 +93,11 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
 
     if (Navigator.of(context).canPop()) {
       context.pop();
+      return;
+    }
+
+    if (backPath != null && backPath!.isNotEmpty) {
+      router.go(backPath!);
       return;
     }
 

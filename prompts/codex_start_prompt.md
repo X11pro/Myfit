@@ -35,8 +35,12 @@ Contexto inmediato:
 - En Windows ya existe `dart_defines.local.json` ignorado por Git y scripts en `scripts/flutter/` para build/run sin repetir flags.
 - El telefono Android `SM S916B` ya quedo probado con instalacion directa por `flutter run --no-resident`; si reaparece un error de `SUPABASE_URL/SUPABASE_ANON_KEY`, sospechar primero una instalacion vieja antes que un bug del codigo.
 - Si reaparece `INSTALL_FAILED_NO_MATCHING_ABIS` al instalar debug en `SM S916B`, recompilar con `flutter build apk --debug --target-platform android-arm64`.
+- La app vieja `debug` `com.example.fitness_app` ya no debe convivir con la nueva `release` `com.x11pro.myfit`; si reaparece un warning raro en Samsung, comprobar primero paquetes instalados duplicados.
+- `user-data-manage` ya esta desplegada para `export/delete` minimo real; el siguiente chequeo es probarla en Android, no volver a reimplementar el backend.
+- `app-release.apk` ya compila localmente y pasa `zipalign -P 16`; el warning de `16 KB` desaparecio cuando se desinstalo la app vieja debug.
+- `Duration (min)` del workout manual ya no debe pisarse mientras el usuario tipea y `Duration/Calories` son opcionales en UI.
 - La rutina recomendada por goal debe verse en ingles cuando la app esta en ingles; no reintroducir textos hardcodeados en espanol en esa parte.
-- Todavia NO es el mejor momento para una mejora total de UI/UX; primero cerrar auth + sync remoto y conectar los tiempos `total / activo / descanso` al dashboard/analisis.
+- Todavia NO es el mejor momento para una mejora total de UI/UX; primero ejecutar QA real Android, confirmar export/delete y cerrar release/legal.
 
 Tareas al retomar:
 1. Revisar el estado real del repo sin revertir cambios ajenos.
@@ -48,11 +52,12 @@ Tareas al retomar:
 7. Priorizar en Android el flujo: guardar foto real -> verla en `/food/gallery` -> lanzar `Analyze with AI`.
 8. Probar varios productos reales por barcode y distinguir si entran por cache, `Open Food Facts` o `USDA`.
 9. Validar con una foto real que OpenRouter responde bien desde Flutter y, si hay respuestas incompletas, ajustar prompt/parsing sin reabrir analisis ya cerrados.
-10. Verificar que los tres tiempos de workout ya persistidos se integren al dashboard/analisis antes de discutir rediseño total.
-11. Priorizar auth real + persistencia remota de meals/workouts/weight como bloqueante de `v1.0`.
-12. Validar en Android barcode real y foto AI real con Supabase configurado.
-13. Seguir desde ahi sin reiniciar nada desde cero.
-14. Mantener respuestas en espanol.
+10. Ejecutar QA real guiada en `SM S916B` con `docs/qa/android_real_device_checklist.md`.
+11. Confirmar export/delete remoto real desde auth screen.
+12. Validar en Android barcode real, foto AI real y rehidratacion remota completa.
+13. Integrar los tiempos `total / activo / descanso` al dashboard/analisis antes del rediseño total.
+14. Seguir desde ahi sin reiniciar nada desde cero.
+15. Mantener respuestas en espanol.
 
 No reinicies el proyecto desde cero. Continua desde la estructura y commits ya existentes.
 
