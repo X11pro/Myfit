@@ -170,6 +170,8 @@ Estado confirmado al cerrar esta sesion:
 - `MainActivity` ya esta alineada con el package nuevo; no reintroducir `com.example.fitness_app`.
 - `app-release.apk` ya compila localmente y pasa `zipalign -P 16`.
 - `user-data-manage` ya fue desplegada en Supabase para `export/delete` minimo real por usuario autenticado.
+- `meal-photo-analyze` ya fue redeployada otra vez para soportar `identifiedIngredients`, `estimatedGrams` y recálculo con correcciones del usuario.
+- `ingredients_text` ya existe en remoto, pero se aplicó con `supabase db query` por un problema del historial de migraciones `20260711`; revisar `migration list` antes de asumir que el historial está limpio.
 
 ## 9. Primer objetivo al volver
 
@@ -211,6 +213,9 @@ Estado funcional actual de la app:
 - cronometro general de entrenamiento con inicio/fin manual,
 - cronometro REST con countdown, overtime, sonido seleccionable, preview automatico y vibracion opcional,
 - meal photos remotas en Storage para usuarios autenticados,
+- meal photos con ingredientes editables y peso total editable,
+- recálculo local automático de macros al cambiar el peso,
+- reanálisis IA que debe respetar ingredientes y peso corregidos,
 - export/delete remoto minimo ya disponible desde auth screen,
 - dashboard pulido con CTA principal, secciones plegables y grafico de linea/area,
 - ingles por defecto verificado y cambio consistente a espanol desde `EN / ESP`,
@@ -306,6 +311,15 @@ La prueba manual minima recomendada al retomar Android es:
 4. cambiar el sonido y confirmar preview automatico,
 5. poner REST en `1` segundo,
 6. confirmar countdown, sonido y vibracion al llegar a `0`.
+
+Prueba minima recomendada extra para `meal photo`:
+
+1. elegir foto de comida,
+2. tocar `Analyze with AI`,
+3. confirmar que aparezcan ingredientes y peso si la IA los detecta,
+4. cambiar `Meal weight (g)` y verificar recálculo inmediato de macros,
+5. corregir ingredientes y volver a tocar `Analyze with AI`,
+6. confirmar que el recálculo respeta esas correcciones.
 
 Si `deno` esta disponible en CachyOS, conviene correr tambien antes del deploy:
 

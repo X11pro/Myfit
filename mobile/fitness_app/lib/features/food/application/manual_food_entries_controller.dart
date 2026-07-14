@@ -132,6 +132,8 @@ class ManualFoodEntriesNotifier extends Notifier<List<ManualFoodEntry>> {
     required int fatGrams,
     int sugarGrams = 0,
     int fiberGrams = 0,
+    int? estimatedGrams,
+    String? ingredientsText,
     double? confidence,
     String? photoPath,
     String? remotePhotoId,
@@ -151,6 +153,8 @@ class ManualFoodEntriesNotifier extends Notifier<List<ManualFoodEntry>> {
       sugarGrams: sugarGrams,
       fiberGrams: fiberGrams,
       createdAt: DateTime.now(),
+      estimatedGrams: estimatedGrams,
+      ingredientsText: ingredientsText,
       confidence: confidence,
       photoPath: photoPath,
       remotePhotoId: remotePhotoId,
@@ -183,6 +187,8 @@ class ManualFoodEntriesNotifier extends Notifier<List<ManualFoodEntry>> {
     required int fatGrams,
     int sugarGrams = 0,
     int fiberGrams = 0,
+    int? estimatedGrams,
+    String? ingredientsText,
     double? confidence,
     String? photoPath,
     String? remotePhotoId,
@@ -205,6 +211,8 @@ class ManualFoodEntriesNotifier extends Notifier<List<ManualFoodEntry>> {
             sugarGrams: sugarGrams,
             fiberGrams: fiberGrams,
             createdAt: entry.createdAt,
+            estimatedGrams: estimatedGrams,
+            ingredientsText: ingredientsText,
             confidence: confidence,
             photoPath: photoPath,
             remotePhotoId: remotePhotoId,
@@ -273,7 +281,7 @@ class ManualFoodEntriesNotifier extends Notifier<List<ManualFoodEntry>> {
       final remoteRows = await Supabase.instance.client
           .from('meal_entries')
           .select(
-            'id, meal_date, meal_type, name, calories, protein_g, carbs_g, fat_g, sugar_g, fiber_g, confidence, created_at, photo_id, meal_photos(storage_path)',
+            'id, meal_date, meal_type, name, calories, protein_g, carbs_g, fat_g, sugar_g, fiber_g, estimated_grams, ingredients_text, confidence, created_at, photo_id, meal_photos(storage_path)',
           )
           .eq('source', 'manual')
           .order('meal_date', ascending: false)
@@ -330,12 +338,14 @@ class ManualFoodEntriesNotifier extends Notifier<List<ManualFoodEntry>> {
           'fat_g': entry.fatGrams,
           'sugar_g': entry.sugarGrams,
           'fiber_g': entry.fiberGrams,
+          'estimated_grams': entry.estimatedGrams,
+          'ingredients_text': entry.ingredientsText,
           'source': 'manual',
           'confidence': entry.confidence,
           'photo_id': entry.remotePhotoId,
         })
         .select(
-          'id, meal_date, meal_type, name, calories, protein_g, carbs_g, fat_g, sugar_g, fiber_g, confidence, created_at, photo_id, meal_photos(storage_path)',
+          'id, meal_date, meal_type, name, calories, protein_g, carbs_g, fat_g, sugar_g, fiber_g, estimated_grams, ingredients_text, confidence, created_at, photo_id, meal_photos(storage_path)',
         )
         .single();
 
@@ -357,6 +367,8 @@ class ManualFoodEntriesNotifier extends Notifier<List<ManualFoodEntry>> {
       'fat_g': entry.fatGrams,
       'sugar_g': entry.sugarGrams,
       'fiber_g': entry.fiberGrams,
+      'estimated_grams': entry.estimatedGrams,
+      'ingredients_text': entry.ingredientsText,
       'confidence': entry.confidence,
       'photo_id': entry.remotePhotoId,
     }).eq('id', entry.id);
@@ -435,6 +447,8 @@ class ManualFoodEntriesNotifier extends Notifier<List<ManualFoodEntry>> {
       sugarGrams: (item['sugar_g'] as num?)?.toInt() ?? 0,
       fiberGrams: (item['fiber_g'] as num?)?.toInt() ?? 0,
       createdAt: DateTime.parse(item['created_at'] as String).toLocal(),
+      estimatedGrams: (item['estimated_grams'] as num?)?.toInt(),
+      ingredientsText: item['ingredients_text'] as String?,
       confidence: (item['confidence'] as num?)?.toDouble(),
       photoPath: photoPath,
       remotePhotoId: photoId,

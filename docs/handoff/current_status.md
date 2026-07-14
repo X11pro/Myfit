@@ -12,6 +12,8 @@ Ultimo estado exacto antes de pausar:
 - El warning de Samsung sobre `16 KB compatibility` desaparecio cuando se desinstalo la app vieja `debug` (`com.example.fitness_app`) y se dejo solo la app nueva `release` (`com.x11pro.myfit`).
 - `Duration (min)` del workout manual ya no se pisa mientras se edita y `Duration (min)` / `Calories burned` quedaron marcados como opcionales.
 - El flujo de auth ya no rebota a splash al pedir OTP, el back funciona mejor y el welcome autenticado muestra `Open app`.
+- `meal photo` ahora permite editar ingredientes y peso total, y el cambio de peso recalcula macros localmente en forma proporcional sobre la ultima base IA.
+- Si el usuario vuelve a tocar `Analyze with AI` despues de corregir ingredientes o peso, el backend recibe esas correcciones como prioridad para recalcular.
 - `flutter analyze` y `flutter test` pasaron correctamente despues de todos estos cambios.
 - El siguiente punto exacto NO es rediseñar UI/UX total todavia: primero hay que ejecutar QA real guiada en Android y confirmar `export/delete + rehidratacion real`.
 
@@ -159,13 +161,18 @@ Ultimo estado exacto antes de pausar:
   - normalizacion de `confidence` entre `0` y `1`,
   - subida remota de `meal photos` a Storage para usuarios autenticados,
   - signed URL remota para preview de foto,
-  - cleanup best-effort de fotos viejas.
+  - cleanup best-effort de fotos viejas,
+  - campo de `peso de la comida` editable,
+  - campo de `ingredientes` editable,
+  - recálculo automático de macros al cambiar el peso,
+  - reanálisis IA priorizando ingredientes y peso corregidos por el usuario.
 - `mobile/fitness_app/lib/features/food/application/manual_food_entries_controller.dart`
   - persistencia hibrida local/remota,
   - sync remoto de `meal_entries`,
-  - soporte para `photo_id`, `remotePhotoId` y `remotePhotoStoragePath`.
+  - soporte para `photo_id`, `remotePhotoId` y `remotePhotoStoragePath`,
+  - soporte persistido para `estimatedGrams` e `ingredientsText`.
 - `mobile/fitness_app/lib/features/food/domain/manual_food_entry.dart`
-  - nuevos campos `remotePhotoId` y `remotePhotoStoragePath`.
+  - nuevos campos `remotePhotoId`, `remotePhotoStoragePath`, `estimatedGrams` e `ingredientsText`.
 - `mobile/fitness_app/lib/features/food/presentation/widgets/meal_photo_view.dart`
   - soporte para `NetworkImage` ademas de `FileImage` y `data:`.
 - `mobile/fitness_app/test/features/workout/manual_workout_controller_test.dart`
@@ -206,7 +213,9 @@ Ultimo estado exacto antes de pausar:
   - migracion real de OpenAI a OpenRouter,
   - correcciones TS/Deno minimas para deploy limpio.
 - `backend/supabase/functions/meal-photo-analyze/index.ts`
-  - migracion real de OpenAI a OpenRouter con parsing JSON mas robusto.
+  - migracion real de OpenAI a OpenRouter con parsing JSON mas robusto,
+  - ahora devuelve `identifiedIngredients` y `estimatedGrams`,
+  - y acepta correcciones del usuario para recalcular macros.
 - `backend/supabase/functions/user-data-manage/index.ts`
   - export/delete minimo real de datos por usuario autenticado.
 - `docs/release/android_release_checklist.md`
@@ -328,6 +337,7 @@ Resultado confirmado de esa prueba:
 - El APK `release` ahora compila correctamente y pasa `zipalign -P 16`.
 - El warning `16 KB compatibility` desaparecio en `SM S916B` cuando se dejo solo la app nueva `release` `com.x11pro.myfit` y se desinstalo la vieja `com.example.fitness_app`.
 - La release instalada ya no deberia confundirse con la debug vieja.
+- `ingredients_text` se agrego en remoto con SQL directo via `supabase db query` porque el historial remoto de migraciones `20260711` quedo sucio; no asumir que `db push` esta completamente saneado sin revisar `migration list`.
 
 ## Verificaciones hechas en la sesion mas reciente de Android/workout
 
@@ -396,11 +406,12 @@ Smoke tests remotos confirmados:
 2. Confirmar en Android que `Export my data` y `Delete my data` funcionan de punta a punta con `user-data-manage`.
 3. Probar en Android varios productos reales con `Scan barcode` y confirmar autocompletado correcto de nombre/macros tanto para `Open Food Facts` como para `USDA` cuando corresponda.
 4. Probar en Android con foto real que `manual food entry` guarda la foto remota, la muestra en gallery y deja lanzar `Analyze with AI`.
-5. Probar end-to-end la pantalla Flutter del catalogo compartido con una imagen real y la build Android/web ya configurada con Supabase.
-6. Integrar los tres tiempos de workout (`total / activo / descanso`) al dashboard y al analisis general.
-7. Preparar firma release real y volver a generar build release firmada para pre-publicacion.
-8. Publicar version final de privacy policy y cerrar contacto/proceso de soporte para export/delete.
-9. Reevaluar en ese punto si ya conviene abrir la mejora total de UI/UX; ese sigue siendo el siguiente gran paso despues de QA real + cierre release/legal.
+5. Confirmar en Android que el cambio de `Meal weight (g)` recalcula macros y que `Analyze with AI` respeta ingredientes/peso corregidos.
+6. Probar end-to-end la pantalla Flutter del catalogo compartido con una imagen real y la build Android/web ya configurada con Supabase.
+7. Integrar los tres tiempos de workout (`total / activo / descanso`) al dashboard y al analisis general.
+8. Preparar firma release real y volver a generar build release firmada para pre-publicacion.
+9. Publicar version final de privacy policy y cerrar contacto/proceso de soporte para export/delete.
+10. Reevaluar en ese punto si ya conviene abrir la mejora total de UI/UX; ese sigue siendo el siguiente gran paso despues de QA real + cierre release/legal.
 
 ## Riesgos o notas
 

@@ -749,6 +749,16 @@ class AppStrings {
 
   String get fiberLabel => isEnglish ? 'Fiber (g)' : 'Fibra (g)';
 
+  String get mealWeightLabel => isEnglish
+      ? 'Meal weight (g, optional)'
+      : 'Peso de la comida (g, opcional)';
+
+  String get ingredientsLabel => isEnglish ? 'Ingredients' : 'Ingredientes';
+
+  String get ingredientsHelp => isEnglish
+      ? 'Add, remove, or correct ingredients. One per line works best.'
+      : 'Agrega, quita o corrige ingredientes. Una linea por ingrediente funciona mejor.';
+
   String get labelTextLabel =>
       isEnglish ? 'Label text / OCR' : 'Texto de etiqueta / OCR';
 

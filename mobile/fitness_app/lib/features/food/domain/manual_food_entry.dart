@@ -10,6 +10,8 @@ class ManualFoodEntry {
     required this.sugarGrams,
     required this.fiberGrams,
     required this.createdAt,
+    this.estimatedGrams,
+    this.ingredientsText,
     this.confidence,
     this.photoPath,
     this.remotePhotoId,
@@ -26,6 +28,8 @@ class ManualFoodEntry {
   final int sugarGrams;
   final int fiberGrams;
   final DateTime createdAt;
+  final int? estimatedGrams;
+  final String? ingredientsText;
   final double? confidence;
   final String? photoPath;
   final String? remotePhotoId;
@@ -43,6 +47,8 @@ class ManualFoodEntry {
       'sugarGrams': sugarGrams,
       'fiberGrams': fiberGrams,
       'createdAt': createdAt.toIso8601String(),
+      'estimatedGrams': estimatedGrams,
+      'ingredientsText': ingredientsText,
       'confidence': confidence,
       'photoPath': photoPath,
       'remotePhotoId': remotePhotoId,
@@ -62,6 +68,8 @@ class ManualFoodEntry {
       sugarGrams: (json['sugarGrams'] as num?)?.toInt() ?? 0,
       fiberGrams: (json['fiberGrams'] as num?)?.toInt() ?? 0,
       createdAt: DateTime.parse(json['createdAt'] as String),
+      estimatedGrams: (json['estimatedGrams'] as num?)?.toInt(),
+      ingredientsText: json['ingredientsText'] as String?,
       confidence: (json['confidence'] as num?)?.toDouble(),
       photoPath: json['photoPath'] as String?,
       remotePhotoId: json['remotePhotoId'] as String?,

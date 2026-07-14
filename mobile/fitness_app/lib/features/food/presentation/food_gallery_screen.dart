@@ -134,8 +134,20 @@ class _FoodGalleryCard extends ConsumerWidget {
                         label: strings.confidence,
                         value: '${(entry.confidence! * 100).round()}%',
                       ),
+                    if (entry.estimatedGrams != null)
+                      _MacroChip(
+                        label: strings.mealWeightLabel,
+                        value: '${entry.estimatedGrams} g',
+                      ),
                   ],
                 ),
+                if ((entry.ingredientsText ?? '').trim().isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(strings.ingredientsLabel,
+                      style: Theme.of(context).textTheme.titleSmall),
+                  const SizedBox(height: 4),
+                  Text(entry.ingredientsText!),
+                ],
                 const SizedBox(height: 16),
                 Row(
                   children: [

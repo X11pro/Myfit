@@ -39,6 +39,9 @@ Contexto inmediato:
 - `user-data-manage` ya esta desplegada para `export/delete` minimo real; el siguiente chequeo es probarla en Android, no volver a reimplementar el backend.
 - `app-release.apk` ya compila localmente y pasa `zipalign -P 16`; el warning de `16 KB` desaparecio cuando se desinstalo la app vieja debug.
 - `Duration (min)` del workout manual ya no debe pisarse mientras el usuario tipea y `Duration/Calories` son opcionales en UI.
+- `meal photo` ahora soporta `Meal weight (g)` e `Ingredients` editables con persistencia local/remota.
+- Cambiar `Meal weight (g)` debe recalcular macros localmente y volver a tocar `Analyze with AI` debe respetar peso/ingredientes corregidos por el usuario.
+- `ingredients_text` se aplicó en remoto con `supabase db query` por un problema del historial `20260711`; revisar `supabase migration list` antes de tocar migraciones nuevas.
 - La rutina recomendada por goal debe verse en ingles cuando la app esta en ingles; no reintroducir textos hardcodeados en espanol en esa parte.
 - Todavia NO es el mejor momento para una mejora total de UI/UX; primero ejecutar QA real Android, confirmar export/delete y cerrar release/legal.
 
@@ -54,7 +57,7 @@ Tareas al retomar:
 9. Validar con una foto real que OpenRouter responde bien desde Flutter y, si hay respuestas incompletas, ajustar prompt/parsing sin reabrir analisis ya cerrados.
 10. Ejecutar QA real guiada en `SM S916B` con `docs/qa/android_real_device_checklist.md`.
 11. Confirmar export/delete remoto real desde auth screen.
-12. Validar en Android barcode real, foto AI real y rehidratacion remota completa.
+12. Validar en Android barcode real, foto AI real, rehidratacion remota completa y el recálculo por peso/ingredientes en meal photo.
 13. Integrar los tiempos `total / activo / descanso` al dashboard/analisis antes del rediseño total.
 14. Seguir desde ahi sin reiniciar nada desde cero.
 15. Mantener respuestas en espanol.

@@ -40,18 +40,24 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
   final _fatController = TextEditingController();
   final _sugarController = TextEditingController();
   final _fiberController = TextEditingController();
+  final _mealWeightController = TextEditingController();
+  final _ingredientsController = TextEditingController();
   String _mealType = 'breakfast';
   String? _photoPath;
   bool _isAnalyzing = false;
   bool _isLookingUpBarcode = false;
   double? _confidence;
   BarcodeFoodLookupResult? _barcodeResult;
+  _NutritionSnapshot? _analysisBaselineNutrition;
+  int? _analysisBaselineWeightGrams;
+  bool _isApplyingAutoNutritionScale = false;
 
   bool get _isEditing => widget.entry != null;
 
   @override
   void initState() {
     super.initState();
+    _mealWeightController.addListener(_handleMealWeightChanged);
 
     final entry = widget.entry;
     if (entry == null) {
@@ -65,9 +71,22 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
     _fatController.text = entry.fatGrams.toString();
     _sugarController.text = entry.sugarGrams.toString();
     _fiberController.text = entry.fiberGrams.toString();
+    _mealWeightController.text = entry.estimatedGrams?.toString() ?? '';
+    _ingredientsController.text = entry.ingredientsText ?? '';
     _mealType = entry.mealType;
     _photoPath = entry.photoPath;
     _confidence = entry.confidence;
+    _analysisBaselineWeightGrams = entry.estimatedGrams;
+    if ((entry.estimatedGrams ?? 0) > 0) {
+      _analysisBaselineNutrition = _NutritionSnapshot(
+        calories: entry.calories,
+        proteinGrams: entry.proteinGrams,
+        carbsGrams: entry.carbsGrams,
+        fatGrams: entry.fatGrams,
+        sugarGrams: entry.sugarGrams,
+        fiberGrams: entry.fiberGrams,
+      );
+    }
   }
 
   @override
@@ -80,6 +99,9 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
     _fatController.dispose();
     _sugarController.dispose();
     _fiberController.dispose();
+    _mealWeightController.removeListener(_handleMealWeightChanged);
+    _mealWeightController.dispose();
+    _ingredientsController.dispose();
     super.dispose();
   }
 
@@ -207,6 +229,22 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
             keyboardType: TextInputType.number,
             decoration: InputDecoration(labelText: strings.fiberLabel),
           ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _mealWeightController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(labelText: strings.mealWeightLabel),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _ingredientsController,
+            minLines: 3,
+            maxLines: 6,
+            decoration: InputDecoration(
+              labelText: strings.ingredientsLabel,
+              helperText: strings.ingredientsHelp,
+            ),
+          ),
           if (_confidence != null) ...[
             const SizedBox(height: 16),
             Text(
@@ -289,6 +327,10 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
     final fat = int.tryParse(_fatController.text.trim()) ?? 0;
     final sugar = int.tryParse(_sugarController.text.trim()) ?? 0;
     final fiber = int.tryParse(_fiberController.text.trim()) ?? 0;
+    final estimatedGrams = int.tryParse(_mealWeightController.text.trim());
+    final ingredientsText = _ingredientsController.text.trim().isEmpty
+        ? null
+        : _ingredientsController.text.trim();
 
     if (name.isEmpty || calories == null || protein == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -311,6 +353,8 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
         fatGrams: fat,
         sugarGrams: sugar,
         fiberGrams: fiber,
+        estimatedGrams: estimatedGrams,
+        ingredientsText: ingredientsText,
         confidence: _confidence,
         photoPath: remotePhoto.photoPath,
         remotePhotoId: remotePhoto.remotePhotoId,
@@ -326,6 +370,8 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
         fatGrams: fat,
         sugarGrams: sugar,
         fiberGrams: fiber,
+        estimatedGrams: estimatedGrams,
+        ingredientsText: ingredientsText,
         confidence: _confidence,
         photoPath: remotePhoto.photoPath,
         remotePhotoId: remotePhoto.remotePhotoId,
@@ -494,10 +540,27 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
 
     try {
       final bytes = await _loadPhotoBytes(_photoPath!);
+      final correctedIngredients = _ingredientsController.text.trim();
+      final correctedGrams = int.tryParse(_mealWeightController.text.trim());
+      final hadCorrectedIngredients = correctedIngredients.isNotEmpty;
+      final hadCorrectedWeight = correctedGrams != null && correctedGrams > 0;
+
       final response = await Supabase.instance.client.functions.invoke(
         'meal-photo-analyze',
         body: {
           'imageBase64': base64Encode(bytes),
+          'ingredientsText':
+              hadCorrectedIngredients ? correctedIngredients : null,
+          'estimatedGrams': hadCorrectedWeight ? correctedGrams : null,
+          'currentName': _nameController.text.trim().isEmpty
+              ? null
+              : _nameController.text.trim(),
+          'currentCalories': int.tryParse(_caloriesController.text.trim()),
+          'currentProteinGrams': int.tryParse(_proteinController.text.trim()),
+          'currentCarbsGrams': int.tryParse(_carbsController.text.trim()),
+          'currentFatGrams': int.tryParse(_fatController.text.trim()),
+          'currentSugarGrams': int.tryParse(_sugarController.text.trim()),
+          'currentFiberGrams': int.tryParse(_fiberController.text.trim()),
         },
       );
 
@@ -513,6 +576,12 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
       final estimatedSugar = analysis['estimatedSugarGrams'] as num?;
       final estimatedFiber = analysis['estimatedFiberGrams'] as num?;
       final estimatedMealType = analysis['estimatedMealType']?.toString();
+      final identifiedIngredients =
+          (analysis['identifiedIngredients'] as List<dynamic>? ?? const [])
+              .map((item) => item.toString().trim())
+              .where((item) => item.isNotEmpty)
+              .toList();
+      final estimatedGrams = (analysis['estimatedGrams'] as num?)?.round();
       final confidence = ((analysis['confidence'] as num?)?.toDouble() ?? 0)
           .clamp(0, 1)
           .toDouble();
@@ -542,6 +611,25 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
           ['breakfast', 'lunch', 'dinner', 'snack']
               .contains(estimatedMealType)) {
         setState(() => _mealType = estimatedMealType);
+      }
+      if (!hadCorrectedWeight && estimatedGrams != null && estimatedGrams > 0) {
+        _mealWeightController.text = estimatedGrams.toString();
+      }
+      if (!hadCorrectedIngredients && identifiedIngredients.isNotEmpty) {
+        _ingredientsController.text = identifiedIngredients.join('\n');
+      }
+      final baselineWeight =
+          hadCorrectedWeight ? correctedGrams : estimatedGrams;
+      if (baselineWeight != null && baselineWeight > 0) {
+        _analysisBaselineWeightGrams = baselineWeight;
+        _analysisBaselineNutrition = _NutritionSnapshot(
+          calories: int.tryParse(_caloriesController.text.trim()) ?? 0,
+          proteinGrams: int.tryParse(_proteinController.text.trim()) ?? 0,
+          carbsGrams: int.tryParse(_carbsController.text.trim()) ?? 0,
+          fatGrams: int.tryParse(_fatController.text.trim()) ?? 0,
+          sugarGrams: int.tryParse(_sugarController.text.trim()) ?? 0,
+          fiberGrams: int.tryParse(_fiberController.text.trim()) ?? 0,
+        );
       }
       setState(() => _confidence = confidence);
 
@@ -837,6 +925,77 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
 
     return strings.remoteSaveFailedMessage;
   }
+
+  void _handleMealWeightChanged() {
+    if (_isApplyingAutoNutritionScale) {
+      return;
+    }
+
+    final baselineNutrition = _analysisBaselineNutrition;
+    final baselineWeight = _analysisBaselineWeightGrams;
+    if (baselineNutrition == null ||
+        baselineWeight == null ||
+        baselineWeight <= 0) {
+      return;
+    }
+
+    final targetWeight = int.tryParse(_mealWeightController.text.trim());
+    if (targetWeight == null ||
+        targetWeight <= 0 ||
+        targetWeight == baselineWeight) {
+      return;
+    }
+
+    _isApplyingAutoNutritionScale = true;
+    try {
+      _caloriesController.text = _scaleNutritionValue(
+              baselineNutrition.calories, baselineWeight, targetWeight)
+          .toString();
+      _proteinController.text = _scaleNutritionValue(
+              baselineNutrition.proteinGrams, baselineWeight, targetWeight)
+          .toString();
+      _carbsController.text = _scaleNutritionValue(
+              baselineNutrition.carbsGrams, baselineWeight, targetWeight)
+          .toString();
+      _fatController.text = _scaleNutritionValue(
+              baselineNutrition.fatGrams, baselineWeight, targetWeight)
+          .toString();
+      _sugarController.text = _scaleNutritionValue(
+              baselineNutrition.sugarGrams, baselineWeight, targetWeight)
+          .toString();
+      _fiberController.text = _scaleNutritionValue(
+              baselineNutrition.fiberGrams, baselineWeight, targetWeight)
+          .toString();
+    } finally {
+      _isApplyingAutoNutritionScale = false;
+    }
+  }
+}
+
+int _scaleNutritionValue(int baseValue, int baseWeight, int targetWeight) {
+  if (baseWeight <= 0) {
+    return baseValue;
+  }
+
+  return ((baseValue * targetWeight) / baseWeight).round();
+}
+
+class _NutritionSnapshot {
+  const _NutritionSnapshot({
+    required this.calories,
+    required this.proteinGrams,
+    required this.carbsGrams,
+    required this.fatGrams,
+    required this.sugarGrams,
+    required this.fiberGrams,
+  });
+
+  final int calories;
+  final int proteinGrams;
+  final int carbsGrams;
+  final int fatGrams;
+  final int sugarGrams;
+  final int fiberGrams;
 }
 
 class _PreparedRemotePhoto {
