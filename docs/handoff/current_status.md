@@ -14,6 +14,7 @@ Ultimo estado exacto antes de pausar:
 - El flujo de auth ya no rebota a splash al pedir OTP, el back funciona mejor y el welcome autenticado muestra `Open app`.
 - `meal photo` ahora permite editar ingredientes y peso total, y el cambio de peso recalcula macros localmente en forma proporcional sobre la ultima base IA.
 - Si el usuario vuelve a tocar `Analyze with AI` despues de corregir ingredientes o peso, el backend recibe esas correcciones como prioridad para recalcular.
+- `mobile_scanner` se actualizo a `7.3.0` para atacar la pantalla negra del scanner de barcode en Android moderno.
 - `flutter analyze` y `flutter test` pasaron correctamente despues de todos estos cambios.
 - El siguiente punto exacto NO es rediseñar UI/UX total todavia: primero hay que ejecutar QA real guiada en Android y confirmar `export/delete + rehidratacion real`.
 
@@ -155,6 +156,10 @@ Ultimo estado exacto antes de pausar:
 - `mobile/fitness_app/lib/features/food/presentation/shared_food_catalog_screen.dart`
   - validacion previa de configuracion Supabase,
   - manejo mas robusto de respuestas incompletas o errores de Edge Functions.
+- `mobile/fitness_app/lib/features/food/presentation/barcode_scanner_screen.dart`
+  - migrado a `MobileScannerController` explicito,
+  - manejo de lifecycle y errores,
+  - preparado para probar fix de pantalla negra en Android.
 - `mobile/fitness_app/lib/features/food/presentation/manual_food_entry_screen.dart`
   - validacion previa de configuracion Supabase,
   - manejo mas robusto de respuesta AI,
@@ -203,6 +208,8 @@ Ultimo estado exacto antes de pausar:
   - nuevos textos para alertas REST, sonido, vibracion y labels relacionados.
 - `mobile/fitness_app/pubspec.yaml`
   - nuevas dependencias `audioplayers` y `vibration` para alertas de descanso en Android.
+- `mobile/fitness_app/pubspec.yaml`
+  - `mobile_scanner` actualizado a `7.3.0`.
 - `mobile/fitness_app/test/features/workout/manual_workout_screen_test.dart`
   - tests nuevos para countdown REST, persistencia de settings de alerta y guardado de tiempos.
 - `mobile/fitness_app/test/features/dashboard/daily_targets_calculator_test.dart`
@@ -338,6 +345,7 @@ Resultado confirmado de esa prueba:
 - El warning `16 KB compatibility` desaparecio en `SM S916B` cuando se dejo solo la app nueva `release` `com.x11pro.myfit` y se desinstalo la vieja `com.example.fitness_app`.
 - La release instalada ya no deberia confundirse con la debug vieja.
 - `ingredients_text` se agrego en remoto con SQL directo via `supabase db query` porque el historial remoto de migraciones `20260711` quedo sucio; no asumir que `db push` esta completamente saneado sin revisar `migration list`.
+- La app release mas reciente ya fue reinstalada limpia en el telefono con `mobile_scanner 7.3.0`; el punto inmediato de QA es confirmar si desaparecio la pantalla negra al abrir la camara de barcode.
 
 ## Verificaciones hechas en la sesion mas reciente de Android/workout
 
@@ -405,13 +413,14 @@ Smoke tests remotos confirmados:
 1. Ejecutar QA real guiada en `SM S916B` con `docs/qa/android_real_device_checklist.md`.
 2. Confirmar en Android que `Export my data` y `Delete my data` funcionan de punta a punta con `user-data-manage`.
 3. Probar en Android varios productos reales con `Scan barcode` y confirmar autocompletado correcto de nombre/macros tanto para `Open Food Facts` como para `USDA` cuando corresponda.
-4. Probar en Android con foto real que `manual food entry` guarda la foto remota, la muestra en gallery y deja lanzar `Analyze with AI`.
-5. Confirmar en Android que el cambio de `Meal weight (g)` recalcula macros y que `Analyze with AI` respeta ingredientes/peso corregidos.
-6. Probar end-to-end la pantalla Flutter del catalogo compartido con una imagen real y la build Android/web ya configurada con Supabase.
-7. Integrar los tres tiempos de workout (`total / activo / descanso`) al dashboard y al analisis general.
-8. Preparar firma release real y volver a generar build release firmada para pre-publicacion.
-9. Publicar version final de privacy policy y cerrar contacto/proceso de soporte para export/delete.
-10. Reevaluar en ese punto si ya conviene abrir la mejora total de UI/UX; ese sigue siendo el siguiente gran paso despues de QA real + cierre release/legal.
+4. Confirmar en Android si el scanner de barcode ya abre camara real en vez de pantalla negra despues del upgrade a `mobile_scanner 7.3.0`.
+5. Probar en Android con foto real que `manual food entry` guarda la foto remota, la muestra en gallery y deja lanzar `Analyze with AI`.
+6. Confirmar en Android que el cambio de `Meal weight (g)` recalcula macros y que `Analyze with AI` respeta ingredientes/peso corregidos.
+7. Probar end-to-end la pantalla Flutter del catalogo compartido con una imagen real y la build Android/web ya configurada con Supabase.
+8. Integrar los tres tiempos de workout (`total / activo / descanso`) al dashboard y al analisis general.
+9. Preparar firma release real y volver a generar build release firmada para pre-publicacion.
+10. Publicar version final de privacy policy y cerrar contacto/proceso de soporte para export/delete.
+11. Reevaluar en ese punto si ya conviene abrir la mejora total de UI/UX; ese sigue siendo el siguiente gran paso despues de QA real + cierre release/legal.
 
 ## Riesgos o notas
 

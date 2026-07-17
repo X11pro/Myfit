@@ -42,6 +42,7 @@ Contexto inmediato:
 - `meal photo` ahora soporta `Meal weight (g)` e `Ingredients` editables con persistencia local/remota.
 - Cambiar `Meal weight (g)` debe recalcular macros localmente y volver a tocar `Analyze with AI` debe respetar peso/ingredientes corregidos por el usuario.
 - `ingredients_text` se aplicó en remoto con `supabase db query` por un problema del historial `20260711`; revisar `supabase migration list` antes de tocar migraciones nuevas.
+- `mobile_scanner` ya fue actualizado a `7.3.0`; el siguiente bug a confirmar es si desapareció la pantalla negra del scanner de barcode en Android real.
 - La rutina recomendada por goal debe verse en ingles cuando la app esta en ingles; no reintroducir textos hardcodeados en espanol en esa parte.
 - Todavia NO es el mejor momento para una mejora total de UI/UX; primero ejecutar QA real Android, confirmar export/delete y cerrar release/legal.
 
@@ -57,10 +58,11 @@ Tareas al retomar:
 9. Validar con una foto real que OpenRouter responde bien desde Flutter y, si hay respuestas incompletas, ajustar prompt/parsing sin reabrir analisis ya cerrados.
 10. Ejecutar QA real guiada en `SM S916B` con `docs/qa/android_real_device_checklist.md`.
 11. Confirmar export/delete remoto real desde auth screen.
-12. Validar en Android barcode real, foto AI real, rehidratacion remota completa y el recálculo por peso/ingredientes en meal photo.
-13. Integrar los tiempos `total / activo / descanso` al dashboard/analisis antes del rediseño total.
-14. Seguir desde ahi sin reiniciar nada desde cero.
-15. Mantener respuestas en espanol.
+12. Validar en Android barcode real, incluyendo que el scanner ya no abra en negro.
+13. Validar foto AI real, rehidratacion remota completa y el recálculo por peso/ingredientes en meal photo.
+14. Integrar los tiempos `total / activo / descanso` al dashboard/analisis antes del rediseño total.
+15. Seguir desde ahi sin reiniciar nada desde cero.
+16. Mantener respuestas en espanol.
 
 No reinicies el proyecto desde cero. Continua desde la estructura y commits ya existentes.
 

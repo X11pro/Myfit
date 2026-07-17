@@ -172,6 +172,7 @@ Estado confirmado al cerrar esta sesion:
 - `user-data-manage` ya fue desplegada en Supabase para `export/delete` minimo real por usuario autenticado.
 - `meal-photo-analyze` ya fue redeployada otra vez para soportar `identifiedIngredients`, `estimatedGrams` y recálculo con correcciones del usuario.
 - `ingredients_text` ya existe en remoto, pero se aplicó con `supabase db query` por un problema del historial de migraciones `20260711`; revisar `migration list` antes de asumir que el historial está limpio.
+- `mobile_scanner` ya fue actualizado a `7.3.0`; el siguiente chequeo real es confirmar en Android si desapareció la pantalla negra de la cámara de barcode.
 
 ## 9. Primer objetivo al volver
 
@@ -320,6 +321,13 @@ Prueba minima recomendada extra para `meal photo`:
 4. cambiar `Meal weight (g)` y verificar recálculo inmediato de macros,
 5. corregir ingredientes y volver a tocar `Analyze with AI`,
 6. confirmar que el recálculo respeta esas correcciones.
+
+Prueba minima recomendada extra para barcode scan:
+
+1. abrir scanner de barcode,
+2. confirmar que aparece preview real de cámara y no pantalla negra,
+3. escanear producto real,
+4. verificar autocompletado.
 
 Si `deno` esta disponible en CachyOS, conviene correr tambien antes del deploy:
 

@@ -13,7 +13,7 @@ dependencies {
 
 android {
     namespace = "com.x11pro.myfit"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = "28.2.13676358"
 
     packaging {
@@ -35,7 +35,7 @@ android {
 
     defaultConfig {
         applicationId = "com.x11pro.myfit"
-        minSdk = flutter.minSdkVersion
+        minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

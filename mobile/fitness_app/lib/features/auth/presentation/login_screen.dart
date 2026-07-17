@@ -157,7 +157,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   TextField(
                     controller: _codeController,
                     keyboardType: TextInputType.number,
-                    maxLength: 8,
+                    maxLength: 6,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     enabled: !isBusy,
                     decoration: InputDecoration(
                       labelText: strings.accessCodeLabel,
@@ -245,14 +246,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _verifyCode(AuthController controller) async {
     final strings = stringsFor(ref);
     final email = _submittedEmail ?? _emailController.text.trim();
-    final token = _codeController.text.trim();
+    final token = _codeController.text.replaceAll(RegExp(r'\D'), '');
 
     if (!_looksLikeEmail(email)) {
       _showMessage(strings.staleEmailMessage);
       return;
     }
 
-    if (token.length < 6 || token.length > 8) {
+    if (token.length != 6) {
       _showMessage(strings.invalidAccessCodeMessage);
       return;
     }

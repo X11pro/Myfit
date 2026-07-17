@@ -36,7 +36,7 @@ class AppStrings {
 
   String get accessCodeLabel => isEnglish ? 'Access code' : 'Codigo de acceso';
 
-  String get accessCodeHint => isEnglish ? '6-8 digits' : '6-8 digitos';
+  String get accessCodeHint => isEnglish ? '6 digits' : '6 digitos';
 
   String get verifyCodeButton => isEnglish ? 'Verify code' : 'Verificar codigo';
 
@@ -60,9 +60,8 @@ class AppStrings {
       ? 'The email is no longer valid. Try again.'
       : 'El email ya no es valido. Vuelve a intentarlo.';
 
-  String get invalidAccessCodeMessage => isEnglish
-      ? 'Enter the 6-8 digit code.'
-      : 'Ingresa el codigo de 6 a 8 digitos.';
+  String get invalidAccessCodeMessage =>
+      isEnglish ? 'Enter the 6-digit code.' : 'Ingresa el codigo de 6 digitos.';
 
   String verifyCodeErrorMessage(Object error) => isEnglish
       ? 'Could not verify the code: $error'
