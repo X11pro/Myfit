@@ -18,6 +18,26 @@ Ultimo estado exacto antes de pausar:
 - `flutter analyze` y `flutter test` pasaron correctamente despues de todos estos cambios.
 - El siguiente punto exacto NO es rediseñar UI/UX total todavia: primero hay que ejecutar QA real guiada en Android y confirmar `export/delete + rehidratacion real`.
 
+## Estado de diseño / Stitch
+
+- El usuario ya compartio varias tandas de pantallas hechas en Google Stitch / Figma.
+- La base visual mejor posicionada se identifico como `Equilibrium Dark`.
+- Las pantallas mejor valoradas hasta ahora para tomar como base son:
+  - `Account Settings`
+  - `Log Food (Unified)`
+  - `Workout Tracker (Unified)`
+  - `Progress (Unified)`
+  - `Sign In (Unified)`
+  - `Sign In (OTP Verification)`
+  - `Log Weight (Modal)`
+- Falta decidir o pulir antes de implementar el rediseño completo:
+  - `Dashboard` final
+  - `Welcome` final
+  - `Barcode scanner / result`
+  - `Shared Food Catalog`
+  - `Empty/Error states`
+- El siguiente punto exacto al retomar diseño es revisar la hilera superior de la ultima tanda de pantallas compartidas por el usuario y marcar pantalla por pantalla: `usar`, `descartar` o `repetir`.
+
 ## Estado de codigo
 
 - Remoto configurado: `origin -> https://github.com/X11pro/Myfit.git`.

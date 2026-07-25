@@ -43,6 +43,7 @@ Contexto inmediato:
 - Cambiar `Meal weight (g)` debe recalcular macros localmente y volver a tocar `Analyze with AI` debe respetar peso/ingredientes corregidos por el usuario.
 - `ingredients_text` se aplicó en remoto con `supabase db query` por un problema del historial `20260711`; revisar `supabase migration list` antes de tocar migraciones nuevas.
 - `mobile_scanner` ya fue actualizado a `7.3.0`; el siguiente bug a confirmar es si desapareció la pantalla negra del scanner de barcode en Android real.
+- Punto de diseño mas reciente: revisar la ultima tanda de pantallas Stitch/Figma compartida por el usuario y decidir `usar / descartar / repetir` para cerrar la base final del rediseño.
 - La rutina recomendada por goal debe verse en ingles cuando la app esta en ingles; no reintroducir textos hardcodeados en espanol en esa parte.
 - Todavia NO es el mejor momento para una mejora total de UI/UX; primero ejecutar QA real Android, confirmar export/delete y cerrar release/legal.
 

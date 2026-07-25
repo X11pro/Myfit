@@ -173,6 +173,7 @@ Estado confirmado al cerrar esta sesion:
 - `meal-photo-analyze` ya fue redeployada otra vez para soportar `identifiedIngredients`, `estimatedGrams` y recálculo con correcciones del usuario.
 - `ingredients_text` ya existe en remoto, pero se aplicó con `supabase db query` por un problema del historial de migraciones `20260711`; revisar `migration list` antes de asumir que el historial está limpio.
 - `mobile_scanner` ya fue actualizado a `7.3.0`; el siguiente chequeo real es confirmar en Android si desapareció la pantalla negra de la cámara de barcode.
+- Punto de reanudacion de diseño mas reciente: revisar la ultima tanda de pantallas Stitch/Figma y cerrar la seleccion final de bases para `Dashboard`, `Log Food`, `Workout`, `Progress`, `Account`, `Auth` y `Food Gallery`.
 
 ## 9. Primer objetivo al volver
 
