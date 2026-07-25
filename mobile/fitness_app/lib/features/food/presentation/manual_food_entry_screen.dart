@@ -13,6 +13,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/config/app_env.dart';
 import '../../../shared/app_language.dart';
 import '../../../shared/app_state.dart';
+import '../../../shared/ui/widgets/premium_card.dart';
+import '../../../shared/ui/widgets/premium_screen.dart';
+import '../../../shared/ui/widgets/section_header.dart';
 import '../../../shared/widgets/app_top_bar.dart';
 import '../application/barcode_lookup_service.dart';
 import '../application/manual_food_entries_controller.dart';
@@ -114,206 +117,239 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
         title: _isEditing ? strings.editMealTitle : strings.addMealTitle,
         strings: strings,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
-        children: [
-          Text(
-            strings.addMealSubtitle,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 16),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: OutlinedButton.icon(
-              onPressed: () => context.push('/food/gallery'),
-              icon: const Icon(Icons.photo_library_outlined),
-              label: Text(strings.foodGalleryTitle),
-            ),
-          ),
-          const SizedBox(height: 24),
-          TextField(
-            controller: _nameController,
-            decoration: InputDecoration(labelText: strings.foodNameLabel),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _barcodeController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: strings.barcodeLabel),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              FilledButton.tonalIcon(
-                onPressed: _isBusyForExternalActions || !_supportsBarcodeScan
-                    ? null
-                    : _scanBarcode,
-                icon: const Icon(Icons.qr_code_scanner_outlined),
-                label: Text(strings.scanBarcodeButton),
-              ),
-              OutlinedButton.icon(
-                onPressed: _isBusyForExternalActions ? null : _lookupBarcode,
-                icon: const Icon(Icons.search_outlined),
-                label: Text(
-                  _isLookingUpBarcode
-                      ? strings.barcodeLookupInProgress
-                      : strings.lookupBarcodeButton,
-                ),
-              ),
-            ],
-          ),
-          if (_barcodeResult != null) ...[
-            const SizedBox(height: 16),
-            _buildBarcodeResultCard(strings),
-          ],
-          const SizedBox(height: 16),
-          DropdownButtonFormField<String>(
-            value: _mealType,
-            decoration: InputDecoration(labelText: strings.mealTypeLabel),
-            items: [
-              DropdownMenuItem(
-                value: 'breakfast',
-                child: Text(strings.mealTypeBreakfast),
-              ),
-              DropdownMenuItem(
-                value: 'lunch',
-                child: Text(strings.mealTypeLunch),
-              ),
-              DropdownMenuItem(
-                value: 'dinner',
-                child: Text(strings.mealTypeDinner),
-              ),
-              DropdownMenuItem(
-                value: 'snack',
-                child: Text(strings.mealTypeSnack),
-              ),
-            ],
-            onChanged: (value) =>
-                setState(() => _mealType = value ?? _mealType),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _caloriesController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: strings.caloriesLabel),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _proteinController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: strings.proteinLabel),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _carbsController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: strings.carbsLabel),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _fatController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: strings.fatLabel),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _sugarController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: strings.sugarLabel),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _fiberController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: strings.fiberLabel),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _mealWeightController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: strings.mealWeightLabel),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _ingredientsController,
-            minLines: 3,
-            maxLines: 6,
-            decoration: InputDecoration(
-              labelText: strings.ingredientsLabel,
-              helperText: strings.ingredientsHelp,
-            ),
-          ),
-          if (_confidence != null) ...[
-            const SizedBox(height: 16),
-            Text(
-              '${strings.confidence}: ${(_confidence! * 100).round()}%',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ],
-          const SizedBox(height: 24),
-          Text(strings.mealPhotoLabel,
-              style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 12),
-          if (_photoPath != null) ...[
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: _buildPhotoPreview(strings),
-            ),
-            const SizedBox(height: 12),
-          ],
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              FilledButton.tonalIcon(
-                onPressed:
-                    _isAnalyzing ? null : () => _pickPhoto(ImageSource.camera),
-                icon: const Icon(Icons.camera_alt_outlined),
-                label: Text(
-                  _photoPath == null
-                      ? strings.addPhotoButton
-                      : strings.changePhotoButton,
-                ),
-              ),
-              FilledButton.tonalIcon(
-                onPressed:
-                    _isAnalyzing ? null : () => _pickPhoto(ImageSource.gallery),
+      body: PremiumScreen(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 4),
+            SectionHeader(
+              title: strings.addMealTitle,
+              subtitle: strings.addMealSubtitle,
+              trailing: OutlinedButton.icon(
+                onPressed: () => context.push('/food/gallery'),
                 icon: const Icon(Icons.photo_library_outlined),
-                label: Text(strings.choosePhotoButton),
+                label: Text(strings.foodGalleryTitle),
               ),
-              if (_photoPath != null)
-                OutlinedButton(
-                  onPressed: () => setState(() => _photoPath = null),
-                  child: Text(strings.removePhotoButton),
+            ),
+            const SizedBox(height: 20),
+            PremiumCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: _nameController,
+                    decoration:
+                        InputDecoration(labelText: strings.foodNameLabel),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _barcodeController,
+                    keyboardType: TextInputType.number,
+                    decoration:
+                        InputDecoration(labelText: strings.barcodeLabel),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      FilledButton.tonalIcon(
+                        onPressed:
+                            _isBusyForExternalActions || !_supportsBarcodeScan
+                                ? null
+                                : _scanBarcode,
+                        icon: const Icon(Icons.qr_code_scanner_outlined),
+                        label: Text(strings.scanBarcodeButton),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed:
+                            _isBusyForExternalActions ? null : _lookupBarcode,
+                        icon: const Icon(Icons.search_outlined),
+                        label: Text(
+                          _isLookingUpBarcode
+                              ? strings.barcodeLookupInProgress
+                              : strings.lookupBarcodeButton,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_barcodeResult != null) ...[
+                    const SizedBox(height: 16),
+                    _buildBarcodeResultCard(strings),
+                  ],
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: _mealType,
+                    decoration:
+                        InputDecoration(labelText: strings.mealTypeLabel),
+                    items: [
+                      DropdownMenuItem(
+                        value: 'breakfast',
+                        child: Text(strings.mealTypeBreakfast),
+                      ),
+                      DropdownMenuItem(
+                        value: 'lunch',
+                        child: Text(strings.mealTypeLunch),
+                      ),
+                      DropdownMenuItem(
+                        value: 'dinner',
+                        child: Text(strings.mealTypeDinner),
+                      ),
+                      DropdownMenuItem(
+                        value: 'snack',
+                        child: Text(strings.mealTypeSnack),
+                      ),
+                    ],
+                    onChanged: (value) =>
+                        setState(() => _mealType = value ?? _mealType),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            PremiumCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SectionHeader(title: 'Nutrition totals'),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _caloriesController,
+                    keyboardType: TextInputType.number,
+                    decoration:
+                        InputDecoration(labelText: strings.caloriesLabel),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _proteinController,
+                    keyboardType: TextInputType.number,
+                    decoration:
+                        InputDecoration(labelText: strings.proteinLabel),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _carbsController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(labelText: strings.carbsLabel),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _fatController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(labelText: strings.fatLabel),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _sugarController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(labelText: strings.sugarLabel),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _fiberController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(labelText: strings.fiberLabel),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _mealWeightController,
+                    keyboardType: TextInputType.number,
+                    decoration:
+                        InputDecoration(labelText: strings.mealWeightLabel),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _ingredientsController,
+                    minLines: 3,
+                    maxLines: 6,
+                    decoration: InputDecoration(
+                      labelText: strings.ingredientsLabel,
+                      helperText: strings.ingredientsHelp,
+                    ),
+                  ),
+                  if (_confidence != null) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      '${strings.confidence}: ${(_confidence! * 100).round()}%',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            PremiumCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SectionHeader(title: strings.mealPhotoLabel),
+                  const SizedBox(height: 12),
+                  if (_photoPath != null) ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: _buildPhotoPreview(strings),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      FilledButton.tonalIcon(
+                        onPressed: _isAnalyzing
+                            ? null
+                            : () => _pickPhoto(ImageSource.camera),
+                        icon: const Icon(Icons.camera_alt_outlined),
+                        label: Text(
+                          _photoPath == null
+                              ? strings.addPhotoButton
+                              : strings.changePhotoButton,
+                        ),
+                      ),
+                      FilledButton.tonalIcon(
+                        onPressed: _isAnalyzing
+                            ? null
+                            : () => _pickPhoto(ImageSource.gallery),
+                        icon: const Icon(Icons.photo_library_outlined),
+                        label: Text(strings.choosePhotoButton),
+                      ),
+                      if (_photoPath != null)
+                        OutlinedButton(
+                          onPressed: () => setState(() => _photoPath = null),
+                          child: Text(strings.removePhotoButton),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _isAnalyzing ? null : _analyzeWithAi,
+                      icon: const Icon(Icons.auto_awesome_outlined),
+                      label: Text(
+                        _isAnalyzing
+                            ? '${strings.analyzeWithAiButton}...'
+                            : strings.analyzeWithAiButton,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: _save,
+                child: Text(
+                  _isEditing
+                      ? strings.updateMealButton
+                      : strings.saveMealButton,
                 ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: _isAnalyzing ? null : _analyzeWithAi,
-              icon: const Icon(Icons.auto_awesome_outlined),
-              label: Text(
-                _isAnalyzing
-                    ? '${strings.analyzeWithAiButton}...'
-                    : strings.analyzeWithAiButton,
               ),
             ),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: _save,
-              child: Text(
-                _isEditing ? strings.updateMealButton : strings.saveMealButton,
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

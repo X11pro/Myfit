@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../shared/app_language.dart';
+import '../../../shared/ui/widgets/premium_card.dart';
+import '../../../shared/ui/widgets/premium_screen.dart';
+import '../../../shared/ui/widgets/section_header.dart';
 import '../../../shared/widgets/app_top_bar.dart';
 import '../application/manual_food_entries_controller.dart';
 import '../domain/manual_food_entry.dart';
@@ -21,29 +24,30 @@ class FoodGalleryScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppTopBar(title: strings.foodGalleryTitle, strings: strings),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
-        children: [
-          Text(
-            strings.foodGallerySubtitle,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            strings.savedMealPhotosCount(photoEntries.length),
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 20),
-          if (photoEntries.isEmpty)
-            _EmptyGalleryCard(strings: strings)
-          else
-            ...photoEntries.map(
-              (entry) => Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: _FoodGalleryCard(entry: entry, strings: strings),
+      body: PremiumScreen(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SectionHeader(
+              title: strings.foodGalleryTitle,
+              subtitle: strings.foodGallerySubtitle,
+              trailing: Text(
+                strings.savedMealPhotosCount(photoEntries.length),
+                style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
-        ],
+            const SizedBox(height: 20),
+            if (photoEntries.isEmpty)
+              _EmptyGalleryCard(strings: strings)
+            else
+              ...photoEntries.map(
+                (entry) => Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _FoodGalleryCard(entry: entry, strings: strings),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -56,23 +60,20 @@ class _EmptyGalleryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(strings.noMealPhotosYet,
-                style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Text(strings.foodGalleryEmptyHint),
-            const SizedBox(height: 16),
-            FilledButton.tonal(
-              onPressed: () => context.go('/food/manual'),
-              child: Text(strings.addMealTitle),
-            ),
-          ],
-        ),
+    return PremiumCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(strings.noMealPhotosYet,
+              style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          Text(strings.foodGalleryEmptyHint),
+          const SizedBox(height: 16),
+          FilledButton.tonal(
+            onPressed: () => context.go('/food/manual'),
+            child: Text(strings.addMealTitle),
+          ),
+        ],
       ),
     );
   }

@@ -150,7 +150,12 @@ Ultimo estado exacto antes de pausar:
   - alta de productos compartidos,
   - foto de etiqueta,
   - OCR/manual input,
-  - score nutricional `0-5`.
+  - score nutricional `0-5`,
+  - migrada a la nueva base visual premium compartida.
+- `mobile/fitness_app/lib/shared/ui/`
+  - nueva base visual reusable con `theme/` y `widgets/` compartidos.
+- `mobile/fitness_app/lib/app/app.dart`
+  - la app ya usa `AppTheme.dark()` como fuente visual central.
 - `mobile/fitness_app/test/widget_test.dart`
   - test actualizado al welcome screen en ingles por defecto,
   - test del cambio a espanol desde el selector de idioma.
@@ -190,7 +195,20 @@ Ultimo estado exacto antes de pausar:
   - campo de `peso de la comida` editable,
   - campo de `ingredientes` editable,
   - recálculo automático de macros al cambiar el peso,
-  - reanálisis IA priorizando ingredientes y peso corregidos por el usuario.
+  - reanálisis IA priorizando ingredientes y peso corregidos por el usuario,
+  - migrada a la nueva base visual premium compartida.
+- `mobile/fitness_app/lib/features/auth/presentation/login_screen.dart`
+  - migrada a la nueva base visual premium compartida.
+- `mobile/fitness_app/lib/features/food/presentation/food_gallery_screen.dart`
+  - migrada a la nueva base visual premium compartida.
+- `mobile/fitness_app/lib/features/dashboard/presentation/progress_screen.dart`
+  - migrada a la nueva base visual premium compartida.
+- `mobile/fitness_app/lib/features/dashboard/presentation/dashboard_screen.dart`
+  - rehecha y refinada sobre la nueva base visual para acercarse al diseño premium de referencia.
+- `mobile/fitness_app/lib/features/splash/presentation/splash_screen.dart`
+  - rehecha sobre la nueva base visual premium.
+- `mobile/fitness_app/lib/features/workout/presentation/manual_workout_screen.dart`
+  - migración parcial a la base visual nueva; sigue siendo la siguiente pantalla principal a pulir.
 - `mobile/fitness_app/lib/features/food/application/manual_food_entries_controller.dart`
   - persistencia hibrida local/remota,
   - sync remoto de `meal_entries`,

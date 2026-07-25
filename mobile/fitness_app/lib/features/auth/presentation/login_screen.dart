@@ -9,6 +9,9 @@ import '../../../core/config/app_env.dart';
 import '../application/account_data_service.dart';
 import '../../../shared/app_language.dart';
 import '../../../shared/app_state.dart';
+import '../../../shared/ui/theme/app_theme.dart';
+import '../../../shared/ui/widgets/premium_card.dart';
+import '../../../shared/ui/widgets/premium_screen.dart';
 import '../../../shared/widgets/app_top_bar.dart';
 import '../application/auth_controller.dart';
 
@@ -61,16 +64,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         strings: strings,
         backPath: _codeSent ? '/auth' : '/splash',
       ),
-      body: SafeArea(
+      body: PremiumScreen(
+        padding: EdgeInsets.fromLTRB(
+          24,
+          24,
+          24,
+          24 + MediaQuery.of(context).viewInsets.bottom,
+        ),
         child: Form(
           key: _formKey,
-          child: ListView(
-            padding: EdgeInsets.fromLTRB(
-              24,
-              24,
-              24,
-              24 + MediaQuery.of(context).viewInsets.bottom,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Myfit',
@@ -83,23 +87,55 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
               const SizedBox(height: 24),
               if (isAuthenticated) ...[
-                Text(
-                  strings.signedInDescription(appState.authEmail),
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () => context.go(
-                      appState.isOnboardingComplete
-                          ? '/dashboard'
-                          : '/onboarding',
-                    ),
-                    child: Text(strings.openProfileOrDashboardButton),
+                PremiumCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 52,
+                            height: 52,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppTheme.primary.withValues(alpha: 0.16),
+                            ),
+                            child: const Icon(Icons.person_outline),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  appState.displayName ??
+                                      strings.defaultUserName,
+                                  style: Theme.of(context).textTheme.titleLarge,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(strings
+                                    .signedInDescription(appState.authEmail)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          onPressed: () => context.go(
+                            appState.isOnboardingComplete
+                                ? '/dashboard'
+                                : '/onboarding',
+                          ),
+                          child: Text(strings.openProfileOrDashboardButton),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
@@ -135,37 +171,53 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
               ] else ...[
-                Text(
-                  isConfigured
-                      ? strings.loginDescription
-                      : strings.loginMissingConfig,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 24),
-                TextField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  autofillHints: const [AutofillHints.email],
-                  enabled: isConfigured && !_codeSent && !isBusy,
-                  decoration: InputDecoration(
-                    labelText: strings.emailLabel,
-                    hintText: strings.emailHint,
+                PremiumCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isConfigured
+                            ? 'Welcome back'
+                            : strings.welcomeScreenTitle,
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        isConfigured
+                            ? strings.loginDescription
+                            : strings.loginMissingConfig,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 20),
+                      TextField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        autofillHints: const [AutofillHints.email],
+                        enabled: isConfigured && !_codeSent && !isBusy,
+                        decoration: InputDecoration(
+                          labelText: strings.emailLabel,
+                          hintText: strings.emailHint,
+                        ),
+                      ),
+                      if (_codeSent) ...[
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _codeController,
+                          keyboardType: TextInputType.number,
+                          maxLength: 6,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly
+                          ],
+                          enabled: !isBusy,
+                          decoration: InputDecoration(
+                            labelText: strings.accessCodeLabel,
+                            hintText: strings.accessCodeHint,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-                if (_codeSent) ...[
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _codeController,
-                    keyboardType: TextInputType.number,
-                    maxLength: 6,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    enabled: !isBusy,
-                    decoration: InputDecoration(
-                      labelText: strings.accessCodeLabel,
-                      hintText: strings.accessCodeHint,
-                    ),
-                  ),
-                ],
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,

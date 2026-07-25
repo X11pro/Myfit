@@ -886,6 +886,80 @@ class AppStrings {
 
   String helloUser(String name) => isEnglish ? 'Hello, $name' : 'Hola, $name';
 
+  String goodMorningUser(String name) =>
+      isEnglish ? 'Good morning, $name' : 'Buen dia, $name';
+
+  String get energyBalanceSubtitle => isEnglish
+      ? 'Your energy balance for today.'
+      : 'Tu balance energetico de hoy.';
+
+  String get dailyEnergyBalanceTitle =>
+      isEnglish ? 'Daily energy balance' : 'Balance energetico diario';
+
+  String energyBalanceStatus(int calories) {
+    if (isEnglish) {
+      if (calories < 0) return 'Deficit tracking on target';
+      if (calories > 0) return 'Above target for today';
+      return 'Right on target';
+    }
+
+    if (calories < 0) return 'Deficit en objetivo';
+    if (calories > 0) return 'Por encima del objetivo hoy';
+    return 'Exactamente en objetivo';
+  }
+
+  String get nutritionSectionTitle => isEnglish ? 'Nutrition' : 'Nutricion';
+
+  String get caloriesEatenTitle =>
+      isEnglish ? 'Calories eaten' : 'Calorias consumidas';
+
+  String caloriesProgressLabel(int eaten, int target) =>
+      '$eaten / $target kcal';
+
+  String get caloriesBurnedTitle =>
+      isEnglish ? 'Calories burned' : 'Calorias quemadas';
+
+  String get caloriesBurnedSubtitle =>
+      isEnglish ? 'Active & workout' : 'Actividad y entrenamiento';
+
+  String get currentWeightCardTitle =>
+      isEnglish ? 'Current weight' : 'Peso actual';
+
+  String weeklyWeightDelta(double deltaKg) {
+    final sign = deltaKg > 0 ? '+' : '';
+    if (isEnglish) {
+      return '$sign${deltaKg.toStringAsFixed(1)} kg this week';
+    }
+    return '$sign${deltaKg.toStringAsFixed(1)} kg esta semana';
+  }
+
+  String get todaysActivityTitle =>
+      isEnglish ? "Today's activity" : 'Actividad de hoy';
+
+  String workoutActivitySummary({
+    required int minutes,
+    required int calories,
+  }) =>
+      isEnglish
+          ? '$minutes mins • $calories kcal'
+          : '$minutes min • $calories kcal';
+
+  String get recentLogsTitle =>
+      isEnglish ? 'Recent logs' : 'Registros recientes';
+
+  String get startWorkoutButton =>
+      isEnglish ? 'Start workout' : 'Iniciar entrenamiento';
+
+  String get weeklyInsightsTitle =>
+      isEnglish ? 'View weekly insights' : 'Ver insights semanales';
+
+  String get weeklyInsightsSubtitle =>
+      isEnglish ? 'Analyze your progress' : 'Analiza tu progreso';
+
+  String get nutritionTabLabel => isEnglish ? 'Nutrition' : 'Nutricion';
+
+  String get accountTabLabel => isEnglish ? 'Account' : 'Cuenta';
+
   String get caloriesConsumed =>
       isEnglish ? 'Calories consumed' : 'Calorias consumidas';
 

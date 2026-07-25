@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'router.dart';
+import '../shared/ui/theme/app_theme.dart';
 
 class MyfitApp extends ConsumerWidget {
   const MyfitApp({super.key});
@@ -12,14 +13,7 @@ class MyfitApp extends ConsumerWidget {
 
     return MaterialApp.router(
       title: 'Myfit',
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF276EF1),
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.dark(),
       themeMode: ThemeMode.dark,
       routerConfig: router,
     );

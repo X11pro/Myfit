@@ -11,6 +11,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/app_env.dart';
 import '../../../shared/app_language.dart';
+import '../../../shared/ui/widgets/premium_card.dart';
+import '../../../shared/ui/widgets/premium_screen.dart';
+import '../../../shared/ui/widgets/section_header.dart';
 import '../../../shared/widgets/app_top_bar.dart';
 import '../application/barcode_lookup_service.dart';
 import '../domain/barcode_food_lookup_result.dart';
@@ -65,130 +68,150 @@ class _SharedFoodCatalogScreenState
 
     return Scaffold(
       appBar: AppTopBar(title: strings.addSharedFoodTitle, strings: strings),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
-        children: [
-          Text(
-            strings.addSharedFoodSubtitle,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 24),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              FilledButton.tonalIcon(
-                onPressed:
-                    _isBusy ? null : () => _pickImage(ImageSource.camera),
-                icon: const Icon(Icons.camera_alt_outlined),
-                label: Text(strings.takePhotoButton),
-              ),
-              FilledButton.tonalIcon(
-                onPressed:
-                    _isBusy ? null : () => _pickImage(ImageSource.gallery),
-                icon: const Icon(Icons.photo_library_outlined),
-                label: Text(strings.pickPhotoButton),
-              ),
-            ],
-          ),
-          if (_barcodeResult != null) ...[
-            const SizedBox(height: 16),
-            _buildBarcodeResultCard(strings),
-          ],
-          const SizedBox(height: 16),
-          TextField(
-            controller: _labelTextController,
-            maxLines: 6,
-            decoration: InputDecoration(labelText: strings.labelTextLabel),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: _isBusy ? null : _parseWithAiOrOcr,
-              child: Text(strings.parseWithAiButton),
+      body: PremiumScreen(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SectionHeader(
+              title: strings.addSharedFoodTitle,
+              subtitle: strings.addSharedFoodSubtitle,
             ),
-          ),
-          const SizedBox(height: 24),
-          TextField(
-            controller: _nameController,
-            decoration: InputDecoration(labelText: strings.foodNameLabel),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _brandController,
-            decoration: InputDecoration(labelText: strings.brandLabel),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _barcodeController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: strings.barcodeLabel),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              FilledButton.tonalIcon(
-                onPressed: _isBusyForBarcode || !_supportsBarcodeScan
-                    ? null
-                    : _scanBarcode,
-                icon: const Icon(Icons.qr_code_scanner_outlined),
-                label: Text(strings.scanBarcodeButton),
-              ),
-              OutlinedButton.icon(
-                onPressed: _isBusyForBarcode ? null : _lookupBarcode,
-                icon: const Icon(Icons.search_outlined),
-                label: Text(
-                  _isLookingUpBarcode
-                      ? strings.barcodeLookupInProgress
-                      : strings.lookupBarcodeButton,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _caloriesController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: strings.caloriesLabel),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _proteinController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: strings.proteinLabel),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _carbsController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: strings.carbsLabel),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _fatController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: strings.fatLabel),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _sugarController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: strings.sugarLabel),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _fiberController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: strings.fiberLabel),
-          ),
-          if (_qualityScore != null) ...[
             const SizedBox(height: 24),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
+            PremiumCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      FilledButton.tonalIcon(
+                        onPressed: _isBusy
+                            ? null
+                            : () => _pickImage(ImageSource.camera),
+                        icon: const Icon(Icons.camera_alt_outlined),
+                        label: Text(strings.takePhotoButton),
+                      ),
+                      FilledButton.tonalIcon(
+                        onPressed: _isBusy
+                            ? null
+                            : () => _pickImage(ImageSource.gallery),
+                        icon: const Icon(Icons.photo_library_outlined),
+                        label: Text(strings.pickPhotoButton),
+                      ),
+                    ],
+                  ),
+                  if (_barcodeResult != null) ...[
+                    const SizedBox(height: 16),
+                    _buildBarcodeResultCard(strings),
+                  ],
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _labelTextController,
+                    maxLines: 6,
+                    decoration:
+                        InputDecoration(labelText: strings.labelTextLabel),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: _isBusy ? null : _parseWithAiOrOcr,
+                      child: Text(strings.parseWithAiButton),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            PremiumCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: _nameController,
+                    decoration:
+                        InputDecoration(labelText: strings.foodNameLabel),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _brandController,
+                    decoration: InputDecoration(labelText: strings.brandLabel),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _barcodeController,
+                    keyboardType: TextInputType.number,
+                    decoration:
+                        InputDecoration(labelText: strings.barcodeLabel),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      FilledButton.tonalIcon(
+                        onPressed: _isBusyForBarcode || !_supportsBarcodeScan
+                            ? null
+                            : _scanBarcode,
+                        icon: const Icon(Icons.qr_code_scanner_outlined),
+                        label: Text(strings.scanBarcodeButton),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: _isBusyForBarcode ? null : _lookupBarcode,
+                        icon: const Icon(Icons.search_outlined),
+                        label: Text(
+                          _isLookingUpBarcode
+                              ? strings.barcodeLookupInProgress
+                              : strings.lookupBarcodeButton,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _caloriesController,
+                    keyboardType: TextInputType.number,
+                    decoration:
+                        InputDecoration(labelText: strings.caloriesLabel),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _proteinController,
+                    keyboardType: TextInputType.number,
+                    decoration:
+                        InputDecoration(labelText: strings.proteinLabel),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _carbsController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(labelText: strings.carbsLabel),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _fatController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(labelText: strings.fatLabel),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _sugarController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(labelText: strings.sugarLabel),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _fiberController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(labelText: strings.fiberLabel),
+                  ),
+                ],
+              ),
+            ),
+            if (_qualityScore != null) ...[
+              const SizedBox(height: 16),
+              PremiumCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -208,17 +231,17 @@ class _SharedFoodCatalogScreenState
                   ],
                 ),
               ),
+            ],
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: _isBusy ? null : _saveSharedFood,
+                child: Text(strings.saveSharedFoodButton),
+              ),
             ),
           ],
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: _isBusy ? null : _saveSharedFood,
-              child: Text(strings.saveSharedFoodButton),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

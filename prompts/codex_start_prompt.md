@@ -44,6 +44,7 @@ Contexto inmediato:
 - `ingredients_text` se aplicó en remoto con `supabase db query` por un problema del historial `20260711`; revisar `supabase migration list` antes de tocar migraciones nuevas.
 - `mobile_scanner` ya fue actualizado a `7.3.0`; el siguiente bug a confirmar es si desapareció la pantalla negra del scanner de barcode en Android real.
 - Punto de diseño mas reciente: revisar la ultima tanda de pantallas Stitch/Figma compartida por el usuario y decidir `usar / descartar / repetir` para cerrar la base final del rediseño.
+- La base visual reusable ya existe en `mobile/fitness_app/lib/shared/ui/`; seguir construyendo sobre esa carpeta y no volver a hardcodear estilos pantalla por pantalla.
 - La rutina recomendada por goal debe verse en ingles cuando la app esta en ingles; no reintroducir textos hardcodeados en espanol en esa parte.
 - Todavia NO es el mejor momento para una mejora total de UI/UX; primero ejecutar QA real Android, confirmar export/delete y cerrar release/legal.
 

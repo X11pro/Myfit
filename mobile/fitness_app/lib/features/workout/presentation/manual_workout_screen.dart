@@ -11,9 +11,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vibration/vibration.dart';
 
 import '../../../shared/app_language.dart';
+import '../../../shared/ui/widgets/premium_card.dart';
+import '../../../shared/ui/widgets/premium_screen.dart';
+import '../../../shared/ui/widgets/section_header.dart';
 import '../../../shared/widgets/app_top_bar.dart';
-import '../../dashboard/application/daily_targets_calculator.dart';
-import '../../dashboard/domain/daily_targets.dart';
 import '../application/manual_workout_controller.dart';
 import '../domain/gym_set_entry.dart';
 import '../domain/manual_workout_session.dart';
@@ -161,7 +162,6 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
   Widget build(BuildContext context) {
     final strings = stringsFor(ref);
     final sessions = ref.watch(manualWorkoutSessionsProvider);
-    final recommendation = ref.watch(workoutRecommendationProvider);
     final recentExercises = ref.watch(recentWorkoutExerciseNamesProvider);
 
     return Scaffold(
@@ -169,31 +169,21 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
         title: _isEditing ? strings.editWorkoutTitle : strings.gymTitle,
         strings: strings,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
-        children: [
-          Text(
-            strings.gymSubtitle,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 16),
-          if (recommendation != null) ...[
-            _RoutineRecommendationCard(recommendation: recommendation),
+      body: PremiumScreen(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SectionHeader(
+              title: _isEditing
+                  ? strings.editWorkoutTitle
+                  : strings.logWorkoutTitle,
+              subtitle: strings.gymSubtitle,
+            ),
             const SizedBox(height: 16),
-          ],
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
+            PremiumCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    _isEditing
-                        ? strings.editWorkoutTitle
-                        : strings.logWorkoutTitle,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 16),
                   TextField(
                     controller: _titleController,
                     decoration:
@@ -254,10 +244,8 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                           value: _restAlertEnabled,
                           onChanged: _setRestAlertEnabled,
                           title: Text(strings.restSoundToggleLabel),
-                          subtitle: Text(strings.restSoundToggleHelp),
-                          secondary: const Icon(
-                            Icons.notifications_active_outlined,
-                          ),
+                          secondary:
+                              const Icon(Icons.notifications_active_outlined),
                         ),
                         SwitchListTile(
                           key: const Key('rest-vibration-toggle'),
@@ -265,7 +253,6 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                           value: _restVibrationEnabled,
                           onChanged: _setRestVibrationEnabled,
                           title: Text(strings.restVibrationToggleLabel),
-                          subtitle: Text(strings.restVibrationToggleHelp),
                           secondary: const Icon(Icons.vibration_outlined),
                         ),
                         DropdownButtonFormField<_RestAlertSoundProfile>(
@@ -368,31 +355,32 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                     maxLines: 4,
                     decoration: InputDecoration(labelText: strings.notesLabel),
                   ),
-                  const SizedBox(height: 20),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            PremiumCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SectionHeader(title: strings.loggedSetsTitle),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
                     children: [
-                      Text(strings.loggedSetsTitle,
-                          style: Theme.of(context).textTheme.titleSmall),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          if (_draftSets.isNotEmpty)
-                            OutlinedButton.icon(
-                              onPressed: _duplicateLastSet,
-                              icon: const Icon(Icons.content_copy_outlined),
-                              label: Text(strings.repeatLastSetButton),
-                            ),
-                          FilledButton.tonalIcon(
-                            onPressed: () => _openSetDialog(
-                              recentExercises: recentExercises,
-                            ),
-                            icon: const Icon(Icons.fitness_center_outlined),
-                            label: Text(strings.addSetButton),
-                          ),
-                        ],
+                      if (_draftSets.isNotEmpty)
+                        OutlinedButton.icon(
+                          onPressed: _duplicateLastSet,
+                          icon: const Icon(Icons.content_copy_outlined),
+                          label: Text(strings.repeatLastSetButton),
+                        ),
+                      FilledButton.tonalIcon(
+                        onPressed: () => _openSetDialog(
+                          recentExercises: recentExercises,
+                        ),
+                        icon: const Icon(Icons.fitness_center_outlined),
+                        label: Text(strings.addSetButton),
                       ),
                     ],
                   ),
@@ -414,42 +402,36 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                         ),
                       ),
                     ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      key: const Key('save-workout-button'),
-                      onPressed: _saveWorkout,
-                      child: Text(
-                        _isEditing
-                            ? strings.updateWorkoutButton
-                            : strings.saveWorkoutButton,
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
-          ),
-          const SizedBox(height: 24),
-          Text(strings.workoutHistoryTitle,
-              style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 12),
-          if (sessions.isEmpty)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Text(strings.noWorkoutsYet),
-              ),
-            )
-          else
-            ...sessions.take(10).map(
-                  (session) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _WorkoutHistoryCard(session: session),
-                  ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                key: const Key('save-workout-button'),
+                onPressed: _saveWorkout,
+                child: Text(
+                  _isEditing
+                      ? strings.updateWorkoutButton
+                      : strings.saveWorkoutButton,
                 ),
-        ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            SectionHeader(title: strings.workoutHistoryTitle),
+            const SizedBox(height: 12),
+            if (sessions.isEmpty)
+              PremiumCard(child: Text(strings.noWorkoutsYet))
+            else
+              ...sessions.take(10).map(
+                    (session) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _WorkoutHistoryCard(session: session),
+                    ),
+                  ),
+          ],
+        ),
       ),
     );
   }
@@ -1263,39 +1245,6 @@ class _SetDialogResult {
 
   final GymSetEntry set;
   final int setsCount;
-}
-
-class _RoutineRecommendationCard extends StatelessWidget {
-  const _RoutineRecommendationCard({required this.recommendation});
-
-  final GoalRecommendation recommendation;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(recommendation.routineName,
-                style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Text(recommendation.headline),
-            const SizedBox(height: 12),
-            ...recommendation.exercises.map<Widget>(
-              (exercise) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Text('• $exercise'),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(recommendation.nutritionFocus),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _TimerSummaryCard extends StatelessWidget {
