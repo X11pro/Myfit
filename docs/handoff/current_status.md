@@ -17,6 +17,10 @@ Ultimo estado exacto antes de pausar:
 - `mobile_scanner` se actualizo a `7.3.0` para atacar la pantalla negra del scanner de barcode en Android moderno.
 - `flutter analyze` y `flutter test` pasaron correctamente despues de todos estos cambios.
 - El siguiente punto exacto NO es rediseñar UI/UX total todavia: primero hay que ejecutar QA real guiada en Android y confirmar `export/delete + rehidratacion real`.
+- La QA critica ya se ejecuto y aprobo en `SM S916B`: OTP y sesion persistente, barcode con camara, foto IA con correcciones, timers, sync/rehidratacion tras reinstalar, export y borrado remoto.
+- El dashboard ya agrega y muestra los tiempos total, activo y de descanso de las sesiones manuales del dia.
+- QA detecto y se corrigio un overflow vertical del historial diario y la falta de acceso para editar/borrar comidas sin foto; Food Gallery ahora incluye todas las comidas guardadas.
+- El temporizador REST ya no se activa ni se reinicia al agregar, editar o repetir un set: solo se controla manualmente desde su boton.
 
 ## Estado de diseño / Stitch
 
@@ -242,6 +246,10 @@ Ultimo estado exacto antes de pausar:
   - persistencia hibrida local/remota para workouts manuales y sets.
 - `mobile/fitness_app/lib/features/dashboard/application/daily_targets_calculator.dart`
   - las rutinas recomendadas por goal ya salen en ingles cuando la app esta en ingles; no quedan hardcodeadas solo en espanol.
+- `mobile/fitness_app/lib/features/workout/application/manual_workout_controller.dart`
+  - agregado reutilizable de tiempos total, activo y descanso para los workouts del dia.
+- `mobile/fitness_app/lib/features/dashboard/presentation/dashboard_screen.dart`
+  - resumen de actividad con desglose agregado de tiempos total, activo y descanso.
 - `mobile/fitness_app/lib/shared/app_language.dart`
   - nuevos textos para alertas REST, sonido, vibracion y labels relacionados.
 - `mobile/fitness_app/pubspec.yaml`
@@ -420,7 +428,7 @@ Resultado confirmado:
 - El flujo web ya no se rompe al elegir foto desde galeria: `manual food entry` ahora soporta `data:` URLs y preview sin depender de `path_provider` para web.
 - Se agrego una galeria local-first de comidas con foto y resumen nutricional en `/food/gallery`, basada en la persistencia local ya existente.
 - El flujo de `gym tracker` ahora incluye cronometro de sesion y cronometro de descanso entre series dentro de la misma pantalla.
-- El cronometro de sesion sincroniza el campo `Duration (min)` y el cronometro de descanso arranca automaticamente al agregar o repetir un set.
+- El cronometro de sesion sincroniza el campo `Duration (min)` y el cronometro REST se inicia y detiene exclusivamente de forma manual.
 - Se regenero `app-debug.apk` con ese flujo nuevo para probar en Android.
 - Tambien se regenero `app-debug.apk` con `SUPABASE_URL` y `SUPABASE_ANON_KEY` reales para destrabar `Analyze with AI` en Android.
 - Quedo preparado tambien el flujo de `flutter run -d windows`, `flutter run -d edge` y `flutter build apk --release` usando `--dart-define-from-file` sobre `mobile/fitness_app/dart_defines.local.json`.
@@ -448,21 +456,16 @@ Smoke tests remotos confirmados:
 
 ## Pendientes inmediatos
 
-1. Ejecutar QA real guiada en `SM S916B` con `docs/qa/android_real_device_checklist.md`.
-2. Confirmar en Android que `Export my data` y `Delete my data` funcionan de punta a punta con `user-data-manage`.
-3. Probar en Android varios productos reales con `Scan barcode` y confirmar autocompletado correcto de nombre/macros tanto para `Open Food Facts` como para `USDA` cuando corresponda.
-4. Confirmar en Android si el scanner de barcode ya abre camara real en vez de pantalla negra despues del upgrade a `mobile_scanner 7.3.0`.
-5. Probar en Android con foto real que `manual food entry` guarda la foto remota, la muestra en gallery y deja lanzar `Analyze with AI`.
-6. Confirmar en Android que el cambio de `Meal weight (g)` recalcula macros y que `Analyze with AI` respeta ingredientes/peso corregidos.
-7. Probar end-to-end la pantalla Flutter del catalogo compartido con una imagen real y la build Android/web ya configurada con Supabase.
-8. Integrar los tres tiempos de workout (`total / activo / descanso`) al dashboard y al analisis general.
-9. Preparar firma release real y volver a generar build release firmada para pre-publicacion.
-10. Publicar version final de privacy policy y cerrar contacto/proceso de soporte para export/delete.
-11. Reevaluar en ese punto si ya conviene abrir la mejora total de UI/UX; ese sigue siendo el siguiente gran paso despues de QA real + cierre release/legal.
+1. Completar los casos secundarios pendientes del checklist QA: sign out, comida sin foto y borrado individual, barcode manual/no-match/sin internet, error de backend controlado y editar/borrar workout.
+2. Probar end-to-end la pantalla Flutter del catalogo compartido con una imagen real y la build Android/web ya configurada con Supabase.
+3. Preparar firma release real y volver a generar build release firmada para pre-publicacion.
+4. Publicar version final de privacy policy y cerrar contacto/proceso de soporte para export/delete.
+5. Consolidar la migracion guest -> cuenta sin perdida de datos ni duplicados.
+6. Reevaluar en ese punto si ya conviene abrir la mejora total de UI/UX; ese sigue siendo el siguiente gran paso despues de QA real + cierre release/legal.
 
 ## Riesgos o notas
 
-- El package name Android sigue siendo el default de Flutter: `com.example.fitness_app`.
+- Android release usa `applicationId` y `namespace` `com.x11pro.myfit`; la antigua debug `com.example.fitness_app` solo debe desinstalarse si aun queda instalada en un dispositivo.
 - Falta definir bundle identifier iOS real.
 - No hay claves reales ni `.env` comprometidos en el repo.
 - La app esta temporalmente en guest mode para destrabar UX y desarrollo de producto.
@@ -470,7 +473,7 @@ Smoke tests remotos confirmados:
 - El flujo manual actual ya muestra y guarda `carbs`, `fat`, `sugar`, `fiber` y `confidence` cuando vienen del analisis AI.
 - La UI principal quedo revisada para evitar mezcla accidental de ingles/espanol en dashboard, auth y workout; el selector `EN / ESP` cambia el copy visible del flujo principal.
 - Todas las pantallas principales ahora usan top bar uniforme con `back`, `home` y `menu`.
-- Los workouts manuales y el progreso de gym aun son local-first; no se sincronizan con Supabase todavia.
+- Los workouts manuales ya usan persistencia hibrida: local como fallback y sincronizacion remota por usuario autenticado. Progreso y dashboard todavia deben validar la rehidratacion remota completa.
 - `RPE` ya se guarda dentro de cada `GymSetEntry` junto con los datos del set y la fecha de su sesion, lo que deja la base lista para futuras metricas de progresion.
 - El flujo de alta de sets ahora es mas guiado: primero grupo muscular, luego ejercicio sugerido, y solo despues entrada manual si hace falta.
 - La pantalla de progreso de fuerza ahora deja alternar entre `peso maximo`, `volumen` y `1RM estimado`; `1RM` es solo una estimacion educativa.
@@ -486,11 +489,11 @@ Smoke tests remotos confirmados:
 - `food-catalog-upsert` respondio OK en smoke test remoto; `meal-photo-analyze` respondio contra OpenRouter y fallo solo con una imagen base64 invalida de prueba.
 - `deno` no estuvo disponible en esta maquina, por lo que no se corrieron `deno fmt` ni `deno check` antes del deploy.
 - Por seguridad, conviene rotar `OPENROUTER_API_KEY` y `SUPABASE_ACCESS_TOKEN` porque fueron expuestos durante la sesion.
-- Recordatorio explicito para la proxima sesion: reimplementar autenticacion sin Auth0 antes de conectar persistencia remota multiusuario.
+- Auth OTP de Supabase y persistencia remota base ya estan implementados. El pendiente es validar guest -> cuenta, export/delete y rehidratacion completa en Android real.
 - `currentWeightKg` del onboarding se guarda en `body_metrics`, no en `profiles`, porque el esquema actual ya separa ese dato historico.
 - El worktree del repo contiene cambios previos y/o de entorno no relacionados, especialmente en `backend/supabase/functions/meal-photo-analyze` y varios archivos Android; revisar cuidadosamente antes de hacer commits amplios.
 - En esta maquina Windows ya se activo `Developer Mode`, por lo que `flutter run -d windows` vuelve a compilar; la sesion de debug puede perder conexion despues del arranque, pero la app si levanta e inicializa Supabase.
-- La nueva galeria de comidas es local-first; todavia no sube fotos ni meals a Supabase Storage/Postgres.
+- La galeria conserva una lectura local-first; para usuarios autenticados, meals y fotos ya se sincronizan con Postgres y Supabase Storage. Falta validar rehidratacion end-to-end en Android real.
 - En web se corrigio el flujo de foto guardando `data:` URLs localmente; eso resuelve preview/AI, pero puede crecer mas que un path local y no es el target principal a largo plazo.
 - No persistir API keys en `docs/`, `prompts/`, `.env.example` ni commits. Recargarlas solo como variables de entorno o secrets de Supabase.
 - `mobile/fitness_app/dart_defines.local.json` queda ignorado por Git y es el lugar local recomendado para recordar `SUPABASE_URL` y `SUPABASE_ANON_KEY` en esta maquina sin volver a escribir `--dart-define` a mano.
@@ -498,7 +501,7 @@ Smoke tests remotos confirmados:
 - Si se necesita un diagrama entendible del producto para terceros o para NotebookLM, usar `docs/product/status_map.md` como fuente estructurada y `docs/product/status_map_visual.md` como referencia visual local.
 - La rutina recomendada por goal debe mantenerse en ingles cuando el idioma de app este en ingles; ya no asumir textos hardcodeados en espanol en esa parte del dashboard/workout.
 - Para instalar debug en el `SM S916B`, si aparece `INSTALL_FAILED_NO_MATCHING_ABIS`, recompilar con `flutter build apk --debug --target-platform android-arm64` antes de reinstalar.
-- El mejor momento para una mejora total de UI/UX aun no es ahora; primero cerrar auth + sync remoto y conectar los tres tiempos de workout al analisis/dashboard.
+- El mejor momento para una mejora total de UI/UX aun no es ahora; primero cerrar QA real, export/delete, rehidratacion remota y conectar los tres tiempos de workout al analisis/dashboard.
 - Desde este punto exacto, el siguiente bloque de trabajo debe continuar desde `QA real Android + export/delete real + cierre release/legal`, no reiniciar sobre auth/persistencia base porque eso ya quedo avanzado.
 
 ## Regla persistente del usuario

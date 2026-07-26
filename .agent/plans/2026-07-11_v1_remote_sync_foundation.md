@@ -10,9 +10,9 @@ Empezar el camino real hacia `v1.0` cerrando la base de identidad y persistencia
 
 - Auth OTP con Supabase ya existe, pero el producto sigue usable en guest mode.
 - `body_metrics` ya se usa remotamente desde onboarding autenticado.
-- `manual food entry`, `daily weight` y `manual workout` siguen persistiendo localmente en `shared_preferences`.
-- `workout_sessions` remoto no alcanza para representar bien el flujo manual actual porque no guarda titulo de sesion ni tiempos `total / activo / descanso`.
-- `meal_entries` remoto existe, pero el flujo local actual permite fotos locales y todavia no tiene subida/Storage remotos cerrados.
+- `manual food entry`, `daily weight` y `manual workout` usan persistencia hibrida: fallback local con sync remoto cuando hay sesion autenticada.
+- `workout_sessions` remoto ya contiene los campos para titulo y tiempos `total / activo / descanso`.
+- `meal_entries`, `meal_photos` y Supabase Storage ya soportan fotos remotas para usuarios autenticados.
 
 ## Relevant documents
 
@@ -25,7 +25,7 @@ Empezar el camino real hacia `v1.0` cerrando la base de identidad y persistencia
 
 - Rediseño total de UI/UX.
 - Health Connect / HealthKit.
-- Persistencia remota completa de fotos de comida en esta misma iteracion.
+- Rediseño del modelo de persistencia ya implementado.
 - Coach, suplementos o analytics avanzados.
 
 ## User stories
@@ -68,11 +68,17 @@ Empezar el camino real hacia `v1.0` cerrando la base de identidad y persistencia
 
 ## Implementation steps
 
-- [ ] Agregar migracion SQL para extender `workout_sessions`.
-- [ ] Implementar carga/escritura remota de `daily weight` para usuarios autenticados.
-- [ ] Implementar carga/escritura remota de `manual workout` y `gym_sets` para usuarios autenticados.
-- [ ] Sembrar remoto desde local cuando aplique y mantener fallback guest.
-- [ ] Validar con analyze y tests existentes.
+- [x] Agregar migracion SQL para extender `workout_sessions`.
+- [x] Implementar carga/escritura remota de `daily weight` para usuarios autenticados.
+- [x] Implementar carga/escritura remota de `manual workout` y `gym_sets` para usuarios autenticados.
+- [x] Sincronizar meals y fotos remotas manteniendo fallback guest.
+- [x] Validar con analyze y tests existentes.
+
+## Continuacion
+
+- [ ] Validar rehidratacion remota de peso, comidas, fotos y workouts tras reinstalacion.
+- [ ] Consolidar migracion guest -> cuenta sin duplicados ni perdida de datos.
+- [ ] Reflejar datos remotos y tiempos de workout en dashboard/progreso.
 
 ## Tests
 

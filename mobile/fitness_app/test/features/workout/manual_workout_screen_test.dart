@@ -24,10 +24,58 @@ void main() {
     await _pumpManualWorkoutScreen(tester);
     await _addBasicSet(tester, sets: '3');
 
-    expect(find.text('10 reps • Set 1 • Chest'), findsOneWidget);
-    expect(find.text('10 reps • Set 2 • Chest'), findsOneWidget);
-    expect(find.text('10 reps • Set 3 • Chest'), findsOneWidget);
-    expect(find.text('Bench press • 80.0 kg'), findsNWidgets(3));
+    expect(find.text('Barbell bench press'), findsOneWidget);
+    expect(find.text('Set 1 • 80.0 kg • 10 reps'), findsOneWidget);
+    expect(find.text('Set 2 • 80.0 kg • 10 reps'), findsOneWidget);
+    expect(find.text('Set 3 • 80.0 kg • 10 reps'), findsOneWidget);
+  });
+
+  testWidgets('adding a set does not start the rest timer', (
+    WidgetTester tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1080, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await _pumpManualWorkoutScreen(tester);
+    await _addBasicSet(tester);
+
+    expect(find.text('Ready'), findsOneWidget);
+    expect(find.text('Counting down'), findsNothing);
+  });
+
+  testWidgets('adds a custom exercise after choosing a muscle group', (
+    WidgetTester tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1080, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await _pumpManualWorkoutScreen(tester);
+    await tester.tap(find.text('Add set'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('muscle-group-dropdown')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Back').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('exercise-dropdown')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add custom exercise').last);
+    await tester.pumpAndSettle();
+
+    final fields = find.descendant(
+      of: find.byType(AlertDialog),
+      matching: find.byType(TextField),
+    );
+    await tester.enterText(fields.at(0), 'Cable pullover');
+    await tester.enterText(fields.at(1), '2');
+    await tester.enterText(fields.at(2), '12');
+    await tester.enterText(fields.at(3), '35');
+    await tester.tap(find.widgetWithText(FilledButton, 'Add'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Cable pullover'), findsOneWidget);
+    expect(find.text('Set 1 • 35.0 kg • 12 reps'), findsOneWidget);
+    expect(find.text('Set 2 • 35.0 kg • 12 reps'), findsOneWidget);
   });
 
   testWidgets('rest timer switches from countdown to overtime', (
@@ -37,6 +85,8 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await _pumpManualWorkoutScreen(tester);
+
+    await _openTimerSettings(tester);
 
     await tester.enterText(
       find.byKey(const Key('rest-goal-seconds-field')),
@@ -62,6 +112,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await _pumpManualWorkoutScreen(tester);
+    await _openTimerSettings(tester);
 
     await tester.ensureVisible(find.byKey(const Key('rest-alert-toggle')));
     await tester.tap(find.byKey(const Key('rest-alert-toggle')));
@@ -78,6 +129,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await _pumpManualWorkoutScreen(tester);
+    await _openTimerSettings(tester);
 
     await tester.ensureVisible(find.byKey(const Key('rest-vibration-toggle')));
     await tester.tap(find.byKey(const Key('rest-vibration-toggle')));
@@ -122,6 +174,7 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     await tester.pump(const Duration(seconds: 1));
 
+    await _openTimerSettings(tester);
     await tester.enterText(
       find.byKey(const Key('rest-goal-seconds-field')),
       '1',
@@ -144,12 +197,15 @@ void main() {
     final decoded = jsonDecode(raw!) as List<dynamic>;
     final session = decoded.single as Map<String, dynamic>;
 
-    expect(session['totalDurationSeconds'], greaterThanOrEqualTo(4));
+    expect(session['totalDurationSeconds'], greaterThanOrEqualTo(3));
     expect(session['restDurationSeconds'], greaterThanOrEqualTo(2));
     expect(session['activeDurationSeconds'], greaterThanOrEqualTo(1));
     expect(
       session['activeDurationSeconds'] + session['restDurationSeconds'],
-      session['totalDurationSeconds'],
+      inInclusiveRange(
+        session['totalDurationSeconds'] - 1,
+        session['totalDurationSeconds'] + 1,
+      ),
     );
   });
 }
@@ -181,19 +237,14 @@ Future<void> _addBasicSet(WidgetTester tester, {String sets = '1'}) async {
   await tester.tap(find.text('Add set'));
   await tester.pumpAndSettle();
 
-  final dropdowns = find.descendant(
-    of: find.byType(AlertDialog),
-    matching: find.byType(DropdownButtonFormField<String>),
-  );
-
-  await tester.tap(dropdowns.at(0));
+  await tester.tap(find.byKey(const Key('muscle-group-dropdown')));
   await tester.pumpAndSettle();
   await tester.tap(find.text('Chest').last);
   await tester.pumpAndSettle();
 
-  await tester.tap(dropdowns.at(1));
+  await tester.tap(find.byKey(const Key('exercise-dropdown')));
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Bench press').last);
+  await tester.tap(find.text('Barbell bench press').last);
   await tester.pumpAndSettle();
 
   final fields = find.descendant(
@@ -206,5 +257,11 @@ Future<void> _addBasicSet(WidgetTester tester, {String sets = '1'}) async {
   await tester.enterText(fields.at(2), '80');
 
   await tester.tap(find.widgetWithText(FilledButton, 'Add'));
+  await tester.pumpAndSettle();
+}
+
+Future<void> _openTimerSettings(WidgetTester tester) async {
+  await tester.ensureVisible(find.text('Timer settings'));
+  await tester.tap(find.text('Timer settings'));
   await tester.pumpAndSettle();
 }

@@ -18,6 +18,7 @@ import '../../../shared/widgets/app_top_bar.dart';
 import '../application/manual_workout_controller.dart';
 import '../domain/gym_set_entry.dart';
 import '../domain/manual_workout_session.dart';
+import '../domain/workout_exercise_catalog.dart';
 
 class ManualWorkoutScreen extends ConsumerStatefulWidget {
   const ManualWorkoutScreen({super.key, this.session});
@@ -54,31 +55,6 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
       endFrequency: 920,
       durationMs: 360,
     ),
-  };
-  static const _muscleGroupExercises = <String, List<String>>{
-    'Chest': ['Bench press', 'Incline dumbbell press', 'Chest fly', 'Dips'],
-    'Back': ['Pull up', 'Barbell row', 'Lat pulldown', 'Seated cable row'],
-    'Legs': ['Squat', 'Leg press', 'Romanian deadlift', 'Lunge'],
-    'Shoulders': [
-      'Overhead press',
-      'Lateral raise',
-      'Rear delt fly',
-      'Arnold press',
-    ],
-    'Arms': [
-      'Barbell curl',
-      'Hammer curl',
-      'Triceps pushdown',
-      'Skull crusher'
-    ],
-    'Core': ['Cable crunch', 'Plank', 'Hanging leg raise', 'Ab wheel'],
-    'Glutes': [
-      'Hip thrust',
-      'Bulgarian split squat',
-      'Glute bridge',
-      'Kickback'
-    ],
-    'Full body': ['Deadlift', 'Clean and press', 'Thruster', 'Farmer carry'],
   };
 
   final _titleController = TextEditingController();
@@ -163,6 +139,7 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
     final strings = stringsFor(ref);
     final sessions = ref.watch(manualWorkoutSessionsProvider);
     final recentExercises = ref.watch(recentWorkoutExerciseNamesProvider);
+    final groupedDraftSets = _groupDraftSets();
 
     return Scaffold(
       appBar: AppTopBar(
@@ -179,181 +156,191 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                   : strings.logWorkoutTitle,
               subtitle: strings.gymSubtitle,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             PremiumCard(
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextField(
-                    controller: _titleController,
-                    decoration:
-                        InputDecoration(labelText: strings.workoutNameLabel),
-                  ),
-                  const SizedBox(height: 16),
-                  OutlinedButton.icon(
-                    onPressed: _pickDate,
-                    icon: const Icon(Icons.calendar_today_outlined),
-                    label: Text(
-                      '${strings.workoutDateLabel}: ${dateKeyFor(_selectedDate)}',
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _TimerSummaryCard(
-                    title: strings.workoutTimelineTitle,
-                    timeText: _formatSessionDuration(_sessionElapsed),
-                    primaryKey: const Key('workout-session-button'),
-                    detailLines: [
-                      '${strings.totalGymTimeLabel}: ${_formatSessionDuration(_sessionElapsed)}',
-                      '${strings.activeTrainingTimeLabel}: ${_formatSessionDuration(_activeTrainingElapsed)}',
-                      '${strings.totalRestTimeLabel}: ${_formatSessionDuration(_totalRestElapsed)}',
-                    ],
-                    primaryLabel: _isSessionRunning
-                        ? strings.stopTimerButton
-                        : strings.startTimerButton,
-                    onPrimaryPressed: _isSessionRunning
-                        ? _stopSessionTimer
-                        : _startSessionTimer,
-                    secondaryLabel: strings.resetTimerButton,
-                    onSecondaryPressed: _sessionElapsed > Duration.zero
-                        ? _resetSessionTimer
-                        : null,
-                  ),
-                  const SizedBox(height: 12),
-                  _TimerSummaryCard(
-                    title: strings.restTimerTitle,
-                    timeText: _formatRestCycleDuration(),
-                    primaryKey: const Key('rest-toggle-button'),
-                    detailLines: [
-                      '${strings.currentRestCycleLabel}: ${_formatRestCycleDuration()}',
-                      '${strings.totalRestTimeLabel}: ${_formatSessionDuration(_totalRestElapsed)}',
-                      _restStateLabel(strings),
-                    ],
-                    leading: TextField(
-                      key: const Key('rest-goal-seconds-field'),
-                      controller: _restGoalController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: strings.restGoalSecondsLabel,
-                      ),
-                    ),
-                    footer: Column(
-                      children: [
-                        SwitchListTile(
-                          key: const Key('rest-alert-toggle'),
-                          contentPadding: EdgeInsets.zero,
-                          value: _restAlertEnabled,
-                          onChanged: _setRestAlertEnabled,
-                          title: Text(strings.restSoundToggleLabel),
-                          secondary:
-                              const Icon(Icons.notifications_active_outlined),
-                        ),
-                        SwitchListTile(
-                          key: const Key('rest-vibration-toggle'),
-                          contentPadding: EdgeInsets.zero,
-                          value: _restVibrationEnabled,
-                          onChanged: _setRestVibrationEnabled,
-                          title: Text(strings.restVibrationToggleLabel),
-                          secondary: const Icon(Icons.vibration_outlined),
-                        ),
-                        DropdownButtonFormField<_RestAlertSoundProfile>(
-                          key: const Key('rest-sound-dropdown'),
-                          value: _restAlertSound,
+                  Row(
+                    children: [
+                      const Icon(Icons.fitness_center_outlined),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          controller: _titleController,
                           decoration: InputDecoration(
-                            labelText: strings.restSoundProfileLabel,
-                            helperText: strings.restSoundProfileHelp,
+                            labelText: strings.workoutNameLabel,
+                            isDense: true,
                           ),
-                          items: _RestAlertSoundProfile.values
-                              .map(
-                                (profile) => DropdownMenuItem(
-                                  value: profile,
-                                  child: Text(
-                                      _labelForRestSound(profile, strings)),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (value) {
-                            if (value != null) {
-                              _setRestAlertSound(value, preview: true);
-                            }
-                          },
                         ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(strings.restAlertVolumeLabel),
-                                  Text(
-                                    strings.restAlertVolumeValueLabel(
-                                      (_restAlertVolume * 100).round(),
-                                    ),
-                                    style:
-                                        Theme.of(context).textTheme.bodySmall,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              child: Slider(
-                                key: const Key('rest-volume-slider'),
-                                value: _restAlertVolume,
-                                onChanged: _setRestAlertVolume,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    primaryLabel: strings.restButton,
-                    onPrimaryPressed: _toggleRestTimer,
-                    primaryBackgroundColor: _restPrimaryColor(context),
-                    primaryForegroundColor: Colors.white,
-                    blinkPrimary: _isRestRunning,
-                    primaryVisible: !_isRestRunning || _restBlinkOn,
-                    secondaryLabel: strings.resetTimerButton,
-                    onSecondaryPressed: _totalRestElapsed > Duration.zero
-                        ? _resetRestTimer
-                        : null,
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        tooltip: strings.workoutDateLabel,
+                        onPressed: _pickDate,
+                        icon: const Icon(Icons.calendar_today_outlined),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  Text(strings.nextRestHint),
-                  const SizedBox(height: 16),
+                  Text(
+                    '${strings.workoutDateLabel}: ${dateKeyFor(_selectedDate)}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 14),
                   Row(
                     children: [
                       Expanded(
-                        child: TextField(
-                          controller: _durationController,
-                          focusNode: _durationFocusNode,
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly
-                          ],
-                          decoration: InputDecoration(
-                            labelText: strings.durationMinutesLabel,
-                          ),
-                          onChanged: _handleManualDurationChanged,
+                        child: _CompactTimerCard(
+                          title: strings.workoutSessionTimerTitle,
+                          timeText: _formatSessionDuration(_sessionElapsed),
+                          accentColor: Theme.of(context).colorScheme.primary,
+                          primaryKey: const Key('workout-session-button'),
+                          primaryLabel: _isSessionRunning
+                              ? strings.stopTimerButton
+                              : strings.startTimerButton,
+                          onPrimaryPressed: _isSessionRunning
+                              ? _stopSessionTimer
+                              : _startSessionTimer,
+                          onReset: _sessionElapsed > Duration.zero
+                              ? _resetSessionTimer
+                              : null,
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       Expanded(
-                        child: TextField(
-                          controller: _caloriesController,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText: strings.workoutCaloriesLabel,
-                          ),
+                        child: _CompactTimerCard(
+                          title: strings.restTimerTitle,
+                          timeText: _formatRestCycleDuration(),
+                          accentColor: _restPrimaryColor(context),
+                          primaryKey: const Key('rest-toggle-button'),
+                          primaryLabel: strings.restButton,
+                          onPrimaryPressed: _toggleRestTimer,
+                          onReset: _totalRestElapsed > Duration.zero
+                              ? _resetRestTimer
+                              : null,
+                          blink: _isRestRunning,
+                          visible: !_isRestRunning || _restBlinkOn,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _notesController,
-                    minLines: 2,
-                    maxLines: 4,
-                    decoration: InputDecoration(labelText: strings.notesLabel),
+                  const SizedBox(height: 12),
+                  _WorkoutTimeSummary(
+                    total: _formatSessionDuration(_sessionElapsed),
+                    active: _formatSessionDuration(_activeTrainingElapsed),
+                    rest: _formatSessionDuration(_totalRestElapsed),
+                    strings: strings,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    _restStateLabel(strings),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 4),
+                  ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    title: Text(strings.restTimerSettings),
+                    children: [
+                      TextField(
+                        key: const Key('rest-goal-seconds-field'),
+                        controller: _restGoalController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: strings.restGoalSecondsLabel,
+                        ),
+                      ),
+                      SwitchListTile(
+                        key: const Key('rest-alert-toggle'),
+                        contentPadding: EdgeInsets.zero,
+                        value: _restAlertEnabled,
+                        onChanged: _setRestAlertEnabled,
+                        title: Text(strings.restSoundToggleLabel),
+                      ),
+                      SwitchListTile(
+                        key: const Key('rest-vibration-toggle'),
+                        contentPadding: EdgeInsets.zero,
+                        value: _restVibrationEnabled,
+                        onChanged: _setRestVibrationEnabled,
+                        title: Text(strings.restVibrationToggleLabel),
+                      ),
+                      DropdownButtonFormField<_RestAlertSoundProfile>(
+                        key: const Key('rest-sound-dropdown'),
+                        value: _restAlertSound,
+                        decoration: InputDecoration(
+                          labelText: strings.restSoundProfileLabel,
+                        ),
+                        items: _RestAlertSoundProfile.values
+                            .map(
+                              (profile) => DropdownMenuItem(
+                                value: profile,
+                                child: Text(
+                                  _labelForRestSound(profile, strings),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            _setRestAlertSound(value, preview: true);
+                          }
+                        },
+                      ),
+                      Row(
+                        children: [
+                          Expanded(child: Text(strings.restAlertVolumeLabel)),
+                          Expanded(
+                            child: Slider(
+                              key: const Key('rest-volume-slider'),
+                              value: _restAlertVolume,
+                              onChanged: _setRestAlertVolume,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    title: Text(strings.notesLabel),
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _durationController,
+                              focusNode: _durationFocusNode,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
+                              decoration: InputDecoration(
+                                labelText: strings.durationMinutesLabel,
+                              ),
+                              onChanged: _handleManualDurationChanged,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextField(
+                              controller: _caloriesController,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                labelText: strings.workoutCaloriesLabel,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _notesController,
+                        minLines: 2,
+                        maxLines: 4,
+                        decoration:
+                            InputDecoration(labelText: strings.notesLabel),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -376,7 +363,7 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                           label: Text(strings.repeatLastSetButton),
                         ),
                       FilledButton.tonalIcon(
-                        onPressed: () => _openSetDialog(
+                        onPressed: () => _openQuickSetDialog(
                           recentExercises: recentExercises,
                         ),
                         icon: const Icon(Icons.fitness_center_outlined),
@@ -388,20 +375,28 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                   if (_draftSets.isEmpty)
                     Text(strings.noSetsAddedYet)
                   else
-                    ...List.generate(
-                      _draftSets.length,
-                      (index) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _DraftSetTile(
-                          set: _draftSets[index],
-                          onEdit: () => _openSetDialog(
-                            index: index,
-                            recentExercises: recentExercises,
+                    ...groupedDraftSets.entries.expand((group) => [
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8, bottom: 6),
+                            child: Text(
+                              group.key,
+                              style: Theme.of(context).textTheme.titleSmall,
+                            ),
                           ),
-                          onRemove: () => _removeSet(index),
-                        ),
-                      ),
-                    ),
+                          ...group.value.map(
+                            (item) => Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: _DraftSetTile(
+                                set: item.value,
+                                onEdit: () => _openQuickSetDialog(
+                                  index: item.key,
+                                  recentExercises: recentExercises,
+                                ),
+                                onRemove: () => _removeSet(item.key),
+                              ),
+                            ),
+                          ),
+                        ]),
                 ],
               ),
             ),
@@ -449,7 +444,185 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
     }
   }
 
-  Future<void> _openSetDialog({
+  // ignore: unused_element
+  Future<void> _openLegacyQuickSetDialog({
+    int? index,
+    List<String> recentExercises = const [],
+  }) async {
+    final strings = stringsFor(ref);
+    final existingSet = index == null ? null : _draftSets[index];
+    final exerciseController =
+        TextEditingController(text: existingSet?.exerciseName ?? '');
+    final muscleGroupController =
+        TextEditingController(text: existingSet?.muscleGroup ?? '');
+    final setsController = TextEditingController(text: '1');
+    final repsController =
+        TextEditingController(text: existingSet?.reps.toString() ?? '');
+    final weightController = TextEditingController(
+      text: existingSet?.weightKg.toString() ?? '',
+    );
+    double? selectedRpe = existingSet?.rpe;
+
+    final result = await showDialog<_SetDialogResult>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: Text(
+              index == null ? strings.addSetButton : strings.editSetButton),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: exerciseController,
+                  textCapitalization: TextCapitalization.words,
+                  autofocus: true,
+                  decoration:
+                      InputDecoration(labelText: strings.exerciseNameLabel),
+                ),
+                if (index == null && recentExercises.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: recentExercises.take(6).map((exercise) {
+                      return ActionChip(
+                        label: Text(exercise),
+                        onPressed: () => setDialogState(
+                          () => exerciseController.text = exercise,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: weightController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        decoration:
+                            InputDecoration(labelText: strings.setWeightLabel),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: repsController,
+                        keyboardType: TextInputType.number,
+                        decoration:
+                            InputDecoration(labelText: strings.repsLabel),
+                      ),
+                    ),
+                    if (index == null) ...[
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          controller: setsController,
+                          keyboardType: TextInputType.number,
+                          decoration:
+                              InputDecoration(labelText: strings.setsLabel),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ExpansionTile(
+                  tilePadding: EdgeInsets.zero,
+                  title: Text(strings.rpeLabel),
+                  children: [
+                    TextField(
+                      controller: muscleGroupController,
+                      textCapitalization: TextCapitalization.words,
+                      decoration:
+                          InputDecoration(labelText: strings.muscleGroupLabel),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        ChoiceChip(
+                          label: Text(strings.noRpeLabel),
+                          selected: selectedRpe == null,
+                          onSelected: (_) =>
+                              setDialogState(() => selectedRpe = null),
+                        ),
+                        ..._rpeOptions.map((value) => ChoiceChip(
+                              label: Text(strings.rpeValueLabel(value)),
+                              selected: selectedRpe == value,
+                              onSelected: (_) => setDialogState(
+                                () => selectedRpe = value,
+                              ),
+                            )),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(strings.cancelButton),
+            ),
+            FilledButton(
+              onPressed: () {
+                final exercise = exerciseController.text.trim();
+                final reps = int.tryParse(repsController.text.trim());
+                final weight = double.tryParse(
+                  weightController.text.trim().replaceAll(',', '.'),
+                );
+                final setsCount = int.tryParse(setsController.text.trim()) ?? 1;
+                if (exercise.isEmpty ||
+                    reps == null ||
+                    weight == null ||
+                    setsCount < 1) {
+                  return;
+                }
+                Navigator.of(dialogContext).pop(
+                  _SetDialogResult(
+                    set: GymSetEntry(
+                      exerciseName: exercise,
+                      muscleGroup: muscleGroupController.text.trim(),
+                      setNumber:
+                          index == null ? _draftSets.length + 1 : index + 1,
+                      reps: reps,
+                      weightKg: weight,
+                      rpe: selectedRpe,
+                    ),
+                    setsCount: index == null ? setsCount : 1,
+                  ),
+                );
+              },
+              child: Text(
+                  index == null ? strings.addButton : strings.updateSetButton),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    exerciseController.dispose();
+    muscleGroupController.dispose();
+    setsController.dispose();
+    repsController.dispose();
+    weightController.dispose();
+
+    if (result == null) {
+      return;
+    }
+
+    _applySetDialogResult(result, index: index);
+  }
+
+  Future<void> _openQuickSetDialog({
     int? index,
     List<String> recentExercises = const [],
   }) async {
@@ -508,6 +681,7 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     DropdownButtonFormField<String>(
+                      key: const Key('muscle-group-dropdown'),
                       value: selectedMuscleGroup,
                       items: availableMuscleGroups
                           .map(
@@ -532,6 +706,7 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
+                      key: const Key('exercise-dropdown'),
                       value: selectedExercise,
                       items: exerciseOptions
                           .map(
@@ -782,15 +957,10 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
       }
       _reindexSets();
     });
-
-    if (_isRestRunning) {
-      _finishRestCycle();
-    }
-    _startRestTimer();
   }
 
   List<String> _buildMuscleGroupOptions(String? existingMuscleGroup) {
-    final groups = _muscleGroupExercises.keys.toList();
+    final groups = List<String>.from(workoutMuscleGroups);
     if (existingMuscleGroup != null &&
         existingMuscleGroup.isNotEmpty &&
         !groups.contains(existingMuscleGroup)) {
@@ -803,9 +973,9 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
     required String? muscleGroup,
     String? existingExercise,
   }) {
-    final options = <String>[
-      ...?_muscleGroupExercises[muscleGroup],
-    ];
+    final options = muscleGroup == null
+        ? <String>[]
+        : List<String>.from(exercisesForMuscleGroup(muscleGroup));
 
     if (existingExercise != null &&
         existingExercise.isNotEmpty &&
@@ -817,11 +987,42 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
     return options;
   }
 
+  void _applySetDialogResult(_SetDialogResult result, {int? index}) {
+    setState(() {
+      if (index == null) {
+        for (var i = 0; i < result.setsCount; i++) {
+          _draftSets.add(
+            GymSetEntry(
+              exerciseName: result.set.exerciseName,
+              muscleGroup: result.set.muscleGroup,
+              setNumber: _draftSets.length + 1,
+              reps: result.set.reps,
+              weightKg: result.set.weightKg,
+              rpe: result.set.rpe,
+            ),
+          );
+        }
+      } else {
+        _draftSets[index] = result.set;
+      }
+      _reindexSets();
+    });
+  }
+
   void _removeSet(int index) {
     setState(() {
       _draftSets.removeAt(index);
       _reindexSets();
     });
+  }
+
+  Map<String, List<MapEntry<int, GymSetEntry>>> _groupDraftSets() {
+    final grouped = <String, List<MapEntry<int, GymSetEntry>>>{};
+    for (var index = 0; index < _draftSets.length; index++) {
+      final set = _draftSets[index];
+      grouped.putIfAbsent(set.exerciseName, () => []).add(MapEntry(index, set));
+    }
+    return grouped;
   }
 
   void _duplicateLastSet() {
@@ -844,11 +1045,6 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
       );
       _reindexSets();
     });
-
-    if (_isRestRunning) {
-      _finishRestCycle();
-    }
-    _startRestTimer();
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -1247,95 +1443,152 @@ class _SetDialogResult {
   final int setsCount;
 }
 
-class _TimerSummaryCard extends StatelessWidget {
-  const _TimerSummaryCard({
+class _CompactTimerCard extends StatelessWidget {
+  const _CompactTimerCard({
     required this.title,
     required this.timeText,
-    this.detailLines = const [],
-    this.leading,
-    this.footer,
     this.primaryKey,
     required this.primaryLabel,
     required this.onPrimaryPressed,
-    this.primaryBackgroundColor,
-    this.primaryForegroundColor,
-    this.blinkPrimary = false,
-    this.primaryVisible = true,
-    required this.secondaryLabel,
-    required this.onSecondaryPressed,
+    required this.accentColor,
+    this.blink = false,
+    this.visible = true,
+    this.onReset,
   });
 
   final String title;
   final String timeText;
-  final List<String> detailLines;
-  final Widget? leading;
-  final Widget? footer;
   final Key? primaryKey;
   final String primaryLabel;
   final VoidCallback onPrimaryPressed;
-  final Color? primaryBackgroundColor;
-  final Color? primaryForegroundColor;
-  final bool blinkPrimary;
-  final bool primaryVisible;
-  final String secondaryLabel;
-  final VoidCallback? onSecondaryPressed;
+  final Color accentColor;
+  final bool blink;
+  final bool visible;
+  final VoidCallback? onReset;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
+        color: accentColor.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accentColor.withValues(alpha: 0.35)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: Theme.of(context).textTheme.titleSmall),
+          Text(title, style: Theme.of(context).textTheme.labelMedium),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(timeText,
+                style: Theme.of(context).textTheme.headlineSmall),
+          ),
           const SizedBox(height: 8),
-          Text(timeText, style: Theme.of(context).textTheme.headlineMedium),
-          if (detailLines.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            for (final line in detailLines)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Text(line),
-              ),
-          ],
-          if (leading != null) ...[
-            const SizedBox(height: 12),
-            leading!,
-          ],
-          if (footer != null) ...[
-            const SizedBox(height: 8),
-            footer!,
-          ],
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+          Row(
             children: [
-              AnimatedOpacity(
-                duration: const Duration(milliseconds: 200),
-                opacity: blinkPrimary ? (primaryVisible ? 1 : 0.35) : 1,
-                child: FilledButton(
-                  key: primaryKey,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: primaryBackgroundColor,
-                    foregroundColor: primaryForegroundColor,
+              Expanded(
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 200),
+                  opacity: blink ? (visible ? 1 : 0.35) : 1,
+                  child: FilledButton(
+                    key: primaryKey,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: accentColor,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
+                    onPressed: onPrimaryPressed,
+                    child: Text(primaryLabel, overflow: TextOverflow.ellipsis),
                   ),
-                  onPressed: onPrimaryPressed,
-                  child: Text(primaryLabel),
                 ),
               ),
-              OutlinedButton(
-                onPressed: onSecondaryPressed,
-                child: Text(secondaryLabel),
-              ),
+              if (onReset != null) ...[
+                const SizedBox(width: 4),
+                IconButton(
+                  tooltip: 'Reset',
+                  onPressed: onReset,
+                  icon: const Icon(Icons.restart_alt),
+                ),
+              ],
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _WorkoutTimeSummary extends StatelessWidget {
+  const _WorkoutTimeSummary({
+    required this.total,
+    required this.active,
+    required this.rest,
+    required this.strings,
+  });
+
+  final String total;
+  final String active;
+  final String rest;
+  final AppStrings strings;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Row(
+      children: [
+        _TimeMetric(
+            label: strings.totalGymTimeLabel,
+            value: total,
+            color: scheme.primary),
+        _TimeMetric(
+            label: strings.activeTrainingTimeLabel,
+            value: active,
+            color: Colors.green),
+        _TimeMetric(
+            label: strings.totalRestTimeLabel,
+            value: rest,
+            color: Colors.orange),
+      ],
+    );
+  }
+}
+
+class _TimeMetric extends StatelessWidget {
+  const _TimeMetric(
+      {required this.label, required this.value, required this.color});
+
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(value,
+                style: Theme.of(context)
+                    .textTheme
+                    .titleSmall
+                    ?.copyWith(color: color)),
+            const SizedBox(height: 2),
+            Text(label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelSmall),
+          ],
+        ),
       ),
     );
   }
@@ -1410,29 +1663,38 @@ class _DraftSetTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final strings = stringsFor(ref);
 
-    return Card(
-      child: ListTile(
-        title: Text('${set.exerciseName} • ${set.weightKg} kg'),
-        subtitle: Text(
-          strings.draftSetSubtitle(
-            reps: set.reps,
-            setNumber: set.setNumber,
-            muscleGroup: set.muscleGroup,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              '${strings.setNumberLabel(set.setNumber)} • ${set.weightKg} kg • ${strings.repsCountLabel(set.reps)}',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
           ),
-        ),
-        trailing: Wrap(
-          spacing: 4,
-          children: [
-            IconButton(
-              onPressed: onEdit,
-              icon: const Icon(Icons.edit_outlined),
+          if (set.rpe != null)
+            Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: Text('RPE ${strings.rpeValueLabel(set.rpe!)}'),
             ),
-            IconButton(
-              onPressed: onRemove,
-              icon: const Icon(Icons.delete_outline),
-            ),
-          ],
-        ),
+          IconButton(
+            tooltip: strings.editSetButton,
+            visualDensity: VisualDensity.compact,
+            onPressed: onEdit,
+            icon: const Icon(Icons.edit_outlined),
+          ),
+          IconButton(
+            tooltip: strings.deleteWorkoutButton,
+            visualDensity: VisualDensity.compact,
+            onPressed: onRemove,
+            icon: const Icon(Icons.delete_outline),
+          ),
+        ],
       ),
     );
   }

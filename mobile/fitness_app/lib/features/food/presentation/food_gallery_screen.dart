@@ -18,9 +18,6 @@ class FoodGalleryScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final strings = stringsFor(ref);
     final entries = ref.watch(manualFoodEntriesProvider);
-    final photoEntries = entries
-        .where((entry) => (entry.photoPath ?? '').trim().isNotEmpty)
-        .toList();
 
     return Scaffold(
       appBar: AppTopBar(title: strings.foodGalleryTitle, strings: strings),
@@ -32,15 +29,15 @@ class FoodGalleryScreen extends ConsumerWidget {
               title: strings.foodGalleryTitle,
               subtitle: strings.foodGallerySubtitle,
               trailing: Text(
-                strings.savedMealPhotosCount(photoEntries.length),
+                strings.savedMealPhotosCount(entries.length),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
             const SizedBox(height: 20),
-            if (photoEntries.isEmpty)
+            if (entries.isEmpty)
               _EmptyGalleryCard(strings: strings)
             else
-              ...photoEntries.map(
+              ...entries.map(
                 (entry) => Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: _FoodGalleryCard(entry: entry, strings: strings),
@@ -87,19 +84,41 @@ class _FoodGalleryCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final photoPath = entry.photoPath!;
+    final photoPath = entry.photoPath;
 
     return Card(
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          MealPhotoView(
-            photoPath: photoPath,
-            width: double.infinity,
-            height: 220,
-            borderRadius: 0,
-          ),
+          if (photoPath != null && photoPath.trim().isNotEmpty)
+            MealPhotoView(
+              photoPath: photoPath,
+              width: double.infinity,
+              height: 220,
+              borderRadius: 0,
+            )
+          else
+            Container(
+              height: 96,
+              width: double.infinity,
+              color: Theme.of(context)
+                  .colorScheme
+                  .surfaceContainerHighest
+                  .withValues(alpha: 0.45),
+              alignment: Alignment.center,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.restaurant_outlined,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(strings.mealWithoutPhoto),
+                ],
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(

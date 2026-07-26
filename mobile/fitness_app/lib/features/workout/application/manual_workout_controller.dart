@@ -31,6 +31,40 @@ final todayWorkoutCaloriesProvider = Provider<int>((ref) {
   return total;
 });
 
+final todayWorkoutDurationSummaryProvider = Provider<WorkoutDurationSummary>(
+  (ref) => summarizeWorkoutDurations(ref.watch(todayWorkoutSessionsProvider)),
+);
+
+class WorkoutDurationSummary {
+  const WorkoutDurationSummary({
+    required this.totalSeconds,
+    required this.activeSeconds,
+    required this.restSeconds,
+  });
+
+  final int totalSeconds;
+  final int activeSeconds;
+  final int restSeconds;
+}
+
+WorkoutDurationSummary summarizeWorkoutDurations(
+  Iterable<ManualWorkoutSession> sessions,
+) {
+  var totalSeconds = 0;
+  var activeSeconds = 0;
+  var restSeconds = 0;
+  for (final session in sessions) {
+    totalSeconds += session.totalDurationSeconds;
+    activeSeconds += session.activeDurationSeconds;
+    restSeconds += session.restDurationSeconds;
+  }
+  return WorkoutDurationSummary(
+    totalSeconds: totalSeconds,
+    activeSeconds: activeSeconds,
+    restSeconds: restSeconds,
+  );
+}
+
 final recentWorkoutExerciseNamesProvider = Provider<List<String>>((ref) {
   final sessions = ref.watch(manualWorkoutSessionsProvider);
   final names = <String>[];

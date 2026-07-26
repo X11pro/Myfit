@@ -6,6 +6,7 @@ import 'package:fitness_app/features/dashboard/application/daily_targets_calcula
 import 'package:fitness_app/features/dashboard/domain/daily_targets.dart';
 import 'package:fitness_app/features/workout/application/manual_workout_controller.dart';
 import 'package:fitness_app/features/workout/domain/gym_set_entry.dart';
+import 'package:fitness_app/features/workout/domain/manual_workout_session.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -192,5 +193,38 @@ void main() {
     final caloriesPoints = container.read(progressCaloriesProvider);
     expect(caloriesPoints, hasLength(1));
     expect(caloriesPoints.single.value, 400);
+  });
+
+  test('sums total, active, and rest time across workout sessions', () {
+    final durations = summarizeWorkoutDurations([
+      ManualWorkoutSession(
+        id: 'session-a',
+        title: 'AM',
+        dateKey: '2026-07-26',
+        durationMinutes: 30,
+        totalDurationSeconds: 1800,
+        activeDurationSeconds: 1320,
+        restDurationSeconds: 480,
+        estimatedActiveCalories: 180,
+        createdAt: DateTime(2026, 7, 26),
+        sets: [],
+      ),
+      ManualWorkoutSession(
+        id: 'session-b',
+        title: 'PM',
+        dateKey: '2026-07-26',
+        durationMinutes: 20,
+        totalDurationSeconds: 1200,
+        activeDurationSeconds: 840,
+        restDurationSeconds: 360,
+        estimatedActiveCalories: 120,
+        createdAt: DateTime(2026, 7, 26, 18),
+        sets: [],
+      ),
+    ]);
+
+    expect(durations.totalSeconds, 3000);
+    expect(durations.activeSeconds, 2160);
+    expect(durations.restSeconds, 840);
   });
 }

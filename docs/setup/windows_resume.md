@@ -148,7 +148,7 @@ Salida esperada:
   - cronometro de sesion,
   - cronometro de descanso,
   - sincronizacion del timer de sesion con `Duration (min)`,
-  - arranque automatico del timer de descanso al agregar o repetir un set.
+  - inicio y detencion manual del timer de descanso desde su boton, sin activarlo al agregar, editar o repetir sets.
 
 ## 7. Siguiente prueba recomendada
 

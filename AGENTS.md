@@ -168,4 +168,4 @@ For backend or Supabase changes, document manual setup steps.
 
 The next milestone is:
 
-> Keep shipping product value in guest mode, then reintroduce authentication without Auth0 and connect local-first food flows to remote persistence.
+> Complete real-device QA and release/privacy closure for the existing guest-first plus Supabase OTP flow and hybrid remote persistence. Then consolidate guest-to-account migration and remote rehydration before Health Connect/HealthKit.

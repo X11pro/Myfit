@@ -2,74 +2,33 @@
 
 ## Listo ahora
 
-- app Flutter base multiscaffold
-- dark mode fijo
-- ingles por defecto
-- selector `EN / ESP` en welcome
-- welcome usable sin login obligatorio
-- onboarding basico
-- guest profile local persistido
-- dashboard base
-- manual food entry local en memoria
-- totales basicos en dashboard:
-  - calories
-  - protein
-- proyecto real de Supabase conectado
-- migracion inicial aplicada
-- esquema base + RLS ya creados
-- auth OTP validado tecnicamente contra Supabase, aunque hoy quedo fuera del flujo principal
+- app Flutter guest-first con dark mode, selector `EN / ESP`, onboarding, dashboard y top bar global;
+- auth por email OTP con Supabase y sesion persistente;
+- persistencia hibrida local/remota para peso diario, comidas manuales, fotos de comidas y workouts manuales de usuarios autenticados;
+- comida manual con macros, edicion, borrado y galeria;
+- barcode con camara, cache Supabase, `Open Food Facts` y fallback `USDA`;
+- foto de comida con IA via OpenRouter, confianza, ingredientes y peso editables;
+- catalogo compartido de alimentos y OCR/IA de etiquetas;
+- workouts manuales, sets, RPE, progreso, cronometros de sesion/descanso, sonido y vibracion;
+- export/delete remoto minimo mediante `user-data-manage`;
+- Android release con package `com.x11pro.myfit`.
 
-## Parcialmente listo
+## Pendiente de validar en dispositivo
 
-- autenticacion:
-  - backend y pruebas tecnicas existen
-  - pero la UX principal quedo desactivada temporalmente
-- onboarding:
-  - ya guarda perfil guest local
-  - tambien tenia soporte para guardar remoto con sesion
-  - pero ahora no esta siendo el camino principal
-- manual food tracking:
-  - UI y estado local existen
-  - falta persistencia local durable
-  - falta persistencia remota
+- sign out, barcode manual/no-match/sin internet y errores controlados de backend;
+- borrado individual y edicion completa de meals/workouts;
+- catalogo compartido end-to-end;
 
-## Todavia por desarrollar del producto principal
+## Siguiente desarrollo
 
-- persistencia local de comidas manuales
-- persistencia remota de comidas en `meal_entries`
-- busqueda nutricional real
-- barcode scan
-- food photo upload
-- AI food estimation
-- confidence score + confirmacion de porcion
-- daily dashboard real con:
-  - calories in
-  - protein
-  - sugar
-  - energy balance
-- daily summary calculado
-- workout import
-- Health Connect Android
-- HealthKit iOS
-- manual gym workout tracking
-- work/NEAT energy estimation
-- coach summary
-- supplement guidance
-- export/delete data flows
-- package name Android real
-- iOS bundle identifier real
-- UX final segun Figma
+1. Resolver los fallos que surjan de QA Android.
+2. Integrar tiempos total, activo y descanso de workout al dashboard y analitica.
+3. Cerrar firma, smoke tests, privacy policy y soporte de release Android.
+4. Consolidar migracion guest -> cuenta y datos remotos por usuario.
+5. Implementar Health Connect, HealthKit, modo trabajo fisico y coach seguro.
 
-## Estado estrategico real
+## Aun fuera del MVP inmediato
 
-Hoy la app ya sirve como base navegable y editable para producto, pero todavia no es el MVP funcional completo.
-
-## Siguiente orden recomendado
-
-1. persistir comidas manuales localmente
-2. reconectar identidad/auth sin romper guest UX
-3. guardar comidas remotas en `meal_entries`
-4. mejorar dashboard diario real
-5. nutricion lookup
-6. barcode
-7. foto + IA
+- bundle identifier iOS real;
+- wearables indirectos, Strava secundario, recovery score, Spotify y analisis de postura;
+- rediseño UI/UX completo, despues del cierre de QA y release.

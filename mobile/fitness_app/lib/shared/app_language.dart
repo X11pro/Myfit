@@ -180,6 +180,9 @@ class AppStrings {
   String get restTimerTitle =>
       isEnglish ? 'Rest timer' : 'Cronometro de descanso';
 
+  String get restTimerSettings =>
+      isEnglish ? 'Timer settings' : 'Ajustes del temporizador';
+
   String get startTimerButton =>
       isEnglish ? 'Start workout' : 'Iniciar entrenamiento';
 
@@ -649,20 +652,21 @@ class AppStrings {
       isEnglish ? 'Food gallery' : 'Galeria de comidas';
 
   String get foodGallerySubtitle => isEnglish
-      ? 'Review your saved meal photos together with their nutrition details.'
-      : 'Revisa tus fotos de comidas guardadas junto con sus detalles nutricionales.';
+      ? 'Review your saved meals together with their nutrition details.'
+      : 'Revisa tus comidas guardadas junto con sus detalles nutricionales.';
 
-  String savedMealPhotosCount(int count) => isEnglish
-      ? '$count saved meal photos'
-      : '$count fotos de comidas guardadas';
+  String savedMealPhotosCount(int count) =>
+      isEnglish ? '$count saved meals' : '$count comidas guardadas';
 
-  String get noMealPhotosYet => isEnglish
-      ? 'No saved meal photos yet.'
-      : 'Todavia no hay fotos de comidas guardadas.';
+  String get noMealPhotosYet =>
+      isEnglish ? 'No saved meals yet.' : 'Todavia no hay comidas guardadas.';
 
   String get foodGalleryEmptyHint => isEnglish
-      ? 'Add a meal with photo and it will appear here for later review.'
-      : 'Agrega una comida con foto y aparecera aqui para revisarla despues.';
+      ? 'Add a meal and it will appear here for later review.'
+      : 'Agrega una comida y aparecera aqui para revisarla despues.';
+
+  String get mealWithoutPhoto =>
+      isEnglish ? 'No photo attached' : 'Sin foto adjunta';
 
   String get addSharedFoodSubtitle => isEnglish
       ? 'If a barcode is missing, capture the label with OCR/AI and save the product for everyone.'

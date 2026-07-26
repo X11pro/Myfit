@@ -10,7 +10,7 @@ Quiero continuar Myfit exactamente desde el ultimo punto.
 
 Contexto inmediato:
 - Ya existe flujo guest-first funcional.
-- Ya existe modulo local-first de gym con sesiones, sets, edicion y progreso.
+- Ya existe modulo de gym con sesiones, sets, edicion y progreso, con persistencia hibrida local/remota para usuarios autenticados.
 - Ya existe top bar global con back/home/menu.
 - Ya se limpio la mezcla EN/ES y el selector EN / ESP cambia el copy visible.
 - Ya se alineo Android a ndkVersion 28.2.13676358.
@@ -18,12 +18,12 @@ Contexto inmediato:
 - Ya se muestran repeticiones al lado de sets en workout/dashboard.
 - Ya existe carga rapida minima en workout: `Repeat last` + sugerencias de ejercicios recientes.
 - El dialogo de workout ya fue mejorado para usar `muscle group -> exercise`, crear multiples sets iguales y capturar `RPE` visual con persistencia por set.
-- `gym tracker` ya incluye cronometro de sesion y cronometro de descanso; el de sesion sincroniza `Duration (min)` y el de descanso arranca automaticamente cuando se agrega o repite un set.
+- `gym tracker` ya incluye cronometro de sesion y cronometro de descanso; el de sesion sincroniza `Duration (min)` y REST solo inicia o se detiene manualmente desde su boton, nunca al agregar, editar o repetir sets.
 - El workout manual ahora guarda `totalDurationSeconds`, `activeDurationSeconds` y `restDurationSeconds` por sesion.
 - El timer REST ya fue probado en `SM S916B` con sonido seleccionable, preview automatico al cambiar la opcion y vibracion opcional al llegar a `0`.
 - El flujo Flutter de AI/comida ahora valida configuracion Supabase y maneja respuestas incompletas del backend.
 - `manual food entry` ya corrige el caso web para fotos elegidas desde galeria usando `data:` URLs cuando hace falta.
-- Ya existe una galeria local-first de comidas en `/food/gallery` con foto, fecha, resumen nutricional, confianza AI, editar y eliminar.
+- Ya existe una galeria de comidas en `/food/gallery` con foto, fecha, resumen nutricional, confianza AI, editar y eliminar; la lectura es local-first y los usuarios autenticados sincronizan meals/fotos remotamente.
 - `Add meal` ya muestra un acceso directo visible a esa galeria.
 - La migracion real del backend de OpenAI a OpenRouter ya quedo implementada en `backend/supabase/functions/meal-photo-analyze/index.ts`, `backend/supabase/functions/food-catalog-upsert/index.ts` y `backend/supabase/functions/_shared/openrouter.ts`.
 - Los secrets remotos de Supabase para OpenRouter ya quedaron cargados y ambas functions ya fueron redeployadas.

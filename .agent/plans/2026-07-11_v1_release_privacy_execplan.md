@@ -14,8 +14,8 @@ Avanzar el bloque posterior a persistencia remota base:
 
 - Auth y persistencia remota base ya existen.
 - La app sigue mostrando algunos errores crudos de Supabase/functions.
-- Android sigue con `com.example.fitness_app` y label provisional.
-- Faltan documentos claros de privacidad/release/QA.
+- Android release usa `com.x11pro.myfit`, label `Myfit` y callback Android base configurado.
+- Ya existen checklist de QA/release y borradores de privacidad, export y borrado; falta validarlos de punta a punta en dispositivo y cerrar la policy publica.
 
 ## Non-goals
 
@@ -25,11 +25,17 @@ Avanzar el bloque posterior a persistencia remota base:
 
 ## Implementation steps
 
-- [ ] Endurecer mensajes de error principales en auth/food.
-- [ ] Ajustar `applicationId`, `namespace`, label y callback Android base.
-- [ ] Agregar checklist de QA Android real.
-- [ ] Agregar base de privacy policy, export y data deletion.
-- [ ] Validar con analyze y tests.
+- [x] Endurecer mensajes de error principales en auth/food.
+- [x] Ajustar `applicationId`, `namespace`, label y callback Android base.
+- [x] Agregar checklist de QA Android real.
+- [x] Agregar base de privacy policy, export y data deletion.
+- [x] Validar con analyze y tests.
+
+## Continuacion
+
+- [ ] Ejecutar QA real en `SM S916B`, incluyendo rehidratacion tras reinstalacion.
+- [ ] Confirmar export/delete remoto de punta a punta.
+- [ ] Definir firma release, publicar la policy final y completar smoke tests de pre-publicacion.
 
 ## Validation commands
 

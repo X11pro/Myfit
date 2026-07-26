@@ -191,8 +191,8 @@ Seguir el guest flow actual y avanzar estas piezas en orden:
 - prueba real del catalogo compartido con OCR/AI ya migrado a OpenRouter,
 - destrabar credenciales locales de Supabase para poder correr esa prueba E2E real,
 - decidir siguientes metricas de progreso por ejercicio o volumen,
-- reintroduccion de autenticacion sin Auth0,
-- conexion de comidas y catalogo a persistencia remota multiusuario.
+- validar autenticacion OTP, export/delete y rehidratacion remota multiusuario,
+- consolidar migracion guest -> cuenta sin perder datos.
 
 ## 10. Guest flow actual
 
@@ -214,7 +214,7 @@ Estado funcional actual de la app:
 - `sets` multiples desde el dialogo,
 - selector visual de `RPE` con persistencia por set,
 - cronometro general de entrenamiento con inicio/fin manual,
-- cronometro REST con countdown, overtime, sonido seleccionable, preview automatico y vibracion opcional,
+- cronometro REST manual con countdown, overtime, sonido seleccionable, preview automatico y vibracion opcional; no se activa ni reinicia al agregar, editar o repetir sets,
 - meal photos remotas en Storage para usuarios autenticados,
 - meal photos con ingredientes editables y peso total editable,
 - recálculo local automático de macros al cambiar el peso,

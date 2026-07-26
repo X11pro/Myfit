@@ -34,6 +34,8 @@ class DashboardScreen extends ConsumerWidget {
     final dailyTargets = ref.watch(dailyTargetsProvider);
     final todayWorkouts = ref.watch(todayWorkoutSessionsProvider);
     final todayWorkoutCalories = ref.watch(todayWorkoutCaloriesProvider);
+    final todayWorkoutDurations =
+        ref.watch(todayWorkoutDurationSummaryProvider);
     final currentWeightKg = todayWeight?.weightKg ?? state.currentWeightKg;
     final totalSetsToday = todayWorkouts.fold<int>(
         0, (value, session) => value + session.totalSets);
@@ -119,6 +121,7 @@ class DashboardScreen extends ConsumerWidget {
           _ActivitySummaryTile(
             strings: strings,
             latestWorkout: latestWorkout,
+            durations: todayWorkoutDurations,
           ),
           const SizedBox(height: 14),
           _RecentLogsPanel(
@@ -588,10 +591,12 @@ class _ActivitySummaryTile extends StatelessWidget {
   const _ActivitySummaryTile({
     required this.strings,
     required this.latestWorkout,
+    required this.durations,
   });
 
   final AppStrings strings;
   final ManualWorkoutSession? latestWorkout;
+  final WorkoutDurationSummary durations;
 
   @override
   Widget build(BuildContext context) {
@@ -623,17 +628,43 @@ class _ActivitySummaryTile extends StatelessWidget {
               color: Theme.of(context).colorScheme.primary),
         ),
         title: Text(workout.title),
-        subtitle: Text(
-          strings.workoutActivitySummary(
-            minutes: workout.durationMinutes,
-            calories: workout.estimatedActiveCalories,
-          ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              strings.workoutActivitySummary(
+                minutes: workout.durationMinutes,
+                calories: workout.estimatedActiveCalories,
+              ),
+            ),
+            if (durations.totalSeconds > 0) ...[
+              const SizedBox(height: 4),
+              Text(
+                strings.workoutTimeSummary(
+                  total: _formatWorkoutDuration(durations.totalSeconds),
+                  active: _formatWorkoutDuration(durations.activeSeconds),
+                  rest: _formatWorkoutDuration(durations.restSeconds),
+                ),
+              ),
+            ],
+          ],
         ),
         trailing:
             const Icon(Icons.check_circle_outline, color: Color(0xFF8DC3F2)),
       ),
     );
   }
+}
+
+String _formatWorkoutDuration(int seconds) {
+  final duration = Duration(seconds: seconds);
+  final hours = duration.inHours;
+  final minutes = duration.inMinutes.remainder(60);
+  final remainingSeconds = duration.inSeconds.remainder(60);
+  if (hours > 0) {
+    return '${hours}h ${minutes.toString().padLeft(2, '0')}m';
+  }
+  return '${minutes}m ${remainingSeconds.toString().padLeft(2, '0')}s';
 }
 
 class _RecentLogsPanel extends StatelessWidget {
@@ -1628,20 +1659,36 @@ class _DailyHistoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: ListTile(
-        title: Text(summary.dateKey),
-        subtitle: Text(
-            strings.dateSummarySubtitle(summary.dateKey, summary.entryCount)),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text('${summary.totalCalories} kcal'),
-            const SizedBox(height: 4),
-            Text('${summary.totalProteinGrams} g'),
-            const SizedBox(height: 4),
-            Text(
-                '${summary.totalCarbsGrams} g C / ${summary.totalFatGrams} g F'),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(summary.dateKey),
+                  const SizedBox(height: 4),
+                  Text(strings.dateSummarySubtitle(
+                      summary.dateKey, summary.entryCount)),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('${summary.totalCalories} kcal'),
+                const SizedBox(height: 4),
+                Text('${summary.totalProteinGrams} g'),
+                const SizedBox(height: 4),
+                Text(
+                    '${summary.totalCarbsGrams} g C / ${summary.totalFatGrams} g F'),
+              ],
+            ),
           ],
         ),
       ),

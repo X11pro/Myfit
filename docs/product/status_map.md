@@ -31,7 +31,7 @@ El contenido prioriza claridad sobre detalle tecnico fino.
   - `USDA FoodData Central`
 - La principal deuda actual ya no es de features core, sino de:
   - pruebas reales en movil,
-  - persistencia remota multiusuario,
+  - validacion de persistencia remota multiusuario y rehidratacion,
   - salud/wearables,
   - consolidacion de auth.
 
@@ -59,20 +59,21 @@ El contenido prioriza claridad sobre detalle tecnico fino.
 ### 2. Auth e identidad
 
 - Modulo: `Auth`
-- Estado: `Implementado parcial`
+- Estado: `Implementado, pendiente de validacion real completa`
 - Incluye:
   - guest-first usable,
   - auth minima por email OTP con Supabase,
   - pantalla de cuenta/auth minima,
-  - estado local y sincronizacion basica con sesion Supabase.
+  - estado local y sincronizacion con sesion Supabase,
+  - persistencia hibrida para peso, comidas manuales, fotos de comidas y workouts manuales.
 - Falta:
-  - modelo final de identidad multiusuario,
-  - reintroduccion completa de auth como base de persistencia remota.
+  - migracion guest -> cuenta sin perder datos,
+  - validar rehidratacion remota y acciones de export/delete en Android real.
 - Dependencias:
   - Supabase Auth,
   - app state.
 - Siguiente paso:
-  - usar auth real como soporte de persistencia remota de meals/workouts.
+  - ejecutar QA real de auth, sync, rehidratacion y export/delete.
 
 ### 3. Food manual
 
@@ -88,10 +89,11 @@ El contenido prioriza claridad sobre detalle tecnico fino.
   - fibra,
   - meal type,
   - editar y borrar,
-  - persistencia local-first.
+  - persistencia hibrida: local-first con sync remoto para usuarios autenticados.
 - Dependencias:
   - shared_preferences,
-  - estado local Riverpod.
+  - estado local Riverpod,
+  - Supabase Auth y Postgres para sync autenticado.
 
 ### 4. Food photo + AI
 
@@ -129,9 +131,9 @@ El contenido prioriza claridad sobre detalle tecnico fino.
   - editar,
   - eliminar.
 - Estado de datos:
-  - local-first.
+  - lectura local-first con meals y fotos sincronizados remotamente para usuarios autenticados.
 - Falta:
-  - persistencia remota de meals/fotos.
+  - validar rehidratacion remota end-to-end en Android.
 
 ### 6. Shared food catalog
 
@@ -199,9 +201,9 @@ El contenido prioriza claridad sobre detalle tecnico fino.
   - sugerencias recientes,
   - flujo `muscle group -> exercise`.
 - Estado de datos:
-  - local-first.
+  - persistencia hibrida: local-first con sync remoto para usuarios autenticados.
 - Falta:
-  - sync remoto por usuario.
+  - validar rehidratacion y reflejo de datos remotos en progreso/dashboard.
 
 ### 9. Workout timers
 
@@ -226,7 +228,8 @@ El contenido prioriza claridad sobre detalle tecnico fino.
   - progreso de fuerza,
   - selector de metrica,
   - `1RM` estimado,
-  - agrupado diario corregido.
+  - agrupado diario corregido,
+  - agregado diario de tiempo total, activo y descanso de workouts manuales.
 - Falta:
   - mezclar datos remotos reales por usuario.
 
@@ -275,15 +278,17 @@ El contenido prioriza claridad sobre detalle tecnico fino.
   -> puede usar `food-barcode-lookup`
   -> puede usar OCR/AI
 
-### Persistencia futura
+### Persistencia a consolidar
 
 - `Meals remotos`
-  -> dependen de `auth real`
-  -> dependen de modelo final de identidad
+  -> ya disponibles para usuarios autenticados
+  -> requieren QA de rehidratacion y migracion desde guest
 - `Workouts remotos`
-  -> dependen de `auth real`
+  -> ya disponibles para usuarios autenticados
+  -> requieren QA de rehidratacion y dashboard/progreso
 - `Resultados AI remotos`
-  -> dependen de identidad + storage + modelo de meals final
+  -> fotos y metadata ya se guardan para usuarios autenticados
+  -> requieren prueba con foto real y rehidratacion
 
 ## Validaciones reales ya hechas
 
@@ -292,14 +297,17 @@ El contenido prioriza claridad sobre detalle tecnico fino.
 - `Barcode scan` funcionando en telefono Android.
 - `Open Food Facts` validado en remoto.
 - `USDA` validado en remoto.
+- Auth OTP y sesion persistente confirmados en `SM S916B`.
+- Foto IA real, edicion de peso/ingredientes, guardado y galeria confirmados en `SM S916B`.
+- Sync remoto de comidas, fotos, peso y workouts confirmado tras reinstalacion.
+- Export y borrado remoto confirmados de punta a punta.
 
 ## Pendiente de prueba real
 
 ### Prioridad alta
 
-- foto real de comida con `Analyze with AI` en Android,
-- mas productos reales por barcode,
-- timers de workout en una sesion real.
+- probar los estados de error de barcode y analisis IA sin afectar datos reales,
+- completar sign out y editar/borrar comidas y workouts en Android.
 
 ### Prioridad media
 
@@ -308,16 +316,16 @@ El contenido prioriza claridad sobre detalle tecnico fino.
 
 ## Pendiente siguiente iteracion
 
-### Persistencia remota
+### Consolidacion remota
 
-- meals remotos por usuario,
-- workouts remotos por usuario,
-- resultados AI remotos,
-- objetivos diarios remotos.
+- QA de meals, fotos, peso y workouts por usuario,
+- rehidratacion tras reinstalacion e inicio de sesion,
+- migracion guest -> cuenta sin perdida de datos,
+- integrar tiempos de workout y datos remotos al dashboard/progreso.
 
 ### Auth / identidad
 
-- auth multiusuario completa,
+- cerrar UX de auth OTP y sesion persistente,
 - guest -> cuenta real sin perder datos.
 
 ### Salud y fuentes del sistema
@@ -379,8 +387,8 @@ Si otra IA necesita una vista compacta, este es el arbol funcional minimo:
     - food-catalog-upsert
     - food-barcode-lookup
   - `Siguiente`
-    - persistencia remota
-    - auth completa
+    - QA de sync remoto y rehidratacion
+    - migracion guest -> cuenta
     - Health Connect
     - HealthKit
   - `Backlog futuro`
