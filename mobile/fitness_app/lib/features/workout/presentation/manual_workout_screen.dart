@@ -1328,7 +1328,7 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
       await _restAlertPlayer!.stop();
       await _restAlertPlayer!.setVolume(_restAlertVolume);
       await _restAlertPlayer!.play(
-        BytesSource(_restAlertSoundBytes[_restAlertSound]!),
+        AssetSource('sounds/rest_alert.wav'),
       );
     } catch (_) {
       // Ignore audio failures to avoid blocking workout logging.
