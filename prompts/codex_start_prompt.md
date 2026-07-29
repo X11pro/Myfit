@@ -36,17 +36,17 @@ Contexto inmediato:
 - El telefono Android `SM S916B` ya quedo probado con instalacion directa por `flutter run --no-resident`; si reaparece un error de `SUPABASE_URL/SUPABASE_ANON_KEY`, sospechar primero una instalacion vieja antes que un bug del codigo.
 - Si reaparece `INSTALL_FAILED_NO_MATCHING_ABIS` al instalar debug en `SM S916B`, recompilar con `flutter build apk --debug --target-platform android-arm64`.
 - La app vieja `debug` `com.example.fitness_app` ya no debe convivir con la nueva `release` `com.x11pro.myfit`; si reaparece un warning raro en Samsung, comprobar primero paquetes instalados duplicados.
-- `user-data-manage` ya esta desplegada para `export/delete` minimo real; el siguiente chequeo es probarla en Android, no volver a reimplementar el backend.
+- `user-data-manage` ya esta desplegada para `export/delete` minimo real y fue aprobada de punta a punta en Android; no volver a reimplementar el backend.
 - `app-release.apk` ya compila localmente y pasa `zipalign -P 16`; el warning de `16 KB` desaparecio cuando se desinstalo la app vieja debug.
 - `Duration (min)` del workout manual ya no debe pisarse mientras el usuario tipea y `Duration/Calories` son opcionales en UI.
 - `meal photo` ahora soporta `Meal weight (g)` e `Ingredients` editables con persistencia local/remota.
 - Cambiar `Meal weight (g)` debe recalcular macros localmente y volver a tocar `Analyze with AI` debe respetar peso/ingredientes corregidos por el usuario.
 - `ingredients_text` se aplicó en remoto con `supabase db query` por un problema del historial `20260711`; revisar `supabase migration list` antes de tocar migraciones nuevas.
-- `mobile_scanner` ya fue actualizado a `7.3.0`; el siguiente bug a confirmar es si desapareció la pantalla negra del scanner de barcode en Android real.
+- `mobile_scanner` ya fue actualizado a `7.3.0` y la camara de barcode fue aprobada en Android real.
 - Punto de diseño mas reciente: revisar la ultima tanda de pantallas Stitch/Figma compartida por el usuario y decidir `usar / descartar / repetir` para cerrar la base final del rediseño.
 - La base visual reusable ya existe en `mobile/fitness_app/lib/shared/ui/`; seguir construyendo sobre esa carpeta y no volver a hardcodear estilos pantalla por pantalla.
 - La rutina recomendada por goal debe verse en ingles cuando la app esta en ingles; no reintroducir textos hardcodeados en espanol en esa parte.
-- Todavia NO es el mejor momento para una mejora total de UI/UX; primero ejecutar QA real Android, confirmar export/delete y cerrar release/legal.
+- Todavia NO es el mejor momento para una mejora total de UI/UX; primero completar QA secundaria y cerrar release/legal.
 
 Tareas al retomar:
 1. Revisar el estado real del repo sin revertir cambios ajenos.
@@ -54,17 +54,13 @@ Tareas al retomar:
 3. Confirmar que el ultimo punto implementado incluye top bar global + fix de Log Workout + NDK 28 + metricas de progreso de fuerza + reps junto a sets + `Repeat last` + sugerencias de ejercicios recientes + flujo `muscle group -> exercise` + sets multiples + `RPE` visual persistido.
 4. Ejecutar flutter pub get, flutter analyze y flutter test.
 5. Verificar primero si la shell actual ya tiene `SUPABASE_URL`, `SUPABASE_ANON_KEY` y opcionalmente `SUPABASE_ACCESS_TOKEN`; si faltan, recargarlas manualmente sin escribirlas en archivos del repo.
-6. Ejecutar la prueba real del catalogo compartido y `Analyze with AI` con la build Android/web ya configurada con Supabase.
-7. Priorizar en Android el flujo: guardar foto real -> verla en `/food/gallery` -> lanzar `Analyze with AI`.
-8. Probar varios productos reales por barcode y distinguir si entran por cache, `Open Food Facts` o `USDA`.
-9. Validar con una foto real que OpenRouter responde bien desde Flutter y, si hay respuestas incompletas, ajustar prompt/parsing sin reabrir analisis ya cerrados.
-10. Ejecutar QA real guiada en `SM S916B` con `docs/qa/android_real_device_checklist.md`.
-11. Confirmar export/delete remoto real desde auth screen.
-12. Validar en Android barcode real, incluyendo que el scanner ya no abra en negro.
-13. Validar foto AI real, rehidratacion remota completa y el recálculo por peso/ingredientes en meal photo.
-14. Integrar los tiempos `total / activo / descanso` al dashboard/analisis antes del rediseño total.
-15. Seguir desde ahi sin reiniciar nada desde cero.
-16. Mantener respuestas en espanol.
+6. Completar la QA secundaria pendiente en `SM S916B`: sign out, barcode manual/no-match/sin internet, error de backend controlado y editar/borrar workout.
+7. Probar end-to-end el catalogo compartido con una imagen real en Android o web configurado con Supabase.
+8. Preparar la firma release Android, publicar la privacy policy final y cerrar el canal/proceso de soporte para export/delete.
+9. Consolidar la migracion guest -> cuenta sin perdida de datos ni duplicados.
+10. Reevaluar el rediseño total de UI/UX solo despues de esos cierres.
+11. Seguir desde ahi sin reiniciar nada desde cero.
+12. Mantener respuestas en espanol.
 
 No reinicies el proyecto desde cero. Continua desde la estructura y commits ya existentes.
 

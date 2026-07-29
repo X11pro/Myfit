@@ -33,8 +33,9 @@ Avanzar el bloque posterior a persistencia remota base:
 
 ## Continuacion
 
-- [ ] Ejecutar QA real en `SM S916B`, incluyendo rehidratacion tras reinstalacion.
-- [ ] Confirmar export/delete remoto de punta a punta.
+- [x] Ejecutar QA critica en `SM S916B`, incluyendo rehidratacion tras reinstalacion.
+- [x] Confirmar export/delete remoto de punta a punta.
+- [ ] Completar la QA secundaria pendiente: sign out, barcode manual/no-match/sin internet, error de backend controlado y editar/borrar workout.
 - [ ] Definir firma release, publicar la policy final y completar smoke tests de pre-publicacion.
 
 ## Validation commands

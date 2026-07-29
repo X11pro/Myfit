@@ -4,6 +4,8 @@
 
 El repo quedo listo para continuar en CachyOS con una app Flutter guest-first pero ya muy cerca de `v1.0`: auth OTP funcional, persistencia remota base para `weight + manual meals + meal photos + manual workouts`, export/delete remoto minimo, release Android base saneada, idioma ingles por defecto, selector `EN / ESP`, dark mode, top bar global, barcode/AI/comida conectados a Supabase/OpenRouter, y timers de workout ya probados en dispositivo.
 
+Revision de continuidad: 2026-07-29. No hay cambios de codigo posteriores al commit `1aa9d64` (`Polish workout tracker and refresh handoff`); `main` coincide con `origin/main`. Solo existe el archivo temporal sin seguimiento `backend/supabase/.temp/cli-latest`, que no debe incluirse en commits.
+
 Ultimo estado exacto antes de pausar:
 
 - `manual meals`, `meal photos`, `daily weight` y `manual workouts` ya tienen base hibrida `guest local / auth remoto`.
@@ -462,6 +464,10 @@ Smoke tests remotos confirmados:
 4. Publicar version final de privacy policy y cerrar contacto/proceso de soporte para export/delete.
 5. Consolidar la migracion guest -> cuenta sin perdida de datos ni duplicados.
 6. Reevaluar en ese punto si ya conviene abrir la mejora total de UI/UX; ese sigue siendo el siguiente gran paso despues de QA real + cierre release/legal.
+
+## Punto exacto para continuar
+
+El primer bloque ejecutable es completar la QA secundaria en `SM S916B` usando `docs/qa/android_real_device_checklist.md`. Las pruebas criticas ya estan aprobadas; no reabrir auth OTP, sync/rehidratacion, scanner con camara, foto IA, timers ni export/delete salvo que una prueba secundaria revele una regresion.
 
 ## Riesgos o notas
 

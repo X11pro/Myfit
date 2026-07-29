@@ -242,6 +242,7 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                     tilePadding: EdgeInsets.zero,
                     title: Text(strings.restTimerSettings),
                     children: [
+                      const SizedBox(height: 8),
                       TextField(
                         key: const Key('rest-goal-seconds-field'),
                         controller: _restGoalController,
