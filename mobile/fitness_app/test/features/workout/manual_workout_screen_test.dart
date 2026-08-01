@@ -43,6 +43,18 @@ void main() {
     expect(find.text('Counting down'), findsNothing);
   });
 
+  testWidgets('new workout uses its date as the default title', (
+    WidgetTester tester,
+  ) async {
+    await _pumpManualWorkoutScreen(tester);
+
+    final titleField = tester.widget<TextField>(
+      find.byKey(const Key('workout-title-field')),
+    );
+
+    expect(titleField.controller!.text, matches(r'^\d{4}-\d{2}-\d{2}$'));
+  });
+
   testWidgets('adds a custom exercise after choosing a muscle group', (
     WidgetTester tester,
   ) async {
@@ -78,7 +90,7 @@ void main() {
     expect(find.text('Set 2 • 35.0 kg • 12 reps'), findsOneWidget);
   });
 
-  testWidgets('rest timer switches from countdown to overtime', (
+  testWidgets('rest timer stops at its target and is ready for the next rest', (
     WidgetTester tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(1080, 1600));
@@ -102,7 +114,13 @@ void main() {
     await tester.pump(const Duration(milliseconds: 600));
     await tester.pump(const Duration(seconds: 1));
 
-    expect(find.text('+00:01'), findsOneWidget);
+    expect(find.text('Ready'), findsOneWidget);
+    expect(find.text('-00:01'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('rest-toggle-button')));
+    await tester.pump();
+
+    expect(find.text('Counting down'), findsOneWidget);
   });
 
   testWidgets('rest alert toggle persists user preference', (

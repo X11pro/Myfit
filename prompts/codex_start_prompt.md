@@ -20,7 +20,9 @@ Contexto inmediato:
 - El dialogo de workout ya fue mejorado para usar `muscle group -> exercise`, crear multiples sets iguales y capturar `RPE` visual con persistencia por set.
 - `gym tracker` ya incluye cronometro de sesion y cronometro de descanso; el de sesion sincroniza `Duration (min)` y REST solo inicia o se detiene manualmente desde su boton, nunca al agregar, editar o repetir sets.
 - El workout manual ahora guarda `totalDurationSeconds`, `activeDurationSeconds` y `restDurationSeconds` por sesion.
-- El timer REST ya fue probado en `SM S916B` con sonido seleccionable, preview automatico al cambiar la opcion y vibracion opcional al llegar a `0`.
+- El timer REST se detiene automaticamente al llegar al objetivo, conserva ese objetivo para el siguiente descanso y no continua en positivo.
+- La alerta REST actual usa `AudioPlayer` con tonos WAV en memoria por `BytesSource`, `mimeType: 'audio/wav'`, dos repeticiones y `mixWithOthers`; falta validar de nuevo en `SM S916B` que el preview y los dos tonos se oigan sin pausar audio externo.
+- Una sesion nueva usa su fecha `YYYY-MM-DD` como titulo por defecto; cambiar la fecha actualiza ese titulo solo si no fue personalizado.
 - El flujo Flutter de AI/comida ahora valida configuracion Supabase y maneja respuestas incompletas del backend.
 - `manual food entry` ya corrige el caso web para fotos elegidas desde galeria usando `data:` URLs cuando hace falta.
 - Ya existe una galeria de comidas en `/food/gallery` con foto, fecha, resumen nutricional, confianza AI, editar y eliminar; la lectura es local-first y los usuarios autenticados sincronizan meals/fotos remotamente.
@@ -54,13 +56,14 @@ Tareas al retomar:
 3. Confirmar que el ultimo punto implementado incluye top bar global + fix de Log Workout + NDK 28 + metricas de progreso de fuerza + reps junto a sets + `Repeat last` + sugerencias de ejercicios recientes + flujo `muscle group -> exercise` + sets multiples + `RPE` visual persistido.
 4. Ejecutar flutter pub get, flutter analyze y flutter test.
 5. Verificar primero si la shell actual ya tiene `SUPABASE_URL`, `SUPABASE_ANON_KEY` y opcionalmente `SUPABASE_ACCESS_TOKEN`; si faltan, recargarlas manualmente sin escribirlas en archivos del repo.
-6. Completar la QA secundaria pendiente en `SM S916B`: sign out, barcode manual/no-match/sin internet, error de backend controlado y editar/borrar workout.
-7. Probar end-to-end el catalogo compartido con una imagen real en Android o web configurado con Supabase.
-8. Preparar la firma release Android, publicar la privacy policy final y cerrar el canal/proceso de soporte para export/delete.
-9. Consolidar la migracion guest -> cuenta sin perdida de datos ni duplicados.
-10. Reevaluar el rediseño total de UI/UX solo despues de esos cierres.
-11. Seguir desde ahi sin reiniciar nada desde cero.
-12. Mantener respuestas en espanol.
+6. En `SM S916B`, validar primero preview y final de REST de 1 segundo con el nuevo WAV/MIME; debe emitir dos tonos, no pausar audio externo y terminar en `Ready`.
+7. Completar la QA secundaria pendiente en `SM S916B`: sign out, barcode manual/no-match/sin internet, error de backend controlado y editar/borrar workout.
+8. Probar end-to-end el catalogo compartido con una imagen real en Android o web configurado con Supabase.
+9. Preparar la firma release Android, publicar la privacy policy final y cerrar el canal/proceso de soporte para export/delete.
+10. Consolidar la migracion guest -> cuenta sin perdida de datos ni duplicados.
+11. Reevaluar el rediseño total de UI/UX solo despues de esos cierres.
+12. Seguir desde ahi sin reiniciar nada desde cero.
+13. Mantener respuestas en espanol.
 
 No reinicies el proyecto desde cero. Continua desde la estructura y commits ya existentes.
 

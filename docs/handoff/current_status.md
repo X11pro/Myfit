@@ -4,7 +4,7 @@
 
 El repo quedo listo para continuar en CachyOS con una app Flutter guest-first pero ya muy cerca de `v1.0`: auth OTP funcional, persistencia remota base para `weight + manual meals + meal photos + manual workouts`, export/delete remoto minimo, release Android base saneada, idioma ingles por defecto, selector `EN / ESP`, dark mode, top bar global, barcode/AI/comida conectados a Supabase/OpenRouter, y timers de workout ya probados en dispositivo.
 
-Revision de continuidad: 2026-07-29. No hay cambios de codigo posteriores al commit `1aa9d64` (`Polish workout tracker and refresh handoff`); `main` coincide con `origin/main`. Solo existe el archivo temporal sin seguimiento `backend/supabase/.temp/cli-latest`, que no debe incluirse en commits.
+Revision de continuidad: 2026-08-01. El ultimo bloque local mejora el tracker de gym; la build debug ARM64 mas reciente fue compilada e instalada limpiamente en `SM S916B`. Antes de continuar, comprobar que el tono REST sea audible en el dispositivo con el nuevo `BytesSource` WAV y MIME explicito.
 
 Ultimo estado exacto antes de pausar:
 
@@ -23,6 +23,9 @@ Ultimo estado exacto antes de pausar:
 - El dashboard ya agrega y muestra los tiempos total, activo y de descanso de las sesiones manuales del dia.
 - QA detecto y se corrigio un overflow vertical del historial diario y la falta de acceso para editar/borrar comidas sin foto; Food Gallery ahora incluye todas las comidas guardadas.
 - El temporizador REST ya no se activa ni se reinicia al agregar, editar o repetir un set: solo se controla manualmente desde su boton.
+- El temporizador REST ahora se detiene automaticamente al alcanzar el objetivo, guarda ese ciclo y vuelve a `Ready`; no continua en tiempo positivo y conserva el objetivo configurado para el proximo descanso.
+- Una sesion nueva de gym recibe por defecto la fecha `YYYY-MM-DD` como nombre. Si se cambia la fecha antes de personalizar el nombre, se actualiza; un nombre escrito por el usuario se conserva.
+- La alerta REST emite dos tonos consecutivos con `AudioPlayer` y `BytesSource` WAV en memoria, usando `mimeType: 'audio/wav'` y `mixWithOthers` para no solicitar foco exclusivo. Falta confirmar la audibilidad real de esta ultima variante en `SM S916B`.
 
 ## Estado de diseño / Stitch
 
@@ -467,7 +470,7 @@ Smoke tests remotos confirmados:
 
 ## Punto exacto para continuar
 
-El primer bloque ejecutable es completar la QA secundaria en `SM S916B` usando `docs/qa/android_real_device_checklist.md`. Las pruebas criticas ya estan aprobadas; no reabrir auth OTP, sync/rehidratacion, scanner con camara, foto IA, timers ni export/delete salvo que una prueba secundaria revele una regresion.
+Primero, en `SM S916B`, abrir `Gym tracker`, elegir un perfil de alerta y confirmar su preview y sus dos tonos al terminar un REST de 1 segundo sin interrumpir otro audio. Despues completar la QA secundaria con `docs/qa/android_real_device_checklist.md`. Las pruebas criticas ya estan aprobadas; no reabrir auth OTP, sync/rehidratacion, scanner con camara, foto IA, timers ni export/delete salvo que una prueba secundaria revele una regresion.
 
 ## Riesgos o notas
 

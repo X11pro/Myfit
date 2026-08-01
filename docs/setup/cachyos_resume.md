@@ -163,7 +163,7 @@ Estado confirmado al cerrar esta sesion:
 - `manual food entry` ya soporta preview web con `data:` URLs para fotos elegidas desde galeria.
 - Ya existe una galeria local-first de comidas en `/food/gallery` con foto, fecha, macros, confianza, editar y eliminar.
 - Se regenero `mobile/fitness_app/build/app/outputs/flutter-apk/app-debug.apk` con la galeria incluida.
-- En `SM S916B` ya quedaron probados los timers de workout, el preview automatico del sonido REST al seleccionar alerta y la vibracion al llegar a `0`.
+- En `SM S916B` ya quedaron probados los timers de workout y la vibracion al llegar a `0`. La implementacion actual de alerta REST usa `AudioPlayer` + WAV en memoria con `BytesSource`, `mimeType: 'audio/wav'`, dos repeticiones y `mixWithOthers`; confirmar su preview y audibilidad real tras la proxima instalacion.
 - El package `vibration` ya esta agregado y funcionando en Android real.
 - La app nueva `release` usa package `com.x11pro.myfit`.
 - El warning de `16 KB compatibility` desaparecio cuando se desinstalo la app vieja `debug` `com.example.fitness_app` y se dejo solo la nueva `release`.
@@ -214,7 +214,7 @@ Estado funcional actual de la app:
 - `sets` multiples desde el dialogo,
 - selector visual de `RPE` con persistencia por set,
 - cronometro general de entrenamiento con inicio/fin manual,
-- cronometro REST manual con countdown, overtime, sonido seleccionable, preview automatico y vibracion opcional; no se activa ni reinicia al agregar, editar o repetir sets,
+- cronometro REST manual que se detiene en el objetivo, conserva ese objetivo para el siguiente descanso, sonido seleccionable, preview automatico y vibracion opcional; no se activa ni reinicia al agregar, editar o repetir sets,
 - meal photos remotas en Storage para usuarios autenticados,
 - meal photos con ingredientes editables y peso total editable,
 - recálculo local automático de macros al cambiar el peso,
@@ -313,7 +313,7 @@ La prueba manual minima recomendada al retomar Android es:
 3. activar sonido/vibracion REST si hace falta,
 4. cambiar el sonido y confirmar preview automatico,
 5. poner REST en `1` segundo,
-6. confirmar countdown, sonido y vibracion al llegar a `0`.
+6. confirmar que se detiene en `00:00`, emite dos tonos sin pausar otro audio y queda `Ready` para el proximo descanso.
 
 Prueba minima recomendada extra para `meal photo`:
 

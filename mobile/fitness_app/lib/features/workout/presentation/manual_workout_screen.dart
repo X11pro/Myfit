@@ -37,6 +37,9 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
       'manual_workout_rest_alert_vibration_enabled';
   static const _restAlertVolumeStorageKey = 'manual_workout_rest_alert_volume';
   static const _restAlertSoundStorageKey = 'manual_workout_rest_alert_sound';
+  static final _restAlertAudioContext = AudioContextConfig(
+    focus: AudioContextConfigFocus.mixWithOthers,
+  ).build();
   static const _rpeOptions = <double>[6, 7, 7.5, 8, 8.5, 9, 9.5, 10];
   static const _customExerciseValue = '__custom_exercise__';
   static final Map<_RestAlertSoundProfile, Uint8List> _restAlertSoundBytes = {
@@ -104,8 +107,7 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
     final session = widget.session;
     unawaited(_loadRestAlertPreferences());
     if (session == null) {
-      _titleController.text =
-          AppStrings(ref.read(appLanguageProvider)).defaultWorkoutTitle;
+      _titleController.text = dateKeyFor(_selectedDate);
       return;
     }
 
@@ -168,6 +170,7 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: TextField(
+                          key: const Key('workout-title-field'),
                           controller: _titleController,
                           decoration: InputDecoration(
                             labelText: strings.workoutNameLabel,
@@ -441,7 +444,13 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
     );
 
     if (picked != null) {
-      setState(() => _selectedDate = picked);
+      final previousDateTitle = dateKeyFor(_selectedDate);
+      setState(() {
+        _selectedDate = picked;
+        if (!_isEditing && _titleController.text == previousDateTitle) {
+          _titleController.text = dateKeyFor(picked);
+        }
+      });
     }
   }
 
@@ -1213,6 +1222,13 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
         _restBlinkOn = !_restBlinkOn;
       });
 
+      if (_restTargetDuration > Duration.zero &&
+          _restCurrentElapsed >= _restTargetDuration) {
+        unawaited(_maybePlayRestAlert());
+        _finishRestCycle();
+        return;
+      }
+
       _maybePlayRestAlert();
     });
     setState(() {
@@ -1314,24 +1330,35 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
     }
 
     _restAlertPlayedForCurrentCycle = true;
-    await _playCurrentRestAlertSound();
+    await _playCurrentRestAlertSound(repetitions: 2);
 
     if (_restVibrationEnabled) {
       await _triggerRestVibration();
     }
   }
 
-  Future<void> _playCurrentRestAlertSound() async {
+  Future<void> _playCurrentRestAlertSound({int repetitions = 1}) async {
     _restAlertPlayer ??= AudioPlayer();
 
     try {
       await _restAlertPlayer!.stop();
+      await _restAlertPlayer!.setAudioContext(_restAlertAudioContext);
       await _restAlertPlayer!.setVolume(_restAlertVolume);
-      await _restAlertPlayer!.play(
-        AssetSource('sounds/rest_alert.wav'),
-      );
+
+      for (var index = 0; index < repetitions; index++) {
+        await _restAlertPlayer!.play(
+          BytesSource(
+            _restAlertSoundBytes[_restAlertSound]!,
+            mimeType: 'audio/wav',
+          ),
+        );
+
+        if (index < repetitions - 1) {
+          await _restAlertPlayer!.onPlayerComplete.first;
+        }
+      }
     } catch (_) {
-      // Ignore audio failures to avoid blocking workout logging.
+      // No bloquear el registro del entrenamiento si el sonido falla.
     }
   }
 
