@@ -23,6 +23,7 @@ Contexto inmediato:
 - El timer REST se detiene automaticamente al llegar al objetivo, conserva ese objetivo para el siguiente descanso y no continua en positivo.
 - La alerta REST actual usa `AudioPlayer` con tonos WAV en memoria por `BytesSource`, `mimeType: 'audio/wav'`, dos repeticiones y `mixWithOthers`; falta validar de nuevo en `SM S916B` que el preview y los dos tonos se oigan sin pausar audio externo.
 - Una sesion nueva usa su fecha `YYYY-MM-DD` como titulo por defecto; cambiar la fecha actualiza ese titulo solo si no fue personalizado.
+- Los ejercicios del workout manual estan agrupados en paneles plegables cerrados por defecto con bordes redondeados; cada cabecera muestra nombre y cantidad de sets, y al abrirla aparecen editar/eliminar por set.
 - El flujo Flutter de AI/comida ahora valida configuracion Supabase y maneja respuestas incompletas del backend.
 - `manual food entry` ya corrige el caso web para fotos elegidas desde galeria usando `data:` URLs cuando hace falta.
 - Ya existe una galeria de comidas en `/food/gallery` con foto, fecha, resumen nutricional, confianza AI, editar y eliminar; la lectura es local-first y los usuarios autenticados sincronizan meals/fotos remotamente.
@@ -37,6 +38,7 @@ Contexto inmediato:
 - En Windows ya existe `dart_defines.local.json` ignorado por Git y scripts en `scripts/flutter/` para build/run sin repetir flags.
 - El telefono Android `SM S916B` ya quedo probado con instalacion directa por `flutter run --no-resident`; si reaparece un error de `SUPABASE_URL/SUPABASE_ANON_KEY`, sospechar primero una instalacion vieja antes que un bug del codigo.
 - Si reaparece `INSTALL_FAILED_NO_MATCHING_ABIS` al instalar debug en `SM S916B`, recompilar con `flutter build apk --debug --target-platform android-arm64`.
+- `SUPABASE_URL` y `SUPABASE_ANON_KEY` son `dart-define` de compilacion: una APK construida sin esas flags siempre mostrara configuracion faltante. En CachyOS usar `scripts/flutter/save_local_dart_defines.sh` y luego `scripts/flutter/reinstall_android_debug.sh <device-id>`; el instalador exige el archivo local ignorado `mobile/fitness_app/dart_defines.local.json` y evita instalar una build sin credenciales.
 - La app vieja `debug` `com.example.fitness_app` ya no debe convivir con la nueva `release` `com.x11pro.myfit`; si reaparece un warning raro en Samsung, comprobar primero paquetes instalados duplicados.
 - `user-data-manage` ya esta desplegada para `export/delete` minimo real y fue aprobada de punta a punta en Android; no volver a reimplementar el backend.
 - `app-release.apk` ya compila localmente y pasa `zipalign -P 16`; el warning de `16 KB` desaparecio cuando se desinstalo la app vieja debug.

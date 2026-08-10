@@ -23,6 +23,8 @@ Convertir el registro de workout en un flujo movil directo: sesion y descanso co
 - [x] Mantener acciones de editar, borrar, repetir y guardar funcionales.
 - [x] Actualizar tests de widget para el nuevo flujo de alta de sets.
 - [x] Ejecutar formato, analisis y tests.
+- [x] Convertir cada grupo de ejercicio en un panel plegable, cerrado por defecto, con el nombre y cantidad de sets visibles.
+- [x] Verificar que abrir un ejercicio mantiene editar y borrar sets funcionales.
 - [ ] Realizar QA Android en dispositivo real.
 
 ## Non-goals

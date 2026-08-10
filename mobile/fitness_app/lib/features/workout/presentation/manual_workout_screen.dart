@@ -379,28 +379,55 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                   if (_draftSets.isEmpty)
                     Text(strings.noSetsAddedYet)
                   else
-                    ...groupedDraftSets.entries.expand((group) => [
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8, bottom: 6),
-                            child: Text(
-                              group.key,
-                              style: Theme.of(context).textTheme.titleSmall,
+                    ...groupedDraftSets.entries.map(
+                      (group) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: ExpansionTile(
+                          key: ValueKey('exercise-group-${group.key}'),
+                          tilePadding:
+                              const EdgeInsets.symmetric(horizontal: 12),
+                          childrenPadding:
+                              const EdgeInsets.symmetric(horizontal: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: BorderSide(
+                              color:
+                                  Theme.of(context).colorScheme.outlineVariant,
                             ),
                           ),
-                          ...group.value.map(
-                            (item) => Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: _DraftSetTile(
-                                set: item.value,
-                                onEdit: () => _openQuickSetDialog(
-                                  index: item.key,
-                                  recentExercises: recentExercises,
+                          collapsedShape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: BorderSide(
+                              color:
+                                  Theme.of(context).colorScheme.outlineVariant,
+                            ),
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          title: Text(
+                            group.key,
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                          subtitle: Text(
+                            strings.setsCountLabel(group.value.length),
+                          ),
+                          children: group.value
+                              .map(
+                                (item) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: _DraftSetTile(
+                                    set: item.value,
+                                    onEdit: () => _openQuickSetDialog(
+                                      index: item.key,
+                                      recentExercises: recentExercises,
+                                    ),
+                                    onRemove: () => _removeSet(item.key),
+                                  ),
                                 ),
-                                onRemove: () => _removeSet(item.key),
-                              ),
-                            ),
-                          ),
-                        ]),
+                              )
+                              .toList(),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),

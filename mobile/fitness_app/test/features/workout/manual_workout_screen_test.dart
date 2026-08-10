@@ -15,7 +15,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  testWidgets('adds multiple identical sets from the add set dialog', (
+  testWidgets('groups new sets under a collapsed exercise', (
     WidgetTester tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(1080, 1600));
@@ -25,6 +25,14 @@ void main() {
     await _addBasicSet(tester, sets: '3');
 
     expect(find.text('Barbell bench press'), findsOneWidget);
+    expect(find.text('3 sets'), findsOneWidget);
+    expect(find.text('Set 1 • 80.0 kg • 10 reps'), findsNothing);
+
+    await tester.tap(
+      find.byKey(const ValueKey('exercise-group-Barbell bench press')),
+    );
+    await tester.pumpAndSettle();
+
     expect(find.text('Set 1 • 80.0 kg • 10 reps'), findsOneWidget);
     expect(find.text('Set 2 • 80.0 kg • 10 reps'), findsOneWidget);
     expect(find.text('Set 3 • 80.0 kg • 10 reps'), findsOneWidget);
@@ -86,6 +94,12 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Cable pullover'), findsOneWidget);
+    expect(find.text('Set 1 • 35.0 kg • 12 reps'), findsNothing);
+    await tester.tap(
+      find.byKey(const ValueKey('exercise-group-Cable pullover')),
+    );
+    await tester.pumpAndSettle();
+
     expect(find.text('Set 1 • 35.0 kg • 12 reps'), findsOneWidget);
     expect(find.text('Set 2 • 35.0 kg • 12 reps'), findsOneWidget);
   });

@@ -4,7 +4,7 @@
 
 El repo quedo listo para continuar en CachyOS con una app Flutter guest-first pero ya muy cerca de `v1.0`: auth OTP funcional, persistencia remota base para `weight + manual meals + meal photos + manual workouts`, export/delete remoto minimo, release Android base saneada, idioma ingles por defecto, selector `EN / ESP`, dark mode, top bar global, barcode/AI/comida conectados a Supabase/OpenRouter, y timers de workout ya probados en dispositivo.
 
-Revision de continuidad: 2026-08-01. El ultimo bloque local mejora el tracker de gym; la build debug ARM64 mas reciente fue compilada e instalada limpiamente en `SM S916B`. Antes de continuar, comprobar que el tono REST sea audible en el dispositivo con el nuevo `BytesSource` WAV y MIME explicito.
+Revision de continuidad: 2026-08-01. El ultimo bloque local mejora el tracker de gym y la reproducibilidad de builds con Supabase; la APK debug universal mas reciente fue compilada con `dart_defines.local.json` e instalada en `emulator-5554`. Antes de continuar, comprobar que el tono REST sea audible en un dispositivo real con el nuevo `BytesSource` WAV y MIME explicito.
 
 Ultimo estado exacto antes de pausar:
 
@@ -25,7 +25,9 @@ Ultimo estado exacto antes de pausar:
 - El temporizador REST ya no se activa ni se reinicia al agregar, editar o repetir un set: solo se controla manualmente desde su boton.
 - El temporizador REST ahora se detiene automaticamente al alcanzar el objetivo, guarda ese ciclo y vuelve a `Ready`; no continua en tiempo positivo y conserva el objetivo configurado para el proximo descanso.
 - Una sesion nueva de gym recibe por defecto la fecha `YYYY-MM-DD` como nombre. Si se cambia la fecha antes de personalizar el nombre, se actualiza; un nombre escrito por el usuario se conserva.
+- Los ejercicios del workout manual se muestran plegados por defecto, con nombre y cantidad de sets; al tocar cada ejercicio se despliegan sus sets y acciones de editar/eliminar. Cada cabecera usa borde, esquinas redondeadas y recorte del efecto de toque.
 - La alerta REST emite dos tonos consecutivos con `AudioPlayer` y `BytesSource` WAV en memoria, usando `mimeType: 'audio/wav'` y `mixWithOthers` para no solicitar foco exclusivo. Falta confirmar la audibilidad real de esta ultima variante en `SM S916B`.
+- Las credenciales de Supabase son `dart-define` de compilacion, no se guardan en la app. Una APK creada sin `--dart-define-from-file=dart_defines.local.json` muestra el aviso de credenciales faltantes aunque se hubieran usado en una compilacion anterior. En CachyOS usar `scripts/flutter/save_local_dart_defines.sh` y `scripts/flutter/reinstall_android_debug.sh` para restaurar la configuracion local e impedir esa reinstalacion incorrecta; el instalador genera una APK universal para emulador x86_64 y telefonos ARM.
 
 ## Estado de diseño / Stitch
 

@@ -306,6 +306,16 @@ flutter install --debug -d "adb-RZCW82F6TRL-J7io0E._adb-tls-connect._tcp"
 flutter run -d "adb-RZCW82F6TRL-J7io0E._adb-tls-connect._tcp"
 ```
 
+Para no generar una APK sin configuracion de Supabase, preferir el script de reinstalacion. Exige el archivo local ignorado `dart_defines.local.json`, falla antes de instalar si las claves no estan disponibles y genera una APK universal para dispositivos ARM y emuladores x86_64:
+
+```bash
+./scripts/flutter/save_local_dart_defines.sh
+./scripts/flutter/reinstall_android_debug.sh \
+  "adb-RZCW82F6TRL-J7io0E._adb-tls-connect._tcp"
+```
+
+La URL debe ser exactamente la del proyecto Supabase, con el formato `https://<project-ref>.supabase.co`; no usar `https://supabase.com` ni la URL del dashboard.
+
 La prueba manual minima recomendada al retomar Android es:
 
 1. abrir `Gym tracker`,
