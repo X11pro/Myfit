@@ -4,7 +4,18 @@
 
 El repo quedo listo para continuar en CachyOS con una app Flutter guest-first pero ya muy cerca de `v1.0`: auth OTP funcional, persistencia remota base para `weight + manual meals + meal photos + manual workouts`, export/delete remoto minimo, release Android base saneada, idioma ingles por defecto, selector `EN / ESP`, dark mode, top bar global, barcode/AI/comida conectados a Supabase/OpenRouter, y timers de workout ya probados en dispositivo.
 
-Revision de continuidad: 2026-08-01. El ultimo bloque local mejora el tracker de gym y la reproducibilidad de builds con Supabase; la APK debug universal mas reciente fue compilada con `dart_defines.local.json` e instalada en `emulator-5554`. Antes de continuar, comprobar que el tono REST sea audible en un dispositivo real con el nuevo `BytesSource` WAV y MIME explicito.
+## Continuidad AMARILLO 2026-08-16
+
+- La QA real Android, incluidas sus pruebas secundarias, quedo aprobada por el usuario en `SM S916B`.
+- El AVD `Pixel_10_Pro` esta iniciado como `emulator-5554`, Android 17 API 37 x86_64.
+- Se genero e instalo la build debug actual con `scripts/flutter/reinstall_android_debug.sh emulator-5554`; usa `dart_defines.local.json` y queda en `mobile/fitness_app/build/app/outputs/flutter-apk/app-debug.apk`.
+- La Mac mini responde por SSH como `Mariano@192.168.0.105` con la clave local `~/.ssh/id_ed25519_macmini`. El usuario remoto real es `macmini` y el repo esta en `/Users/macmini/Projects/Myfit`.
+- `myfit-macmini-sync.service` esta activo como servicio de usuario en CachyOS. Ejecuta `scripts/git/watch_sync_to_macmini.sh` y replica cada 3 segundos los cambios fuente a la Mac mini por `rsync`.
+- El watcher excluye secretos y artefactos generados: `.git`, `.dart_tool`, `build`, `.env`, `.env.local`, `dart_defines.local.json`, `ios/Pods`, `ios/.symlinks` y `macos/Flutter/ephemeral`.
+- La primera ruta intentada `/Users/Mariano/Documents/Github/Myfit` no existia. No reutilizarla: la ruta correcta ya esta configurada en `AGENTS.md` y `docs/setup/macos_resume.md`.
+- En la Mac mini: ejecutar `open -a Simulator`; despues, desde `/Users/macmini/Projects/Myfit/mobile/fitness_app`, ejecutar `flutter run -d ios`. Con la app corriendo, `r` aplica hot reload a cambios Dart sincronizados; cambios nativos requieren reiniciar.
+
+Revision de continuidad: 2026-08-16. El ultimo bloque local mejora el tracker de gym y la reproducibilidad de builds con Supabase; la QA real Android, incluido el tono REST con `BytesSource` WAV y MIME explicito, esta aprobada en `SM S916B`.
 
 Ultimo estado exacto antes de pausar:
 
@@ -26,7 +37,9 @@ Ultimo estado exacto antes de pausar:
 - El temporizador REST ahora se detiene automaticamente al alcanzar el objetivo, guarda ese ciclo y vuelve a `Ready`; no continua en tiempo positivo y conserva el objetivo configurado para el proximo descanso.
 - Una sesion nueva de gym recibe por defecto la fecha `YYYY-MM-DD` como nombre. Si se cambia la fecha antes de personalizar el nombre, se actualiza; un nombre escrito por el usuario se conserva.
 - Los ejercicios del workout manual se muestran plegados por defecto, con nombre y cantidad de sets; al tocar cada ejercicio se despliegan sus sets y acciones de editar/eliminar. Cada cabecera usa borde, esquinas redondeadas y recorte del efecto de toque.
-- La alerta REST emite dos tonos consecutivos con `AudioPlayer` y `BytesSource` WAV en memoria, usando `mimeType: 'audio/wav'` y `mixWithOthers` para no solicitar foco exclusivo. Falta confirmar la audibilidad real de esta ultima variante en `SM S916B`.
+- Ya existe la biblioteca local-first de rutinas semanales en `/workout/routine`: permite crear varias rutinas con nombre, elegir la activa, renombrarla, borrarla y actualizar cada bloque normal/superserie/triserie. Cada ejercicio comienza con 3 sets, 10 reps y 0 kg; una sesion nueva vacia carga bajo demanda la rutina activa correspondiente a su fecha, incluidos los pesos configurados.
+- El catalogo de ejercicios de Chest, Back, Shoulders, Biceps y Triceps usa la lista proporcionada por el usuario; el grupo Legs se mantuvo sin cambios.
+- La alerta REST emite dos tonos consecutivos con `AudioPlayer` y `BytesSource` WAV en memoria, usando `mimeType: 'audio/wav'` y `mixWithOthers` para no solicitar foco exclusivo. El preview y el final de REST de 1 segundo fueron aprobados en `SM S916B`, sin interrumpir audio externo.
 - Las credenciales de Supabase son `dart-define` de compilacion, no se guardan en la app. Una APK creada sin `--dart-define-from-file=dart_defines.local.json` muestra el aviso de credenciales faltantes aunque se hubieran usado en una compilacion anterior. En CachyOS usar `scripts/flutter/save_local_dart_defines.sh` y `scripts/flutter/reinstall_android_debug.sh` para restaurar la configuracion local e impedir esa reinstalacion incorrecta; el instalador genera una APK universal para emulador x86_64 y telefonos ARM.
 
 ## Estado de diseño / Stitch
@@ -463,16 +476,14 @@ Smoke tests remotos confirmados:
 
 ## Pendientes inmediatos
 
-1. Completar los casos secundarios pendientes del checklist QA: sign out, comida sin foto y borrado individual, barcode manual/no-match/sin internet, error de backend controlado y editar/borrar workout.
-2. Probar end-to-end la pantalla Flutter del catalogo compartido con una imagen real y la build Android/web ya configurada con Supabase.
-3. Preparar firma release real y volver a generar build release firmada para pre-publicacion.
-4. Publicar version final de privacy policy y cerrar contacto/proceso de soporte para export/delete.
-5. Consolidar la migracion guest -> cuenta sin perdida de datos ni duplicados.
-6. Reevaluar en ese punto si ya conviene abrir la mejora total de UI/UX; ese sigue siendo el siguiente gran paso despues de QA real + cierre release/legal.
+1. Preparar firma release real y volver a generar build release firmada para pre-publicacion.
+2. Publicar version final de privacy policy y cerrar contacto/proceso de soporte para export/delete.
+3. Consolidar la migracion guest -> cuenta sin perdida de datos ni duplicados.
+4. Reevaluar en ese punto si ya conviene abrir la mejora total de UI/UX; ese sigue siendo el siguiente gran paso despues de QA real + cierre release/legal.
 
 ## Punto exacto para continuar
 
-Primero, en `SM S916B`, abrir `Gym tracker`, elegir un perfil de alerta y confirmar su preview y sus dos tonos al terminar un REST de 1 segundo sin interrumpir otro audio. Despues completar la QA secundaria con `docs/qa/android_real_device_checklist.md`. Las pruebas criticas ya estan aprobadas; no reabrir auth OTP, sync/rehidratacion, scanner con camara, foto IA, timers ni export/delete salvo que una prueba secundaria revele una regresion.
+La QA real Android esta cerrada, incluida la prueba de alerta REST, sign out, barcode manual/no-match/sin red, error de backend y edicion/borrado de workouts. La sincronizacion fuente CachyOS -> Mac mini tambien esta activa cada 3 segundos. Continuar con firma release, privacy policy publica y proceso de soporte para export/delete; despues consolidar la migracion guest -> cuenta. No reabrir auth OTP, sync/rehidratacion, scanner con camara, foto IA, timers ni export/delete salvo una regresion nueva.
 
 ## Riesgos o notas
 
@@ -513,7 +524,7 @@ Primero, en `SM S916B`, abrir `Gym tracker`, elegir un perfil de alerta y confir
 - La rutina recomendada por goal debe mantenerse en ingles cuando el idioma de app este en ingles; ya no asumir textos hardcodeados en espanol en esa parte del dashboard/workout.
 - Para instalar debug en el `SM S916B`, si aparece `INSTALL_FAILED_NO_MATCHING_ABIS`, recompilar con `flutter build apk --debug --target-platform android-arm64` antes de reinstalar.
 - El mejor momento para una mejora total de UI/UX aun no es ahora; primero cerrar QA real, export/delete, rehidratacion remota y conectar los tres tiempos de workout al analisis/dashboard.
-- Desde este punto exacto, el siguiente bloque de trabajo debe continuar desde `QA real Android + export/delete real + cierre release/legal`, no reiniciar sobre auth/persistencia base porque eso ya quedo avanzado.
+- Desde este punto exacto, el siguiente bloque de trabajo debe continuar desde `firma release + cierre legal/soporte + migracion guest a cuenta`, no reiniciar sobre auth/persistencia base ni sobre QA real Android, que ya quedaron aprobadas.
 
 ## Regla persistente del usuario
 

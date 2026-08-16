@@ -21,9 +21,11 @@ Contexto inmediato:
 - `gym tracker` ya incluye cronometro de sesion y cronometro de descanso; el de sesion sincroniza `Duration (min)` y REST solo inicia o se detiene manualmente desde su boton, nunca al agregar, editar o repetir sets.
 - El workout manual ahora guarda `totalDurationSeconds`, `activeDurationSeconds` y `restDurationSeconds` por sesion.
 - El timer REST se detiene automaticamente al llegar al objetivo, conserva ese objetivo para el siguiente descanso y no continua en positivo.
-- La alerta REST actual usa `AudioPlayer` con tonos WAV en memoria por `BytesSource`, `mimeType: 'audio/wav'`, dos repeticiones y `mixWithOthers`; falta validar de nuevo en `SM S916B` que el preview y los dos tonos se oigan sin pausar audio externo.
+- La alerta REST actual usa `AudioPlayer` con tonos WAV en memoria por `BytesSource`, `mimeType: 'audio/wav'`, dos repeticiones y `mixWithOthers`; fue validada en `SM S916B`: preview y dos tonos audibles sin pausar audio externo.
 - Una sesion nueva usa su fecha `YYYY-MM-DD` como titulo por defecto; cambiar la fecha actualiza ese titulo solo si no fue personalizado.
 - Los ejercicios del workout manual estan agrupados en paneles plegables cerrados por defecto con bordes redondeados; cada cabecera muestra nombre y cantidad de sets, y al abrirla aparecen editar/eliminar por set.
+- Existe una biblioteca local-first de rutinas en `/workout/routine`: permite crear, seleccionar, renombrar y borrar rutinas nombradas, y editar bloques de ejercicio, superserie o triserie para lunes a domingo. Cada ejercicio arranca en 3 sets x 10 reps x 0 kg; el workout nuevo vacio carga manualmente la rutina activa de su fecha incluyendo el peso configurado. No asumir que estas plantillas ya se sincronizan con Supabase.
+- El catalogo de Chest, Back, Shoulders, Biceps y Triceps ya fue reemplazado por la lista elegida por el usuario; no cambiar Legs sin una lista nueva del usuario.
 - El flujo Flutter de AI/comida ahora valida configuracion Supabase y maneja respuestas incompletas del backend.
 - `manual food entry` ya corrige el caso web para fotos elegidas desde galeria usando `data:` URLs cuando hace falta.
 - Ya existe una galeria de comidas en `/food/gallery` con foto, fecha, resumen nutricional, confianza AI, editar y eliminar; la lectura es local-first y los usuarios autenticados sincronizan meals/fotos remotamente.
@@ -50,7 +52,11 @@ Contexto inmediato:
 - Punto de diseño mas reciente: revisar la ultima tanda de pantallas Stitch/Figma compartida por el usuario y decidir `usar / descartar / repetir` para cerrar la base final del rediseño.
 - La base visual reusable ya existe en `mobile/fitness_app/lib/shared/ui/`; seguir construyendo sobre esa carpeta y no volver a hardcodear estilos pantalla por pantalla.
 - La rutina recomendada por goal debe verse en ingles cuando la app esta en ingles; no reintroducir textos hardcodeados en espanol en esa parte.
-- Todavia NO es el mejor momento para una mejora total de UI/UX; primero completar QA secundaria y cerrar release/legal.
+- La QA real Android, incluida la secundaria, esta aprobada. Todavia NO es el mejor momento para una mejora total de UI/UX; primero cerrar release/legal y migracion guest a cuenta.
+- `Pixel_10_Pro` fue iniciado y la build debug actual se instalo en `emulator-5554` con `scripts/flutter/reinstall_android_debug.sh emulator-5554`.
+- El flujo de Mac mini esta configurado: SSH `Mariano@192.168.0.105`, clave `~/.ssh/id_ed25519_macmini`, repo remoto `/Users/macmini/Projects/Myfit`.
+- `myfit-macmini-sync.service` esta activo en CachyOS y usa `scripts/git/watch_sync_to_macmini.sh` para copiar cambios fuente a la Mac mini cada 3 segundos. Confirmar que siga activo con `systemctl --user status myfit-macmini-sync.service` antes de depender de iOS.
+- Para iOS en Mac mini: `open -a Simulator`; despues `cd /Users/macmini/Projects/Myfit/mobile/fitness_app && flutter run -d ios`. Usar `r` para hot reload de cambios Dart ya sincronizados.
 
 Tareas al retomar:
 1. Revisar el estado real del repo sin revertir cambios ajenos.
@@ -58,14 +64,13 @@ Tareas al retomar:
 3. Confirmar que el ultimo punto implementado incluye top bar global + fix de Log Workout + NDK 28 + metricas de progreso de fuerza + reps junto a sets + `Repeat last` + sugerencias de ejercicios recientes + flujo `muscle group -> exercise` + sets multiples + `RPE` visual persistido.
 4. Ejecutar flutter pub get, flutter analyze y flutter test.
 5. Verificar primero si la shell actual ya tiene `SUPABASE_URL`, `SUPABASE_ANON_KEY` y opcionalmente `SUPABASE_ACCESS_TOKEN`; si faltan, recargarlas manualmente sin escribirlas en archivos del repo.
-6. En `SM S916B`, validar primero preview y final de REST de 1 segundo con el nuevo WAV/MIME; debe emitir dos tonos, no pausar audio externo y terminar en `Ready`.
-7. Completar la QA secundaria pendiente en `SM S916B`: sign out, barcode manual/no-match/sin internet, error de backend controlado y editar/borrar workout.
-8. Probar end-to-end el catalogo compartido con una imagen real en Android o web configurado con Supabase.
-9. Preparar la firma release Android, publicar la privacy policy final y cerrar el canal/proceso de soporte para export/delete.
-10. Consolidar la migracion guest -> cuenta sin perdida de datos ni duplicados.
-11. Reevaluar el rediseño total de UI/UX solo despues de esos cierres.
-12. Seguir desde ahi sin reiniciar nada desde cero.
-13. Mantener respuestas en espanol.
+6. No repetir QA Android ya aprobada salvo una regresion: REST, sign out, barcode manual/no-match/sin red, error backend y editar/borrar workout estan validados.
+7. Si se trabaja con iOS, confirmar el watcher Mac mini y arrancar el Simulator antes de ejecutar Flutter en la Mac mini.
+8. Preparar la firma release Android, publicar la privacy policy final y cerrar el canal/proceso de soporte para export/delete.
+9. Consolidar la migracion guest -> cuenta sin perdida de datos ni duplicados.
+10. Reevaluar el rediseño total de UI/UX solo despues de esos cierres.
+11. Seguir desde ahi sin reiniciar nada desde cero.
+12. Mantener respuestas en espanol.
 
 No reinicies el proyecto desde cero. Continua desde la estructura y commits ya existentes.
 

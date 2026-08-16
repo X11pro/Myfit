@@ -383,3 +383,37 @@ Esto crea un timer de `systemd --user` que ejecuta sync cada 20 minutos.
 La palabra clave del usuario es `AMARILLO`.
 
 Cuando aparezca en una sesion futura, el agente debe actualizar el paquete de continuidad antes de terminar, para que el cambio de OS o entorno no corte el progreso.
+
+## 16. Android emulator and Mac mini
+
+Iniciar el AVD Android configurado y esperar que este online:
+
+```bash
+cd mobile/fitness_app
+flutter emulators --launch Pixel_10_Pro
+flutter devices
+```
+
+El identificador esperado es `emulator-5554`. Para compilar e instalar la build debug actual con las credenciales locales:
+
+```bash
+cd ../..
+./scripts/flutter/reinstall_android_debug.sh emulator-5554
+```
+
+La Mac mini se conecta como `Mariano@192.168.0.105` y usa el repo `/Users/macmini/Projects/Myfit`. La clave local configurada es `~/.ssh/id_ed25519_macmini`.
+
+El watcher de sincronizacion fuente ya esta activo como servicio de usuario y replica cada 3 segundos. Verificarlo:
+
+```bash
+systemctl --user status myfit-macmini-sync.service
+journalctl --user -u myfit-macmini-sync.service --since "5 minutes ago"
+```
+
+Para iniciarlo otra vez si fuera necesario:
+
+```bash
+systemd-run --user --unit=myfit-macmini-sync --collect \
+  "$PWD/scripts/git/watch_sync_to_macmini.sh" \
+  Mariano@192.168.0.105 /Users/macmini/Projects/Myfit
+```

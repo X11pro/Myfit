@@ -40,6 +40,15 @@ That continuity package must include, at minimum:
 
 Do not wait for the user to restate the workflow once `AMARILLO` appears.
 
+If the user writes the keyword `EMU` in uppercase, treat it as an Android emulator and Mac mini handoff instruction:
+
+- Start the Android AVD with `flutter emulators --launch Pixel_10_Pro` from `mobile/fitness_app` and wait until `flutter devices` reports `emulator-5554` online.
+- The configured Mac mini SSH destination is `Mariano@192.168.0.105`, with repository path `/Users/macmini/Projects/Myfit`. Its local name is `Marianos-Mini`.
+- The configured SSH identity is `~/.ssh/id_ed25519_macmini`; both Mac mini synchronization scripts use it by default. Override it only through `MYFIT_MACMINI_SSH_KEY` when needed.
+- Run `scripts/git/sync_to_macmini.sh Mariano@192.168.0.105 /Users/macmini/Projects/Myfit` when a committed Git synchronization is required. The script refuses a dirty worktree and never creates commits automatically.
+- Start `scripts/git/watch_sync_to_macmini.sh Mariano@192.168.0.105 /Users/macmini/Projects/Myfit` in the background. It mirrors source changes to the Mac mini every 3 seconds without syncing secrets or generated artifacts.
+- Provide the Mac mini command `open -a Simulator` to open the iOS Simulator, followed by `flutter run -d ios` from `/Users/macmini/Projects/Myfit/mobile/fitness_app` to launch Myfit.
+
 ## Current repository state
 
 - Flutter project exists at `mobile/fitness_app`.

@@ -1,6 +1,6 @@
 # Android Real Device QA Checklist
 
-Estado de la ejecucion del 2026-07-26: las verificaciones marcadas fueron aprobadas en `SM S916B` con Android 16 y una build debug configurada contra Supabase.
+Estado de la ejecucion: todas las verificaciones fueron aprobadas en `SM S916B` con Android 16 y una build debug configurada contra Supabase.
 
 ## Auth
 
@@ -8,7 +8,7 @@ Estado de la ejecucion del 2026-07-26: las verificaciones marcadas fueron aproba
 - [x] verificar codigo
 - [x] cerrar y reabrir app
 - [x] confirmar sesion persistente
-- [ ] sign out
+- [x] sign out
 
 ## Meals
 
@@ -21,20 +21,20 @@ Estado de la ejecucion del 2026-07-26: las verificaciones marcadas fueron aproba
 ## Barcode
 
 - [x] scan real con preview de cámara y autocompletado
-- [ ] lookup manual
-- [ ] no match
-- [ ] sin internet
+- [x] lookup manual
+- [x] no match
+- [x] sin internet
 
 ## AI photo
 
 - [x] foto real
 - [x] `Analyze with AI`
-- [ ] error de backend controlado
+- [x] error de backend controlado
 
 ## Workout
 
 - [x] guardar workout
-- [ ] editar/borrar
+- [x] editar/borrar
 - [x] timers
 - [x] sonido/vibracion REST
 
