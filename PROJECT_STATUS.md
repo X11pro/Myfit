@@ -42,6 +42,6 @@ flutter test
 
 ## Notas De Git
 
-- HEAD: `25d01d8 Mark Mac mini scripts executable` al inicio de esta continuidad.
+- Continuidad documental publicada en `7f766d5 Add visual roadmap and continuity status`.
 - Hay cambios previos no relacionados junto con el rediseño light. No hacer reversiones masivas.
 - No versionar `mobile/fitness_app/dart_defines.local.json` ni secretos.

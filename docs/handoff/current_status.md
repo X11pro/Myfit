@@ -12,7 +12,7 @@ El repo quedo listo para continuar en CachyOS con una app Flutter guest-first pe
 - Plan asociado: `.agent/plans/2026-10-12_light_workout_ux_execplan.md`.
 - `flutter test test/features/workout/manual_workout_screen_test.dart` y `flutter test` pasaron. `flutter analyze` no introdujo errores; conserva 10 avisos deprecados previos.
 - En macOS local, Myfit compiló, se instaló e inició en `iPhone 18 Pro` Simulator (`AB8AD4CB-BE80-4011-B664-3B062DC0EB07`) y Supabase inicializó. La sesión debug perdió conexión después del arranque con `The Dart compiler exited unexpectedly`; falta confirmar estabilidad de hot reload.
-- Esta continuidad debe commitearse y subirse al remoto configurado cuando el worktree permita aislar los cambios documentales.
+- La continuidad documental se commiteó y subió a `origin/main` como `7f766d5 Add visual roadmap and continuity status`.
 
 ## Continuidad AMARILLO 2026-08-16
 
