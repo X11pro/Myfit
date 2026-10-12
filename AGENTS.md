@@ -33,10 +33,13 @@ If the user writes the keyword `AMARILLO` in uppercase, treat it as an instructi
 That continuity package must include, at minimum:
 
 - updated project state in `docs/handoff/current_status.md`,
+- updated root-level `PROJECT_STATUS.md` with the exact resume point, verification and blockers,
 - setup or resume notes for the current target OS in `docs/setup/`,
 - any new agent instructions needed in `AGENTS.md` or `.agent/`,
 - any useful resume prompt updates in `prompts/codex_start_prompt.md`,
 - commit and push to GitHub if Git is available and the repo is configured.
+
+Refresh every active Markdown document affected by the session. Do not rewrite archived context packs solely for continuity.
 
 Do not wait for the user to restate the workflow once `AMARILLO` appears.
 

@@ -57,6 +57,7 @@ Contexto inmediato:
 - El flujo de Mac mini esta configurado: SSH `Mariano@192.168.0.105`, clave `~/.ssh/id_ed25519_macmini`, repo remoto `/Users/macmini/Projects/Myfit`.
 - `myfit-macmini-sync.service` esta activo en CachyOS y usa `scripts/git/watch_sync_to_macmini.sh` para copiar cambios fuente a la Mac mini cada 3 segundos. Confirmar que siga activo con `systemctl --user status myfit-macmini-sync.service` antes de depender de iOS.
 - Para iOS en Mac mini: `open -a Simulator`; despues `cd /Users/macmini/Projects/Myfit/mobile/fitness_app && flutter run -d ios`. Usar `r` para hot reload de cambios Dart ya sincronizados.
+- El ultimo bloque de UX/UI inicio el modo light y el registro directo de sets: peso y reps se editan en linea dentro de `/workout/manual`. Revisar `PROJECT_STATUS.md`, `docs/product/app_roadmap_visual.md` y `docs/product/function_family_tree.md` antes de continuar.
 
 Tareas al retomar:
 1. Revisar el estado real del repo sin revertir cambios ajenos.
@@ -66,11 +67,12 @@ Tareas al retomar:
 5. Verificar primero si la shell actual ya tiene `SUPABASE_URL`, `SUPABASE_ANON_KEY` y opcionalmente `SUPABASE_ACCESS_TOKEN`; si faltan, recargarlas manualmente sin escribirlas en archivos del repo.
 6. No repetir QA Android ya aprobada salvo una regresion: REST, sign out, barcode manual/no-match/sin red, error backend y editar/borrar workout estan validados.
 7. Si se trabaja con iOS, confirmar el watcher Mac mini y arrancar el Simulator antes de ejecutar Flutter en la Mac mini.
-8. Preparar la firma release Android, publicar la privacy policy final y cerrar el canal/proceso de soporte para export/delete.
-9. Consolidar la migracion guest -> cuenta sin perdida de datos ni duplicados.
-10. Reevaluar el rediseño total de UI/UX solo despues de esos cierres.
-11. Seguir desde ahi sin reiniciar nada desde cero.
-12. Mantener respuestas en espanol.
+8. Revisar visualmente el workout light en iOS Simulator y decidir la siguiente mejora de velocidad: precarga de ultimo peso/reps o gestos de set.
+9. Preparar la firma release Android, publicar la privacy policy final y cerrar el canal/proceso de soporte para export/delete.
+10. Consolidar la migracion guest -> cuenta sin perdida de datos ni duplicados.
+11. Reevaluar el rediseño total de UI/UX solo despues de esos cierres.
+12. Seguir desde ahi sin reiniciar nada desde cero.
+13. Mantener respuestas en espanol.
 
 No reinicies el proyecto desde cero. Continua desde la estructura y commits ya existentes.
 

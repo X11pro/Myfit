@@ -46,7 +46,7 @@ El contenido prioriza claridad sobre detalle tecnico fino.
   - onboarding,
   - dashboard,
   - router con `go_router`,
-  - dark mode,
+  - light mode,
   - selector `EN / ESP`,
   - top bar global con `back/home/menu`.
 - Dependencias:
@@ -200,6 +200,7 @@ El contenido prioriza claridad sobre detalle tecnico fino.
   - `Repeat last`,
   - sugerencias recientes,
   - flujo `muscle group -> exercise`.
+  - edicion directa de peso y reps desde cada set visible.
 - Estado de datos:
   - persistencia hibrida: local-first con sync remoto para usuarios autenticados.
 - Falta:
@@ -208,12 +209,12 @@ El contenido prioriza claridad sobre detalle tecnico fino.
 ### 9. Workout timers
 
 - Modulo: `Workout timer + rest timer`
-- Estado: `Implementado, pendiente de prueba real suficiente`
+- Estado: `Implementado y validado en dispositivo`
 - Incluye:
   - cronometro total de sesion,
   - cronometro de descanso,
   - sincronizacion con `Duration (min)`,
-  - arranque automatico del descanso al agregar o repetir set.
+  - arranque y parada manual del descanso.
 
 ### 10. Dashboard y progreso
 

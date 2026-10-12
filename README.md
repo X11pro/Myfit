@@ -23,6 +23,8 @@ Este repositorio ya incluye:
 - `docs/product/mvp.md`: alcance del MVP.
 - `docs/product/roadmap.md`: fases y entregables.
 - `docs/product/user_stories.md`: historias de usuario iniciales.
+- `docs/product/app_roadmap_visual.md`: mapa de navegacion, funciones disponibles y roadmap visual actualizado.
+- `docs/product/function_family_tree.md`: árbol visual de las familias de funciones.
 - `docs/architecture/system_architecture.md`: arquitectura funcional.
 - `docs/architecture/data_model.md`: modelo de datos inicial.
 - `docs/architecture/api_contracts.md`: endpoints base.

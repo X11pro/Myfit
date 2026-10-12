@@ -2,7 +2,17 @@
 
 ## Resumen
 
-El repo quedo listo para continuar en CachyOS con una app Flutter guest-first pero ya muy cerca de `v1.0`: auth OTP funcional, persistencia remota base para `weight + manual meals + meal photos + manual workouts`, export/delete remoto minimo, release Android base saneada, idioma ingles por defecto, selector `EN / ESP`, dark mode, top bar global, barcode/AI/comida conectados a Supabase/OpenRouter, y timers de workout ya probados en dispositivo.
+El repo quedo listo para continuar en CachyOS con una app Flutter guest-first pero ya muy cerca de `v1.0`: auth OTP funcional, persistencia remota base para `weight + manual meals + meal photos + manual workouts`, export/delete remoto minimo, release Android base saneada, idioma ingles por defecto, selector `EN / ESP`, light mode, top bar global, barcode/AI/comida conectados a Supabase/OpenRouter, y timers de workout ya probados en dispositivo.
+
+## Continuidad AMARILLO 2026-10-12
+
+- Inicio de la primera iteracion UX/UI light: superficies claras y flujo de workout centrado en sets.
+- Los sets ahora se muestran abiertos por ejercicio; `KG` y `REPS` se editan directamente sin abrir un modal. RPE, grupo muscular y acciones secundarias permanecen fuera del flujo rapido.
+- Se crearon `docs/product/app_roadmap_visual.md` y `docs/product/function_family_tree.md`. `PROJECT_STATUS.md` en la raiz contiene el punto breve de reanudacion.
+- Plan asociado: `.agent/plans/2026-10-12_light_workout_ux_execplan.md`.
+- `flutter test test/features/workout/manual_workout_screen_test.dart` y `flutter test` pasaron. `flutter analyze` no introdujo errores; conserva 10 avisos deprecados previos.
+- En macOS local, Myfit compiló, se instaló e inició en `iPhone 18 Pro` Simulator (`AB8AD4CB-BE80-4011-B664-3B062DC0EB07`) y Supabase inicializó. La sesión debug perdió conexión después del arranque con `The Dart compiler exited unexpectedly`; falta confirmar estabilidad de hot reload.
+- Esta continuidad debe commitearse y subirse al remoto configurado cuando el worktree permita aislar los cambios documentales.
 
 ## Continuidad AMARILLO 2026-08-16
 
