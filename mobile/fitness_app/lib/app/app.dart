@@ -13,8 +13,8 @@ class MyfitApp extends ConsumerWidget {
 
     return MaterialApp.router(
       title: 'Myfit',
-      theme: AppTheme.dark(),
-      themeMode: ThemeMode.dark,
+      theme: AppTheme.light(),
+      themeMode: ThemeMode.light,
       routerConfig: router,
     );
   }

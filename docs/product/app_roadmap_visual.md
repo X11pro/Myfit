@@ -13,6 +13,13 @@ Para una vista de árbol genealógico de todas las funciones, abrir `docs/produc
 - `[SIGUIENTE]`: es el proximo bloque de producto.
 - `[FUTURO]`: no forma parte del trabajo inmediato.
 
+## Paleta Actual
+
+- 60%: blanco y gris cálido (`#F7F7F5`, `#FFFFFF`, `#F0F0ED`) para fondo y superficies.
+- 30%: carbón (`#202124`) para texto, iconos y estructura visual.
+- 10%: naranja energético (`#E6511E`) para CTAs y acciones principales.
+- Estados: verde (`#2E7D32`) para éxito, rojo (`#C62828`) para error y naranja ámbar (`#F57C00`) para avisos.
+
 ## Mapa De Navegacion
 
 ```mermaid
@@ -44,9 +51,9 @@ flowchart TD
 | Area | Ruta o acceso | Funciones | Estado |
 |---|---|---|---|
 | Welcome | `/splash` | Idioma EN/ESP, entrar como guest, entrar con cuenta, abrir app con sesion existente. | LISTO |
-| Onboarding | `/onboarding` | Perfil, objetivo, peso, actividad y persistencia local/remota segun sesion. | LISTO |
+| Perfil energético | `/onboarding`, `/profile` | Peso, altura, fecha de nacimiento, sexo opcional, objetivo y actividad diaria en cuatro niveles. Se edita tocando el gasto diario estimado del dashboard. | LISTO |
 | Cuenta | `/auth`, `/auth/verify` | Email OTP, sesion persistente, sign out, exportar datos y borrar datos remotos. | LISTO |
-| Dashboard | `/dashboard` | Resumen diario, macros, objetivos, comidas, peso, actividad y accesos rapidos. | EN CURSO: integrar mejor los tiempos y datos remotos en analitica. |
+| Dashboard | `/dashboard` | Resumen diario, macros, objetivo, comida, peso, actividad, gasto diario estimado y estado de balance. | EN CURSO: integrar mejor los tiempos y datos remotos en analitica. |
 | Peso | Dashboard | Registro e historial de peso diario, con persistencia hibrida. | LISTO |
 | Comida manual | `/food/manual` | Nombre, tipo, kcal, proteina, carbs, grasas, azucar, fibra, editar y borrar. | LISTO |
 | Barcode | Dentro de comida y catalogo | Camara o codigo manual; cache Supabase, Open Food Facts y fallback USDA. | LISTO |

@@ -29,6 +29,32 @@ void main() {
     expect(targets.targetFatGrams, 64);
     expect(targets.targetCarbsGrams, 409);
     expect(targets.isTrainingDay, isTrue);
+    expect(targets.usesPersonalizedEnergyEstimate, isFalse);
+  });
+
+  test('uses Mifflin-St Jeor and daily activity for a complete profile', () {
+    final targets = calculateDailyTargets(
+      goal: 'maintain',
+      weightKg: 80,
+      jobActivityLevel: 'sedentary',
+      workoutCalories: 300,
+      heightCm: 180,
+      dateOfBirth: DateTime(1996, 6, 20),
+      sex: 'male',
+      activityLevel: 'medium_high',
+    );
+
+    expect(
+        estimateBmrCalories(
+          weightKg: 80,
+          heightCm: 180,
+          ageYears: 30,
+          sex: 'male',
+        ),
+        1780);
+    expect(targets.bmrCalories, 1780);
+    expect(targets.estimatedBurnCalories, 2970);
+    expect(targets.usesPersonalizedEnergyEstimate, isTrue);
   });
 
   test('builds muscle gain recommendation and multiplier', () {

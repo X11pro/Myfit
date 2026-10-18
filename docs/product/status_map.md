@@ -63,6 +63,7 @@ El contenido prioriza claridad sobre detalle tecnico fino.
 - Incluye:
   - guest-first usable,
   - auth minima por email OTP con Supabase,
+  - perfil energético obligatorio antes del dashboard,
   - pantalla de cuenta/auth minima,
   - estado local y sincronizacion con sesion Supabase,
   - persistencia hibrida para peso, comidas manuales, fotos de comidas y workouts manuales.

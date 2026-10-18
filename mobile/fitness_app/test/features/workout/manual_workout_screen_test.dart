@@ -15,7 +15,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  testWidgets('groups new sets under a collapsed exercise', (
+  testWidgets('keeps new sets collapsed until the exercise is opened', (
     WidgetTester tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(1080, 1600));
@@ -24,18 +24,47 @@ void main() {
     await _pumpManualWorkoutScreen(tester);
     await _addBasicSet(tester, sets: '3');
 
-    expect(find.text('Barbell bench press'), findsOneWidget);
-    expect(find.text('3 sets'), findsOneWidget);
-    expect(find.text('Set 1 • 80.0 kg • 10 reps'), findsNothing);
+    expect(
+      find.text('Flat barbell or dumbbell bench press'),
+      findsOneWidget,
+    );
+    expect(find.text('3 sets · 80 kg × 10 reps'), findsOneWidget);
+    expect(find.byKey(const ValueKey('quick-set-1-KG')), findsNothing);
 
     await tester.tap(
-      find.byKey(const ValueKey('exercise-group-Barbell bench press')),
+      find.byKey(
+        const ValueKey('exercise-group-Flat barbell or dumbbell bench press'),
+      ),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Set 1 • 80.0 kg • 10 reps'), findsOneWidget);
-    expect(find.text('Set 2 • 80.0 kg • 10 reps'), findsOneWidget);
-    expect(find.text('Set 3 • 80.0 kg • 10 reps'), findsOneWidget);
+    expect(find.byKey(const ValueKey('quick-set-1-KG')), findsOneWidget);
+    expect(find.byKey(const ValueKey('quick-set-2-KG')), findsOneWidget);
+    expect(find.byKey(const ValueKey('quick-set-3-KG')), findsOneWidget);
+  });
+
+  testWidgets('updates a set weight directly from the workout screen', (
+    WidgetTester tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1080, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await _pumpManualWorkoutScreen(tester);
+    await _addBasicSet(tester);
+
+    await tester.tap(
+      find.byKey(
+        const ValueKey('exercise-group-Flat barbell or dumbbell bench press'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('quick-set-1-KG')), '85');
+    await tester.pump();
+
+    final field = tester.widget<TextFormField>(
+      find.byKey(const ValueKey('quick-set-1-KG')),
+    );
+    expect(field.initialValue, '85');
   });
 
   testWidgets('adding a set does not start the rest timer', (
@@ -94,14 +123,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Cable pullover'), findsOneWidget);
-    expect(find.text('Set 1 • 35.0 kg • 12 reps'), findsNothing);
     await tester.tap(
       find.byKey(const ValueKey('exercise-group-Cable pullover')),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Set 1 • 35.0 kg • 12 reps'), findsOneWidget);
-    expect(find.text('Set 2 • 35.0 kg • 12 reps'), findsOneWidget);
+    expect(find.byKey(const ValueKey('quick-set-1-KG')), findsOneWidget);
+    expect(find.byKey(const ValueKey('quick-set-2-KG')), findsOneWidget);
   });
 
   testWidgets('rest timer stops at its target and is ready for the next rest', (
@@ -276,7 +304,9 @@ Future<void> _addBasicSet(WidgetTester tester, {String sets = '1'}) async {
 
   await tester.tap(find.byKey(const Key('exercise-dropdown')));
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Barbell bench press').last);
+  await tester.tap(
+    find.text('Flat barbell or dumbbell bench press').last,
+  );
   await tester.pumpAndSettle();
 
   final fields = find.descendant(

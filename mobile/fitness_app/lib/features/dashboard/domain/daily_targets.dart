@@ -6,6 +6,8 @@ class DailyTargets {
     required this.targetCarbsGrams,
     required this.targetFatGrams,
     required this.estimatedBurnCalories,
+    required this.bmrCalories,
+    required this.usesPersonalizedEnergyEstimate,
     required this.jobActivityCalories,
     required this.workoutCalories,
     required this.isTrainingDay,
@@ -18,6 +20,8 @@ class DailyTargets {
   final int targetCarbsGrams;
   final int targetFatGrams;
   final int estimatedBurnCalories;
+  final int bmrCalories;
+  final bool usesPersonalizedEnergyEstimate;
   final int jobActivityCalories;
   final int workoutCalories;
   final bool isTrainingDay;

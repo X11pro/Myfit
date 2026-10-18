@@ -88,7 +88,7 @@ class SplashScreen extends ConsumerWidget {
                       ? strings.openProfileOrDashboardButton
                       : (appState.isOnboardingComplete
                           ? strings.continueGuest
-                          : strings.setupProfile),
+                          : strings.onboardingTitle),
                 ),
               ),
             ),

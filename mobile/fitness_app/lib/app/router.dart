@@ -12,6 +12,7 @@ import '../features/onboarding/presentation/onboarding_screen.dart';
 import '../features/splash/presentation/splash_screen.dart';
 import '../features/workout/domain/manual_workout_session.dart';
 import '../features/workout/presentation/manual_workout_screen.dart';
+import '../features/workout/presentation/weekly_workout_routine_screen.dart';
 import '../shared/app_state.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -23,6 +24,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
           path: '/onboarding',
           builder: (context, state) => const OnboardingScreen()),
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) => const OnboardingScreen(),
+      ),
       GoRoute(path: '/auth', builder: (context, state) => const LoginScreen()),
       GoRoute(
         path: '/auth/verify',
@@ -58,6 +63,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ? state.extra as ManualWorkoutSession
               : null,
         ),
+      ),
+      GoRoute(
+        path: '/workout/routine',
+        builder: (context, state) => const WeeklyWorkoutRoutineScreen(),
       ),
       GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
     ],

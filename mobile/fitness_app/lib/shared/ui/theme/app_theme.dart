@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const background = Color(0xFF0B0D12);
-  static const backgroundSecondary = Color(0xFF11131A);
-  static const surface = Color(0xFF171A22);
-  static const surfaceMuted = Color(0xFF1D212B);
-  static const border = Color(0xFF2A303C);
-  static const primary = Color(0xFF8DC3F2);
-  static const success = Color(0xFF44B573);
-  static const warning = Color(0xFFD8A55D);
-  static const danger = Color(0xFFCF6679);
+  // 60-30-10: neutral canvas, charcoal structure and energetic orange actions.
+  static const background = Color(0xFFF7F7F5);
+  static const backgroundSecondary = Color(0xFFFFFFFF);
+  static const surface = Color(0xFFFFFFFF);
+  static const surfaceMuted = Color(0xFFF0F0ED);
+  static const border = Color(0xFFDEDED8);
+  static const charcoal = Color(0xFF202124);
+  static const primary = Color(0xFFE6511E);
+  static const success = Color(0xFF2E7D32);
+  static const warning = Color(0xFFF57C00);
+  static const danger = Color(0xFFC62828);
 
-  static ThemeData dark() {
+  static ThemeData light() {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: primary,
-      brightness: Brightness.dark,
+      brightness: Brightness.light,
     ).copyWith(
       primary: primary,
       secondary: primary,
@@ -26,15 +28,20 @@ class AppTheme {
     );
 
     return ThemeData(
-      brightness: Brightness.dark,
+      brightness: Brightness.light,
       useMaterial3: true,
       scaffoldBackgroundColor: background,
       colorScheme: colorScheme,
       appBarTheme: const AppBarTheme(
         backgroundColor: backgroundSecondary,
+        foregroundColor: charcoal,
         elevation: 0,
         centerTitle: true,
       ),
+      textTheme: Typography.material2021().black.apply(
+            bodyColor: charcoal,
+            displayColor: charcoal,
+          ),
       cardTheme: CardThemeData(
         color: surface,
         elevation: 0,
@@ -62,21 +69,21 @@ class AppTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: backgroundSecondary,
-        indicatorColor: primary.withValues(alpha: 0.18),
+        indicatorColor: primary.withValues(alpha: 0.12),
         iconTheme: WidgetStateProperty.resolveWith(
           (states) => IconThemeData(
             color: states.contains(WidgetState.selected)
                 ? primary
-                : Colors.white70,
+                : charcoal.withValues(alpha: 0.68),
           ),
         ),
         labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => TextStyle(
             color: states.contains(WidgetState.selected)
                 ? primary
-                : Colors.white70,
+                : charcoal.withValues(alpha: 0.68),
             fontWeight: states.contains(WidgetState.selected)
-                ? FontWeight.w600
+                ? FontWeight.w700
                 : FontWeight.w500,
           ),
         ),

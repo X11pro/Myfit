@@ -7,12 +7,16 @@ El repo quedo listo para continuar en CachyOS con una app Flutter guest-first pe
 ## Continuidad AMARILLO 2026-10-12
 
 - Inicio de la primera iteracion UX/UI light: superficies claras y flujo de workout centrado en sets.
-- Los sets ahora se muestran abiertos por ejercicio; `KG` y `REPS` se editan directamente sin abrir un modal. RPE, grupo muscular y acciones secundarias permanecen fuera del flujo rapido.
+- Paleta visual acordada: regla 60-30-10 con neutros claros como base, carbón para estructura y naranja energético para CTAs; rojo queda limitado a errores y verde a estados positivos.
+- El onboarding ahora pide un perfil energético breve: peso, altura, fecha de nacimiento, sexo opcional y actividad diaria baja/media/media-alta/alta. Con perfil completo, el gasto diario usa Mifflin-St Jeor y actividad fuera del gym; sin perfil completo usa el cálculo anterior como fallback.
+- Después de login OTP o entrada guest, el perfil energético completo es obligatorio antes de abrir dashboard. El usuario puede volver a editarlo tocando `Gasto diario estimado` en dashboard.
+- Los sets se resumen en tarjetas desplegables por ejercicio; al abrirlas, `KG` y `REPS` se editan directamente. RPE, grupo muscular y acciones secundarias permanecen fuera del flujo rapido.
 - Se crearon `docs/product/app_roadmap_visual.md` y `docs/product/function_family_tree.md`. `PROJECT_STATUS.md` en la raiz contiene el punto breve de reanudacion.
 - Plan asociado: `.agent/plans/2026-10-12_light_workout_ux_execplan.md`.
 - `flutter test test/features/workout/manual_workout_screen_test.dart` y `flutter test` pasaron. `flutter analyze` no introdujo errores; conserva 10 avisos deprecados previos.
 - En macOS local, Myfit compiló, se instaló e inició en `iPhone 18 Pro` Simulator (`AB8AD4CB-BE80-4011-B664-3B062DC0EB07`) y Supabase inicializó. La sesión debug perdió conexión después del arranque con `The Dart compiler exited unexpectedly`; falta confirmar estabilidad de hot reload.
 - La continuidad documental se commiteó y subió a `origin/main` como `7f766d5 Add visual roadmap and continuity status`.
+- `flutter test` completo pasó después del perfil energético y el flujo post-login. La build actual volvió a iniciarse en `iPhone 18 Pro` con Supabase correcto.
 
 ## Continuidad AMARILLO 2026-08-16
 

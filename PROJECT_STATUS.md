@@ -9,9 +9,12 @@ Myfit esta en una primera iteracion de rediseño UX/UI light, con prioridad abso
 ## Ultimo Trabajo Hecho
 
 - El tema global cambio a light mode.
-- El workout manual ahora muestra ejercicios y sets abiertos.
+- La paleta light usa la regla 60-30-10: fondo neutro, estructura carbón y naranja energético para acciones; rojo solo para errores y verde para éxito.
+- El workout manual resume cada ejercicio en una tarjeta desplegable; al abrirlo, muestra sus sets y controles rápidos.
 - `KG` y `REPS` se editan directamente en cada set.
 - El dialogo detallado sigue disponible para ejercicio, grupo muscular, RPE y acciones secundarias.
+- El onboarding recoge perfil energético: peso, altura, fecha de nacimiento, sexo opcional y actividad diaria baja/media/media-alta/alta. El dashboard usa Mifflin-St Jeor cuando el perfil está completo; conserva el cálculo previo como fallback.
+- El perfil energético completo es obligatorio antes del dashboard, tanto después de OTP como en modo guest. Se puede editar después tocando la tarjeta de gasto diario estimado.
 - Se agregaron los mapas `docs/product/app_roadmap_visual.md` y `docs/product/function_family_tree.md`.
 - El plan de este trabajo es `.agent/plans/2026-10-12_light_workout_ux_execplan.md`.
 

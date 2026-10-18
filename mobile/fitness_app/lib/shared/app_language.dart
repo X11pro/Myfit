@@ -260,6 +260,82 @@ class AppStrings {
 
   String get loggedSetsTitle => isEnglish ? 'Logged sets' : 'Sets cargados';
 
+  String get weeklyRoutineTitle =>
+      isEnglish ? 'Weekly routine' : 'Rutina semanal';
+
+  String get weeklyRoutineSubtitle => isEnglish
+      ? 'Build your training plan for each day of the week.'
+      : 'Arma tu plan de entrenamiento para cada dia de la semana.';
+
+  String get newRoutineButton => isEnglish ? 'New routine' : 'Nueva rutina';
+
+  String get routineNameLabel =>
+      isEnglish ? 'Routine name' : 'Nombre de la rutina';
+
+  String get renameRoutineButton =>
+      isEnglish ? 'Rename routine' : 'Renombrar rutina';
+
+  String get deleteRoutineButton =>
+      isEnglish ? 'Delete routine' : 'Borrar rutina';
+
+  String get noSavedRoutines => isEnglish
+      ? 'Create a named routine to start planning your week.'
+      : 'Crea una rutina con nombre para empezar a planificar tu semana.';
+
+  String get editWeeklyRoutineButton =>
+      isEnglish ? 'Edit weekly routine' : 'Editar rutina semanal';
+
+  String loadRoutineForDay(String day) =>
+      isEnglish ? 'Load $day routine' : 'Cargar rutina de $day';
+
+  String get routineLoadBlockedMessage => isEnglish
+      ? 'Start with an empty workout before loading a routine.'
+      : 'Inicia un workout vacio antes de cargar una rutina.';
+
+  String get noRoutineForDay => isEnglish
+      ? 'No routine planned for this day.'
+      : 'No hay rutina programada para este dia.';
+
+  String get addNormalBlockButton =>
+      isEnglish ? 'Add exercise' : 'Agregar ejercicio';
+
+  String get addSupersetButton =>
+      isEnglish ? 'Add superset' : 'Agregar superserie';
+
+  String get addTrisetButton => isEnglish ? 'Add triset' : 'Agregar triserie';
+
+  String get normalBlockLabel => isEnglish ? 'Exercise' : 'Ejercicio';
+
+  String get supersetBlockLabel => isEnglish ? 'Superset' : 'Superserie';
+
+  String get trisetBlockLabel => isEnglish ? 'Triset' : 'Triserie';
+
+  String routineExerciseLabel(int index) =>
+      isEnglish ? 'Exercise ${index + 1}' : 'Ejercicio ${index + 1}';
+
+  String weekdayLabel(int weekday) {
+    const english = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
+    const spanish = [
+      'Lunes',
+      'Martes',
+      'Miercoles',
+      'Jueves',
+      'Viernes',
+      'Sabado',
+      'Domingo',
+    ];
+    final index = (weekday - DateTime.monday).clamp(0, 6);
+    return (isEnglish ? english : spanish)[index];
+  }
+
   String get addSetButton => isEnglish ? 'Add set' : 'Agregar set';
 
   String get repeatLastSetButton =>
@@ -1015,6 +1091,71 @@ class AppStrings {
   String get goalLabel => isEnglish ? 'Goal' : 'Objetivo';
 
   String get workLabel => isEnglish ? 'Work activity' : 'Trabajo';
+
+  String get energyProfileTitle =>
+      isEnglish ? 'Daily energy estimate' : 'Estimacion de energia diaria';
+
+  String get energyProfileHint => isEnglish
+      ? 'These details make your calorie estimate more personal. They are not medical data.'
+      : 'Estos datos hacen mas personal la estimacion de calorias. No son datos medicos.';
+
+  String get dateOfBirthLabel =>
+      isEnglish ? 'Date of birth' : 'Fecha de nacimiento';
+
+  String get sexLabel =>
+      isEnglish ? 'Sex for BMR (optional)' : 'Sexo para TMB (opcional)';
+
+  String get sexUnspecified =>
+      isEnglish ? 'Prefer not to say' : 'Prefiero no decirlo';
+
+  String get sexFemale => isEnglish ? 'Female' : 'Mujer';
+
+  String get sexMale => isEnglish ? 'Male' : 'Hombre';
+
+  String get dailyActivityLabel => isEnglish
+      ? 'Daily activity outside workouts'
+      : 'Actividad diaria fuera del entrenamiento';
+
+  String get activityLow => isEnglish ? 'Low' : 'Baja';
+
+  String get activityMedium => isEnglish ? 'Medium' : 'Media';
+
+  String get activityMediumHigh => isEnglish ? 'Medium-high' : 'Media-alta';
+
+  String get activityHigh => isEnglish ? 'High' : 'Alta';
+
+  String get activityLowHint => isEnglish
+      ? 'Mostly seated, little walking'
+      : 'Mayormente sentado, poca caminata';
+
+  String get activityMediumHint => isEnglish
+      ? 'Regular walking or standing'
+      : 'Caminata o estar de pie regular';
+
+  String get activityMediumHighHint => isEnglish
+      ? 'Active job or lots of walking'
+      : 'Trabajo activo o mucha caminata';
+
+  String get activityHighHint => isEnglish
+      ? 'Physical work most of the day'
+      : 'Trabajo fisico gran parte del dia';
+
+  String get selectBirthDate => isEnglish ? 'Select date' : 'Elegir fecha';
+
+  String get energyProfileRequiredMessage => isEnglish
+      ? 'Add your height, weight, date of birth, and daily activity to continue.'
+      : 'Agrega tu altura, peso, fecha de nacimiento y actividad diaria para continuar.';
+
+  String get estimatedDailyBurnTitle =>
+      isEnglish ? 'Estimated daily burn' : 'Gasto diario estimado';
+
+  String energyEstimateMethod({required bool personalized}) => personalized
+      ? (isEnglish
+          ? 'Based on your profile, daily activity, and logged workout.'
+          : 'Basado en tu perfil, actividad diaria y entrenamiento registrado.')
+      : (isEnglish
+          ? 'Complete your energy profile for a more personal estimate.'
+          : 'Completa tu perfil energético para una estimacion mas personal.');
 
   String get saveProfile =>
       isEnglish ? 'Save initial profile' : 'Guardar perfil inicial';

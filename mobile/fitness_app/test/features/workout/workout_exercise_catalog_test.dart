@@ -20,8 +20,19 @@ void main() {
   });
 
   test('catalog returns exercises only for the selected muscle group', () {
-    expect(exercisesForMuscleGroup('Chest'), contains('Barbell bench press'));
-    expect(exercisesForMuscleGroup('Chest'), isNot(contains('Barbell row')));
+    expect(
+      exercisesForMuscleGroup('Chest'),
+      contains('Flat barbell or dumbbell bench press'),
+    );
+    expect(
+      exercisesForMuscleGroup('Back'),
+      contains('Bent over barbell or dumbbell rows'),
+    );
+    expect(
+      exercisesForMuscleGroup('Chest'),
+      isNot(contains('Bent over barbell or dumbbell rows')),
+    );
+    expect(exercisesForMuscleGroup('Legs'), contains('Barbell squat'));
     expect(workoutMuscleGroups, containsAll(['Chest', 'Back', 'Legs']));
   });
 }

@@ -16,8 +16,10 @@ import '../../../shared/ui/widgets/premium_screen.dart';
 import '../../../shared/ui/widgets/section_header.dart';
 import '../../../shared/widgets/app_top_bar.dart';
 import '../application/manual_workout_controller.dart';
+import '../application/weekly_workout_routine_controller.dart';
 import '../domain/gym_set_entry.dart';
 import '../domain/manual_workout_session.dart';
+import '../domain/weekly_workout_routine.dart';
 import '../domain/workout_exercise_catalog.dart';
 
 class ManualWorkoutScreen extends ConsumerStatefulWidget {
@@ -141,7 +143,11 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
     final strings = stringsFor(ref);
     final sessions = ref.watch(manualWorkoutSessionsProvider);
     final recentExercises = ref.watch(recentWorkoutExerciseNamesProvider);
+    final weeklyRoutineLibrary = ref.watch(weeklyWorkoutRoutineProvider);
     final groupedDraftSets = _groupDraftSets();
+    final routineBlocks =
+        weeklyRoutineLibrary.activeRoutine?.blocksFor(_selectedDate) ??
+            const [];
 
     return Scaffold(
       appBar: AppTopBar(
@@ -356,75 +362,67 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                 children: [
                   SectionHeader(title: strings.loggedSetsTitle),
                   const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                  Row(
                     children: [
-                      if (_draftSets.isNotEmpty)
-                        OutlinedButton.icon(
+                      Expanded(
+                        child: FilledButton.icon(
+                          onPressed: () => _openQuickSetDialog(
+                            recentExercises: recentExercises,
+                          ),
+                          icon: const Icon(Icons.add),
+                          label: Text(strings.addSetButton),
+                        ),
+                      ),
+                      if (_draftSets.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        IconButton.filledTonal(
+                          tooltip: strings.repeatLastSetButton,
                           onPressed: _duplicateLastSet,
                           icon: const Icon(Icons.content_copy_outlined),
-                          label: Text(strings.repeatLastSetButton),
                         ),
-                      FilledButton.tonalIcon(
-                        onPressed: () => _openQuickSetDialog(
-                          recentExercises: recentExercises,
-                        ),
-                        icon: const Icon(Icons.fitness_center_outlined),
-                        label: Text(strings.addSetButton),
+                      ],
+                      const SizedBox(width: 8),
+                      IconButton.outlined(
+                        tooltip: strings.editWeeklyRoutineButton,
+                        onPressed: () => context.push('/workout/routine'),
+                        icon: const Icon(Icons.calendar_month_outlined),
                       ),
                     ],
                   ),
+                  if (!_isEditing &&
+                      _draftSets.isEmpty &&
+                      routineBlocks.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        key: const Key('load-routine-button'),
+                        onPressed: () => _loadRoutine(routineBlocks),
+                        icon: const Icon(Icons.playlist_add_outlined),
+                        label: Text(
+                          strings.loadRoutineForDay(
+                            strings.weekdayLabel(_selectedDate.weekday),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   if (_draftSets.isEmpty)
                     Text(strings.noSetsAddedYet)
                   else
                     ...groupedDraftSets.entries.map(
                       (group) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: ExpansionTile(
-                          key: ValueKey('exercise-group-${group.key}'),
-                          tilePadding:
-                              const EdgeInsets.symmetric(horizontal: 12),
-                          childrenPadding:
-                              const EdgeInsets.symmetric(horizontal: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            side: BorderSide(
-                              color:
-                                  Theme.of(context).colorScheme.outlineVariant,
-                            ),
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _ExerciseSetCard(
+                          exerciseName: group.key,
+                          sets: group.value,
+                          onSetChanged: _updateSet,
+                          onEdit: (index) => _openQuickSetDialog(
+                            index: index,
+                            recentExercises: recentExercises,
                           ),
-                          collapsedShape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            side: BorderSide(
-                              color:
-                                  Theme.of(context).colorScheme.outlineVariant,
-                            ),
-                          ),
-                          clipBehavior: Clip.antiAlias,
-                          title: Text(
-                            group.key,
-                            style: Theme.of(context).textTheme.titleSmall,
-                          ),
-                          subtitle: Text(
-                            strings.setsCountLabel(group.value.length),
-                          ),
-                          children: group.value
-                              .map(
-                                (item) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 8),
-                                  child: _DraftSetTile(
-                                    set: item.value,
-                                    onEdit: () => _openQuickSetDialog(
-                                      index: item.key,
-                                      recentExercises: recentExercises,
-                                    ),
-                                    onRemove: () => _removeSet(item.key),
-                                  ),
-                                ),
-                              )
-                              .toList(),
+                          onRemove: _removeSet,
                         ),
                       ),
                     ),
@@ -745,6 +743,7 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                     DropdownButtonFormField<String>(
                       key: const Key('exercise-dropdown'),
                       value: selectedExercise,
+                      isExpanded: true,
                       items: exerciseOptions
                           .map(
                             (exercise) => DropdownMenuItem(
@@ -753,6 +752,8 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                                 exercise == _customExerciseValue
                                     ? strings.addCustomExerciseOption
                                     : exercise,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           )
@@ -1049,6 +1050,48 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
   void _removeSet(int index) {
     setState(() {
       _draftSets.removeAt(index);
+      _reindexSets();
+    });
+  }
+
+  void _updateSet(int index, {int? reps, double? weightKg}) {
+    final existing = _draftSets[index];
+    setState(() {
+      _draftSets[index] = GymSetEntry(
+        exerciseName: existing.exerciseName,
+        muscleGroup: existing.muscleGroup,
+        setNumber: existing.setNumber,
+        reps: reps ?? existing.reps,
+        weightKg: weightKg ?? existing.weightKg,
+        rpe: existing.rpe,
+      );
+    });
+  }
+
+  void _loadRoutine(List<WorkoutRoutineBlock> blocks) {
+    if (_isEditing || _draftSets.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(stringsFor(ref).routineLoadBlockedMessage)),
+      );
+      return;
+    }
+
+    setState(() {
+      for (final block in blocks) {
+        for (final exercise in block.exercises) {
+          for (var set = 0; set < exercise.sets; set++) {
+            _draftSets.add(
+              GymSetEntry(
+                exerciseName: exercise.exerciseName,
+                muscleGroup: exercise.muscleGroup,
+                setNumber: _draftSets.length + 1,
+                reps: exercise.reps,
+                weightKg: exercise.weightKg,
+              ),
+            );
+          }
+        }
+      }
       _reindexSets();
     });
   }
@@ -1703,57 +1746,208 @@ Uint8List _buildRestAlertSoundBytes({
   return byteData.buffer.asUint8List();
 }
 
-class _DraftSetTile extends ConsumerWidget {
-  const _DraftSetTile({
-    required this.set,
+class _ExerciseSetCard extends StatelessWidget {
+  const _ExerciseSetCard({
+    required this.exerciseName,
+    required this.sets,
+    required this.onSetChanged,
     required this.onEdit,
     required this.onRemove,
   });
 
-  final GymSetEntry set;
-  final VoidCallback onEdit;
-  final VoidCallback onRemove;
+  final String exerciseName;
+  final List<MapEntry<int, GymSetEntry>> sets;
+  final void Function(int index, {int? reps, double? weightKg}) onSetChanged;
+  final ValueChanged<int> onEdit;
+  final ValueChanged<int> onRemove;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final strings = stringsFor(ref);
-
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      key: ValueKey('exercise-group-$exerciseName'),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
-      child: Row(
+      child: ExpansionTile(
+        tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+        childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+        shape: const RoundedRectangleBorder(),
+        collapsedShape: const RoundedRectangleBorder(),
+        title: Text(exerciseName, style: theme.textTheme.titleMedium),
+        subtitle: Text(
+          _setSummary(),
+          style: theme.textTheme.bodySmall,
+        ),
         children: [
-          Expanded(
-            child: Text(
-              '${strings.setNumberLabel(set.setNumber)} • ${set.weightKg} kg • ${strings.repsCountLabel(set.reps)}',
-              style: Theme.of(context).textTheme.titleSmall,
+          const Divider(height: 1),
+          const SizedBox(height: 8),
+          ...sets.map(
+            (entry) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _QuickSetRow(
+                set: entry.value,
+                onRepsChanged: (value) =>
+                    onSetChanged(entry.key, reps: value.toInt()),
+                onWeightChanged: (value) =>
+                    onSetChanged(entry.key, weightKg: value.toDouble()),
+                onEdit: () => onEdit(entry.key),
+                onRemove: () => onRemove(entry.key),
+              ),
             ),
-          ),
-          if (set.rpe != null)
-            Padding(
-              padding: const EdgeInsets.only(right: 4),
-              child: Text('RPE ${strings.rpeValueLabel(set.rpe!)}'),
-            ),
-          IconButton(
-            tooltip: strings.editSetButton,
-            visualDensity: VisualDensity.compact,
-            onPressed: onEdit,
-            icon: const Icon(Icons.edit_outlined),
-          ),
-          IconButton(
-            tooltip: strings.deleteWorkoutButton,
-            visualDensity: VisualDensity.compact,
-            onPressed: onRemove,
-            icon: const Icon(Icons.delete_outline),
           ),
         ],
       ),
     );
   }
+
+  String _setSummary() {
+    final firstSet = sets.first.value;
+    final allSetsMatch = sets.every(
+      (entry) =>
+          entry.value.weightKg == firstSet.weightKg &&
+          entry.value.reps == firstSet.reps,
+    );
+    final count = sets.length == 1 ? '1 set' : '${sets.length} sets';
+    if (!allSetsMatch) {
+      return count;
+    }
+    return '$count · ${_formatWeight(firstSet.weightKg)} kg × ${firstSet.reps} reps';
+  }
+
+  String _formatWeight(double value) {
+    return value == value.roundToDouble() ? value.toInt().toString() : '$value';
+  }
 }
+
+class _QuickSetRow extends StatelessWidget {
+  const _QuickSetRow({
+    required this.set,
+    required this.onRepsChanged,
+    required this.onWeightChanged,
+    required this.onEdit,
+    required this.onRemove,
+  });
+
+  final GymSetEntry set;
+  final ValueChanged<int> onRepsChanged;
+  final ValueChanged<double> onWeightChanged;
+  final VoidCallback onEdit;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(10, 6, 4, 6),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 30,
+            child: Text(
+              '${set.setNumber}',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleSmall,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: _InlineNumberField(
+              label: 'KG',
+              setNumber: set.setNumber,
+              initialValue: _formatWeight(set.weightKg),
+              decimal: true,
+              onChanged: (value) => onWeightChanged(value.toDouble()),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _InlineNumberField(
+              label: 'REPS',
+              setNumber: set.setNumber,
+              initialValue: '${set.reps}',
+              onChanged: (value) => onRepsChanged(value.toInt()),
+            ),
+          ),
+          if (set.rpe != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: Text('RPE ${set.rpe}'),
+            ),
+          PopupMenuButton<_SetAction>(
+            tooltip: 'Set options',
+            icon: const Icon(Icons.more_horiz),
+            onSelected: (action) {
+              if (action == _SetAction.edit) {
+                onEdit();
+              } else {
+                onRemove();
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                  value: _SetAction.edit, child: Text('More details')),
+              PopupMenuItem(
+                  value: _SetAction.remove, child: Text('Delete set')),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatWeight(double value) {
+    return value == value.roundToDouble() ? value.toInt().toString() : '$value';
+  }
+}
+
+class _InlineNumberField extends StatelessWidget {
+  const _InlineNumberField({
+    required this.label,
+    required this.setNumber,
+    required this.initialValue,
+    required this.onChanged,
+    this.decimal = false,
+  });
+
+  final String label;
+  final int setNumber;
+  final String initialValue;
+  final bool decimal;
+  final ValueChanged<num> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      key: ValueKey('quick-set-$setNumber-$label'),
+      initialValue: initialValue,
+      keyboardType: TextInputType.numberWithOptions(decimal: decimal),
+      textAlign: TextAlign.center,
+      style: Theme.of(context).textTheme.titleMedium,
+      decoration: InputDecoration(
+        labelText: label,
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      ),
+      onChanged: (value) {
+        final parsed = decimal
+            ? double.tryParse(value.replaceAll(',', '.'))
+            : int.tryParse(value);
+        if (parsed != null && parsed >= 0) {
+          onChanged(parsed);
+        }
+      },
+    );
+  }
+}
+
+enum _SetAction { edit, remove }
 
 class _WorkoutHistoryCard extends ConsumerWidget {
   const _WorkoutHistoryCard({required this.session});

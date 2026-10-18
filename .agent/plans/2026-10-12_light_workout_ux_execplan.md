@@ -7,6 +7,7 @@ Crear la primera iteracion visual light de Myfit y priorizar el registro de sets
 ## Alcance
 
 - Cambiar el tema global de la app a light mode.
+- Aplicar una paleta light 60-30-10: neutros claros, estructura carbón y naranja energético para CTAs.
 - Adaptar la superficie compartida para fondos claros y legibles.
 - Reorganizar el workout manual alrededor de ejercicios y sets visibles.
 - Permitir editar reps y kg directamente en cada set.
@@ -15,7 +16,7 @@ Crear la primera iteracion visual light de Myfit y priorizar el registro de sets
 ## Criterios de aceptacion
 
 - La app arranca en light mode.
-- En workout, el usuario ve los ejercicios cargados sin expandir tarjetas.
+- En workout, cada ejercicio se muestra resumido y se despliega solo cuando el usuario necesita revisar o editar sus sets.
 - Peso y reps se pueden cambiar desde cada fila de set sin abrir el modal de edicion.
 - Las acciones secundarias no compiten visualmente con el registro de sets.
 - Las pruebas existentes siguen pasando y se agrega una prueba del flujo directo.

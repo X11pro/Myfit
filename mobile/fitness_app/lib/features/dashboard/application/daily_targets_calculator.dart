@@ -28,6 +28,10 @@ final dailyTargetsProvider = Provider<DailyTargets?>((ref) {
     weightKg: weightKg,
     jobActivityLevel: jobActivityLevel,
     workoutCalories: workoutCalories,
+    heightCm: appState.heightCm,
+    dateOfBirth: appState.dateOfBirth,
+    sex: appState.sex,
+    activityLevel: appState.activityLevel,
   );
 });
 
@@ -127,11 +131,26 @@ DailyTargets calculateDailyTargets({
   required double weightKg,
   required String jobActivityLevel,
   required int workoutCalories,
+  double? heightCm,
+  DateTime? dateOfBirth,
+  String? sex,
+  String? activityLevel,
 }) {
-  final baseMaintenance = (weightKg * 30).round();
-  final jobActivityCalories = estimateJobActivityCalories(jobActivityLevel);
+  final hasPersonalizedInputs =
+      heightCm != null && dateOfBirth != null && activityLevel != null;
+  final bmrCalories = hasPersonalizedInputs
+      ? estimateBmrCalories(
+          weightKg: weightKg,
+          heightCm: heightCm,
+          ageYears: ageOnDate(dateOfBirth, DateTime.now()),
+          sex: sex,
+        )
+      : (weightKg * 30).round();
+  final activityCalories = hasPersonalizedInputs
+      ? (bmrCalories * (dailyActivityMultiplier(activityLevel) - 1)).round()
+      : estimateJobActivityCalories(jobActivityLevel);
   final estimatedBurnCalories =
-      baseMaintenance + jobActivityCalories + workoutCalories;
+      bmrCalories + activityCalories + workoutCalories;
 
   final proteinTarget = (weightKg * proteinMultiplierForGoal(goal)).round();
   final calorieAdjustment = calorieAdjustmentForGoal(goal);
@@ -150,11 +169,51 @@ DailyTargets calculateDailyTargets({
     targetCarbsGrams: targetCarbs,
     targetFatGrams: targetFat,
     estimatedBurnCalories: estimatedBurnCalories,
-    jobActivityCalories: jobActivityCalories,
+    bmrCalories: bmrCalories,
+    usesPersonalizedEnergyEstimate: hasPersonalizedInputs,
+    jobActivityCalories: activityCalories,
     workoutCalories: workoutCalories,
     isTrainingDay: workoutCalories > 0,
     basedOnWeightKg: weightKg,
   );
+}
+
+int estimateBmrCalories({
+  required double weightKg,
+  required double heightCm,
+  required int ageYears,
+  String? sex,
+}) {
+  final sexAdjustment = switch (sex) {
+    'male' => 5,
+    'female' => -161,
+    _ => -78,
+  };
+  return (10 * weightKg + 6.25 * heightCm - 5 * ageYears + sexAdjustment)
+      .round();
+}
+
+int ageOnDate(DateTime dateOfBirth, DateTime onDate) {
+  var age = onDate.year - dateOfBirth.year;
+  if (onDate.month < dateOfBirth.month ||
+      (onDate.month == dateOfBirth.month && onDate.day < dateOfBirth.day)) {
+    age--;
+  }
+  return age < 0 ? 0 : age;
+}
+
+double dailyActivityMultiplier(String? activityLevel) {
+  switch (activityLevel) {
+    case 'medium':
+      return 1.35;
+    case 'medium_high':
+      return 1.5;
+    case 'high':
+      return 1.65;
+    case 'low':
+    default:
+      return 1.2;
+  }
 }
 
 int estimateJobActivityCalories(String jobActivityLevel) {

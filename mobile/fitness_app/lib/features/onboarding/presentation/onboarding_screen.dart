@@ -18,7 +18,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _heightController = TextEditingController();
   final _weightController = TextEditingController();
   String _goal = 'lose_fat';
-  String _jobActivity = 'sedentary';
+  String _activityLevel = 'low';
+  String? _sex;
+  DateTime? _dateOfBirth;
 
   @override
   void initState() {
@@ -29,7 +31,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     _heightController.text = state.heightCm?.toString() ?? '';
     _weightController.text = state.currentWeightKg?.toString() ?? '';
     _goal = state.goal ?? _goal;
-    _jobActivity = state.jobActivityLevel ?? _jobActivity;
+    _activityLevel = state.activityLevel ?? _activityLevel;
+    _sex = state.sex;
+    _dateOfBirth = state.dateOfBirth;
   }
 
   @override
@@ -74,6 +78,55 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             decoration: InputDecoration(labelText: strings.weightLabel),
           ),
           const SizedBox(height: 16),
+          Text(strings.energyProfileTitle,
+              style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 6),
+          Text(strings.energyProfileHint),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: _pickDateOfBirth,
+            icon: const Icon(Icons.cake_outlined),
+            label: Text(
+              _dateOfBirth == null
+                  ? strings.selectBirthDate
+                  : '${_dateOfBirth!.day.toString().padLeft(2, '0')}/${_dateOfBirth!.month.toString().padLeft(2, '0')}/${_dateOfBirth!.year}',
+            ),
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String?>(
+            initialValue: _sex,
+            decoration: InputDecoration(labelText: strings.sexLabel),
+            items: [
+              DropdownMenuItem(
+                  value: null, child: Text(strings.sexUnspecified)),
+              DropdownMenuItem(value: 'female', child: Text(strings.sexFemale)),
+              DropdownMenuItem(value: 'male', child: Text(strings.sexMale)),
+            ],
+            onChanged: (value) => setState(() => _sex = value),
+          ),
+          const SizedBox(height: 16),
+          Text(strings.dailyActivityLabel,
+              style: Theme.of(context).textTheme.titleSmall),
+          const SizedBox(height: 8),
+          SegmentedButton<String>(
+            segments: [
+              ButtonSegment(value: 'low', label: Text(strings.activityLow)),
+              ButtonSegment(
+                  value: 'medium', label: Text(strings.activityMedium)),
+              ButtonSegment(
+                value: 'medium_high',
+                label: Text(strings.activityMediumHigh),
+              ),
+              ButtonSegment(value: 'high', label: Text(strings.activityHigh)),
+            ],
+            selected: {_activityLevel},
+            onSelectionChanged: (value) =>
+                setState(() => _activityLevel = value.first),
+          ),
+          const SizedBox(height: 8),
+          Text(_activityHint(strings),
+              style: Theme.of(context).textTheme.bodySmall),
+          const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             value: _goal,
             decoration: InputDecoration(labelText: strings.goalLabel),
@@ -90,23 +143,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             onChanged: (value) => setState(() => _goal = value ?? _goal),
           ),
           const SizedBox(height: 16),
-          DropdownButtonFormField<String>(
-            value: _jobActivity,
-            decoration: InputDecoration(labelText: strings.workLabel),
-            items: [
-              DropdownMenuItem(
-                  value: 'sedentary', child: Text(strings.jobSedentary)),
-              DropdownMenuItem(
-                  value: 'standing', child: Text(strings.jobStanding)),
-              DropdownMenuItem(value: 'light', child: Text(strings.jobLight)),
-              DropdownMenuItem(
-                  value: 'moderate', child: Text(strings.jobModerate)),
-              DropdownMenuItem(
-                  value: 'intense', child: Text(strings.jobIntense)),
-            ],
-            onChanged: (value) =>
-                setState(() => _jobActivity = value ?? _jobActivity),
-          ),
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
@@ -122,6 +158,19 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   Future<void> _save() async {
     final strings = stringsFor(ref);
+    final heightCm = double.tryParse(_heightController.text.trim());
+    final currentWeightKg = double.tryParse(_weightController.text.trim());
+
+    if (heightCm == null ||
+        heightCm <= 0 ||
+        currentWeightKg == null ||
+        currentWeightKg <= 0 ||
+        _dateOfBirth == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(strings.energyProfileRequiredMessage)),
+      );
+      return;
+    }
 
     try {
       await ref.read(appStateProvider.notifier).completeOnboarding(
@@ -129,9 +178,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 ? strings.defaultUserName
                 : _nameController.text.trim(),
             goal: _goal,
-            jobActivityLevel: _jobActivity,
-            heightCm: double.tryParse(_heightController.text.trim()),
-            currentWeightKg: double.tryParse(_weightController.text.trim()),
+            jobActivityLevel: _jobActivityForDailyActivity(_activityLevel),
+            activityLevel: _activityLevel,
+            sex: _sex,
+            dateOfBirth: _dateOfBirth,
+            heightCm: heightCm,
+            currentWeightKg: currentWeightKg,
           );
 
       if (!mounted) {
@@ -147,6 +199,47 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('${strings.saveOnboardingError}: $error')),
       );
+    }
+  }
+
+  Future<void> _pickDateOfBirth() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _dateOfBirth ?? DateTime(now.year - 30),
+      firstDate: DateTime(now.year - 100),
+      lastDate: DateTime(now.year - 13),
+    );
+    if (picked != null) {
+      setState(() => _dateOfBirth = picked);
+    }
+  }
+
+  String _activityHint(AppStrings strings) {
+    switch (_activityLevel) {
+      case 'medium':
+        return strings.activityMediumHint;
+      case 'medium_high':
+        return strings.activityMediumHighHint;
+      case 'high':
+        return strings.activityHighHint;
+      case 'low':
+      default:
+        return strings.activityLowHint;
+    }
+  }
+
+  String _jobActivityForDailyActivity(String activityLevel) {
+    switch (activityLevel) {
+      case 'medium':
+        return 'standing';
+      case 'medium_high':
+        return 'moderate';
+      case 'high':
+        return 'intense';
+      case 'low':
+      default:
+        return 'sedentary';
     }
   }
 }

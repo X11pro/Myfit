@@ -95,11 +95,17 @@ class DashboardScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           _MetricInfoCard(
-            title: strings.caloriesBurnedTitle.toUpperCase(),
-            value: '$todayWorkoutCalories kcal',
-            subtitle: strings.caloriesBurnedSubtitle,
+            title: strings.estimatedDailyBurnTitle.toUpperCase(),
+            value: dailyTargets == null
+                ? '$todayWorkoutCalories kcal'
+                : '${dailyTargets.estimatedBurnCalories} kcal',
+            subtitle: strings.energyEstimateMethod(
+              personalized:
+                  dailyTargets?.usesPersonalizedEnergyEstimate ?? false,
+            ),
             icon: Icons.local_fire_department_outlined,
-            accent: const Color(0xFFD8A55D),
+            accent: Theme.of(context).colorScheme.primary,
+            onTap: () => context.push('/profile'),
           ),
           const SizedBox(height: 12),
           _MetricInfoCard(
