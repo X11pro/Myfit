@@ -53,6 +53,7 @@ flutter test
 
 ## Notas De Git
 
-- El último commit base antes de este paquete es `da504dc Add light workout and energy profile flow`.
+- La entrega de UI, OTP, iconos y continuidad está publicada en `eeea9bd Refresh dark UI and continuity`.
 - Hay cambios previos no relacionados junto con el rediseño, iconos iOS, OTP y Android. No hacer reversiones masivas.
+- `.agent/skills/impeccable/` queda intencionalmente sin seguimiento: fue generado por una inicialización externa y no forma parte de Myfit.
 - No versionar `mobile/fitness_app/dart_defines.local.json` ni secretos.

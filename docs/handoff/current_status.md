@@ -10,7 +10,8 @@
 - El AVD `Pixel_10_Pro` se inició como `emulator-5554`; la build debug se compiló, instaló y abrió con `flutter run -d emulator-5554 --no-resident`.
 - Verificación actual desde `mobile/fitness_app`: `flutter test` pasó con 32 pruebas; `flutter analyze` no tiene errores y muestra 8 avisos informativos deprecados preexistentes; `git diff --check` pasó.
 - Punto exacto de continuación: hacer QA visual móvil del rediseño, completar firma Android/privacy policy/soporte export-delete y consolidar guest a cuenta con rehidratación remota. No reiniciar OTP, barcode, foto IA, timers ni export/delete salvo regresión.
-- Commit base antes de esta continuidad: `da504dc Add light workout and energy profile flow` en `main`.
+- Entrega publicada en `origin/main`: `eeea9bd Refresh dark UI and continuity`.
+- `.agent/skills/impeccable/` permanece sin seguimiento de forma intencional; pertenece a una inicialización externa y no se debe incluir en commits de Myfit.
 
 ## Resumen
 

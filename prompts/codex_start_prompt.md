@@ -10,6 +10,7 @@ Quiero continuar Myfit exactamente desde el ultimo punto.
 
 Contexto inmediato:
 - La continuidad más reciente es del 2026-11-16. Se aplicó un rediseño dark minimalista: superficies verde bosque, progreso verde menta y avisos coral. Leer `.agent/plans/2026-11-16-ui-ux-refresh.md` y `PROJECT_STATUS.md` antes de cambiar UI.
+- La entrega publicada es `eeea9bd Refresh dark UI and continuity`. Mantener `.agent/skills/impeccable/` sin seguimiento: es una inicialización externa, no código de Myfit.
 - El dashboard ahora prioriza balance, macros, acciones rápidas, actividad y métricas secundarias; onboarding, tarjetas, formularios y top bar usan el mismo sistema. La top bar se simplificó a volver y menú de más opciones.
 - `Pixel_10_Pro` inició correctamente como `emulator-5554`; la app se instaló y abrió con `flutter run -d emulator-5554 --no-resident`. `flutter test` pasó con 32 pruebas y `flutter analyze` conserva 8 avisos informativos preexistentes de formularios.
 - Ya existe flujo guest-first funcional.
