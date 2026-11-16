@@ -1,6 +1,6 @@
 # Retomar en Mac mini
 
-## Estado local macOS, 2026-10-12
+## Estado local macOS, 2026-11-16
 
 Este entorno detecta `iPhone 18 Pro` Simulator con ID `AB8AD4CB-BE80-4011-B664-3B062DC0EB07`. Myfit compiló, instaló e inició con Supabase correcto, pero la sesión debug perdió conexión después del arranque. Confirmar la UI y hot reload antes de tomarlo como QA iOS concluyente.
 
@@ -11,6 +11,8 @@ flutter run -d AB8AD4CB-BE80-4011-B664-3B062DC0EB07 \
 ```
 
 No versionar `dart_defines.local.json`.
+
+La rama actual incluye el rediseño dark minimalista del dashboard, onboarding y componentes compartidos. Tras iniciar, comprobar primero el layout en teléfono, tipografía dinámica y navegación de las cuatro pestañas antes de retomar trabajo de producto.
 
 ## Sincronizar desde CachyOS
 

@@ -8,6 +8,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../shared/app_language.dart';
 import '../../../shared/app_state.dart';
+import '../../../shared/ui/theme/app_theme.dart';
+import '../../../shared/ui/widgets/crystal_progress_ring.dart';
 import '../../food/application/manual_food_entries_controller.dart';
 import '../../food/domain/manual_food_entry.dart';
 import '../../food/presentation/widgets/meal_photo_view.dart';
@@ -51,11 +53,16 @@ class DashboardScreen extends ConsumerWidget {
     final calorieProgress = targetCalories <= 0
         ? 0.0
         : (summary.totalCalories / targetCalories).clamp(0.0, 1.0);
+    final remainingCalories =
+        max(0, targetCalories - summary.totalCalories).toInt();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Myfit'),
-        centerTitle: true,
+        title: const Text(
+          'myfit',
+          style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.8),
+        ),
+        centerTitle: false,
         leading: IconButton(
           onPressed: () => context.go('/auth'),
           icon: const Icon(Icons.account_circle_outlined),
@@ -64,26 +71,37 @@ class DashboardScreen extends ConsumerWidget {
         actions: [
           IconButton(
             onPressed: () => context.push('/dashboard/progress'),
-            icon: const Icon(Icons.notifications_none_outlined),
+            icon: const Icon(Icons.insights_outlined),
+            tooltip: strings.progressScreenTitle,
           ),
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
         children: [
           Text(
             strings.goodMorningUser(displayName),
-            style: Theme.of(context).textTheme.headlineSmall,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.8,
+                ),
           ),
           const SizedBox(height: 6),
-          Text(strings.energyBalanceSubtitle),
-          const SizedBox(height: 16),
+          Text(
+            strings.energyBalanceSubtitle,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+          ),
+          const SizedBox(height: 20),
           _PremiumBalanceCard(
             strings: strings,
             balanceCalories: primaryBalance,
             isOnTarget: primaryBalance <= 0,
+            remainingCalories: remainingCalories,
+            consumedProgress: calorieProgress,
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           _CompactNutritionCard(
             strings: strings,
             eatenCalories: summary.totalCalories,
@@ -93,76 +111,71 @@ class DashboardScreen extends ConsumerWidget {
             carbsGrams: summary.totalCarbsGrams,
             fatGrams: summary.totalFatGrams,
           ),
-          const SizedBox(height: 12),
-          _MetricInfoCard(
-            title: strings.estimatedDailyBurnTitle.toUpperCase(),
-            value: dailyTargets == null
-                ? '$todayWorkoutCalories kcal'
-                : '${dailyTargets.estimatedBurnCalories} kcal',
-            subtitle: strings.energyEstimateMethod(
-              personalized:
-                  dailyTargets?.usesPersonalizedEnergyEstimate ?? false,
-            ),
-            icon: Icons.local_fire_department_outlined,
-            accent: Theme.of(context).colorScheme.primary,
-            onTap: () => context.push('/profile'),
+          const SizedBox(height: 20),
+          _QuickActions(
+            addMealLabel: strings.addMealTitle,
+            workoutLabel: strings.startWorkoutButton,
+            onAddMeal: () => context.go('/food/manual'),
+            onWorkout: () => context.go('/workout/manual'),
           ),
-          const SizedBox(height: 12),
-          _MetricInfoCard(
-            title: strings.currentWeightCardTitle.toUpperCase(),
-            value: currentWeightKg == null
-                ? strings.noWeightLogged
-                : '${currentWeightKg.toStringAsFixed(1)} kg',
-            subtitle: currentWeightKg == null
-                ? strings.logWeightTitle
-                : strings.weeklyWeightDelta(0.2),
-            icon: Icons.monitor_weight_outlined,
-            accent: Colors.green.shade400,
-            onTap: () => _showWeightDialog(context, ref, strings),
+          const SizedBox(height: 24),
+          Text(
+            strings.todaysActivityTitle,
+            style: Theme.of(context)
+                .textTheme
+                .titleLarge
+                ?.copyWith(fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 18),
-          Text(strings.todaysActivityTitle,
-              style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 10),
           _ActivitySummaryTile(
-            strings: strings,
-            latestWorkout: latestWorkout,
-            durations: todayWorkoutDurations,
-          ),
-          const SizedBox(height: 14),
-          _RecentLogsPanel(
-            strings: strings,
-            recentMeal: recentMeal,
-            totalSets: totalSetsToday,
-            totalReps: totalRepsToday,
-          ),
-          const SizedBox(height: 16),
+              strings: strings,
+              latestWorkout: latestWorkout,
+              durations: todayWorkoutDurations),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
-                child: _DashboardActionButton(
-                  label: strings.addMealTitle,
-                  icon: Icons.add_circle_outline,
-                  filled: false,
-                  onPressed: () => context.go('/food/manual'),
+                child: _MetricInfoCard(
+                  title: strings.estimatedDailyBurnTitle,
+                  value: dailyTargets == null
+                      ? '$todayWorkoutCalories kcal'
+                      : '${dailyTargets.estimatedBurnCalories} kcal',
+                  subtitle: strings.energyEstimateMethod(
+                    personalized:
+                        dailyTargets?.usesPersonalizedEnergyEstimate ?? false,
+                  ),
+                  icon: Icons.local_fire_department_outlined,
+                  accent: AppTheme.warning,
+                  onTap: () => context.push('/profile'),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _DashboardActionButton(
-                  label: strings.startWorkoutButton,
-                  icon: Icons.play_arrow_outlined,
-                  filled: true,
-                  onPressed: () => context.go('/workout/manual'),
+                child: _MetricInfoCard(
+                  title: strings.currentWeightCardTitle,
+                  value: currentWeightKg == null
+                      ? '--'
+                      : '${currentWeightKg.toStringAsFixed(1)} kg',
+                  subtitle: currentWeightKg == null
+                      ? strings.logWeightTitle
+                      : strings.weeklyWeightDelta(0.2),
+                  icon: Icons.monitor_weight_outlined,
+                  accent: AppTheme.success,
+                  onTap: () => _showWeightDialog(context, ref, strings),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
+          _RecentLogsPanel(
+              strings: strings,
+              recentMeal: recentMeal,
+              totalSets: totalSetsToday,
+              totalReps: totalRepsToday),
+          const SizedBox(height: 12),
           _PremiumInsightsCard(
-            strings: strings,
-            onPressed: () => context.push('/dashboard/progress'),
-          ),
+              strings: strings,
+              onPressed: () => context.push('/dashboard/progress')),
           if (dailySummaries.isNotEmpty) ...[
             const SizedBox(height: 16),
             _CollapsibleSection(
@@ -257,17 +270,20 @@ class _PremiumBalanceCard extends StatelessWidget {
     required this.strings,
     required this.balanceCalories,
     required this.isOnTarget,
+    required this.remainingCalories,
+    required this.consumedProgress,
   });
 
   final AppStrings strings;
   final int balanceCalories;
   final bool isOnTarget;
+  final int remainingCalories;
+  final double consumedProgress;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final displayValue = balanceCalories.abs().toString();
 
     return Card(
       child: Padding(
@@ -276,53 +292,48 @@ class _PremiumBalanceCard extends StatelessWidget {
           children: [
             Text(
               strings.dailyEnergyBalanceTitle.toUpperCase(),
+              textAlign: TextAlign.center,
               style: theme.textTheme.labelLarge?.copyWith(
                 color: colors.onSurfaceVariant,
                 letterSpacing: 0.6,
               ),
             ),
             const SizedBox(height: 14),
-            Container(
-              width: 150,
-              height: 150,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: colors.primary, width: 5),
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      displayValue,
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        color: colors.primary,
-                        fontWeight: FontWeight.w700,
-                      ),
+            CrystalProgressRing(
+              progress: consumedProgress,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '$remainingCalories',
+                    style: theme.textTheme.headlineLarge?.copyWith(
+                      color: colors.primary,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -1.2,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'kcal',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colors.onSurfaceVariant,
-                      ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    strings.caloriesRemainingLabel,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colors.onSurfaceVariant,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: (isOnTarget ? Colors.green : colors.tertiary)
+                color: (isOnTarget ? AppTheme.success : colors.tertiary)
                     .withValues(alpha: 0.16),
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
                 strings.energyBalanceStatus(balanceCalories),
                 style: TextStyle(
-                  color: isOnTarget ? Colors.green.shade300 : colors.tertiary,
+                  color: isOnTarget ? AppTheme.success : colors.tertiary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -557,36 +568,46 @@ class _MetricInfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
         onTap: onTap,
-        title: Text(title),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 8),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                value,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: accent,
-                    ),
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: accent, size: 20),
               ),
+              const SizedBox(height: 14),
+              Text(title.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        letterSpacing: 0.5,
+                      )),
+              const SizedBox(height: 6),
+              Text(value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: accent,
+                      )),
               const SizedBox(height: 4),
-              Text(subtitle),
+              Text(subtitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall),
             ],
           ),
-        ),
-        trailing: Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: accent.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: accent, size: 18),
         ),
       ),
     );
@@ -762,6 +783,43 @@ class _DashboardActionButton extends StatelessWidget {
         minimumSize: const Size.fromHeight(84),
       ),
       child: child,
+    );
+  }
+}
+
+class _QuickActions extends StatelessWidget {
+  const _QuickActions({
+    required this.addMealLabel,
+    required this.workoutLabel,
+    required this.onAddMeal,
+    required this.onWorkout,
+  });
+
+  final String addMealLabel;
+  final String workoutLabel;
+  final VoidCallback onAddMeal;
+  final VoidCallback onWorkout;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: FilledButton.icon(
+            onPressed: onAddMeal,
+            icon: const Icon(Icons.add_rounded),
+            label: Text(addMealLabel),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: onWorkout,
+            icon: const Icon(Icons.fitness_center_outlined),
+            label: Text(workoutLabel),
+          ),
+        ),
+      ],
     );
   }
 }

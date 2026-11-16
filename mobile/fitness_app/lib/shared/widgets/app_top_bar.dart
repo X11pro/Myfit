@@ -39,14 +39,9 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       title: Text(title),
       actions: [
-        IconButton(
-          tooltip: strings.homeButtonTooltip,
-          onPressed: () => context.go('/dashboard'),
-          icon: const Icon(Icons.home_outlined),
-        ),
         PopupMenuButton<_TopBarMenuAction>(
           tooltip: strings.menuButtonTooltip,
-          icon: const Icon(Icons.menu),
+          icon: const Icon(Icons.more_horiz),
           onSelected: (value) => _handleMenuAction(context, value),
           itemBuilder: (context) => [
             PopupMenuItem(

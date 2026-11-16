@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../shared/app_language.dart';
 import '../../../shared/app_state.dart';
+import '../../../shared/ui/widgets/premium_card.dart';
+import '../../../shared/ui/widgets/premium_screen.dart';
+import '../../../shared/ui/widgets/section_header.dart';
 import '../../../shared/widgets/app_top_bar.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
@@ -55,103 +58,120 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         strings: strings,
         backPath: '/splash',
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
-        children: [
-          Text(strings.onboardingTitle,
-              style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: 24),
-          TextField(
-            controller: _nameController,
-            decoration: InputDecoration(labelText: strings.nameLabel),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _heightController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: strings.heightLabel),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _weightController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: strings.weightLabel),
-          ),
-          const SizedBox(height: 16),
-          Text(strings.energyProfileTitle,
-              style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 6),
-          Text(strings.energyProfileHint),
-          const SizedBox(height: 16),
-          OutlinedButton.icon(
-            onPressed: _pickDateOfBirth,
-            icon: const Icon(Icons.cake_outlined),
-            label: Text(
-              _dateOfBirth == null
-                  ? strings.selectBirthDate
-                  : '${_dateOfBirth!.day.toString().padLeft(2, '0')}/${_dateOfBirth!.month.toString().padLeft(2, '0')}/${_dateOfBirth!.year}',
+      body: PremiumScreen(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SectionHeader(
+              title: strings.onboardingTitle,
+              subtitle: strings.energyProfileHint,
             ),
-          ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<String?>(
-            initialValue: _sex,
-            decoration: InputDecoration(labelText: strings.sexLabel),
-            items: [
-              DropdownMenuItem(
-                  value: null, child: Text(strings.sexUnspecified)),
-              DropdownMenuItem(value: 'female', child: Text(strings.sexFemale)),
-              DropdownMenuItem(value: 'male', child: Text(strings.sexMale)),
-            ],
-            onChanged: (value) => setState(() => _sex = value),
-          ),
-          const SizedBox(height: 16),
-          Text(strings.dailyActivityLabel,
-              style: Theme.of(context).textTheme.titleSmall),
-          const SizedBox(height: 8),
-          SegmentedButton<String>(
-            segments: [
-              ButtonSegment(value: 'low', label: Text(strings.activityLow)),
-              ButtonSegment(
-                  value: 'medium', label: Text(strings.activityMedium)),
-              ButtonSegment(
-                value: 'medium_high',
-                label: Text(strings.activityMediumHigh),
+            const SizedBox(height: 20),
+            PremiumCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: _nameController,
+                    decoration: InputDecoration(labelText: strings.nameLabel),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _heightController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(labelText: strings.heightLabel),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _weightController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(labelText: strings.weightLabel),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(strings.energyProfileTitle,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          )),
+                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: _pickDateOfBirth,
+                    icon: const Icon(Icons.cake_outlined),
+                    label: Text(
+                      _dateOfBirth == null
+                          ? strings.selectBirthDate
+                          : '${_dateOfBirth!.day.toString().padLeft(2, '0')}/${_dateOfBirth!.month.toString().padLeft(2, '0')}/${_dateOfBirth!.year}',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String?>(
+                    initialValue: _sex,
+                    decoration: InputDecoration(labelText: strings.sexLabel),
+                    items: [
+                      DropdownMenuItem(
+                          value: null, child: Text(strings.sexUnspecified)),
+                      DropdownMenuItem(
+                          value: 'female', child: Text(strings.sexFemale)),
+                      DropdownMenuItem(
+                          value: 'male', child: Text(strings.sexMale)),
+                    ],
+                    onChanged: (value) => setState(() => _sex = value),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(strings.dailyActivityLabel,
+                      style: Theme.of(context).textTheme.titleSmall),
+                  const SizedBox(height: 8),
+                  SegmentedButton<String>(
+                    segments: [
+                      ButtonSegment(
+                          value: 'low', label: Text(strings.activityLow)),
+                      ButtonSegment(
+                          value: 'medium', label: Text(strings.activityMedium)),
+                      ButtonSegment(
+                        value: 'medium_high',
+                        label: Text(strings.activityMediumHigh),
+                      ),
+                      ButtonSegment(
+                          value: 'high', label: Text(strings.activityHigh)),
+                    ],
+                    selected: {_activityLevel},
+                    onSelectionChanged: (value) =>
+                        setState(() => _activityLevel = value.first),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(_activityHint(strings),
+                      style: Theme.of(context).textTheme.bodySmall),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    initialValue: _goal,
+                    decoration: InputDecoration(labelText: strings.goalLabel),
+                    items: [
+                      DropdownMenuItem(
+                          value: 'lose_fat', child: Text(strings.goalLoseFat)),
+                      DropdownMenuItem(
+                          value: 'gain_muscle',
+                          child: Text(strings.goalGainMuscle)),
+                      DropdownMenuItem(
+                          value: 'maintain', child: Text(strings.goalMaintain)),
+                      DropdownMenuItem(
+                          value: 'recomp', child: Text(strings.goalRecomp)),
+                    ],
+                    onChanged: (value) =>
+                        setState(() => _goal = value ?? _goal),
+                  ),
+                ],
               ),
-              ButtonSegment(value: 'high', label: Text(strings.activityHigh)),
-            ],
-            selected: {_activityLevel},
-            onSelectionChanged: (value) =>
-                setState(() => _activityLevel = value.first),
-          ),
-          const SizedBox(height: 8),
-          Text(_activityHint(strings),
-              style: Theme.of(context).textTheme.bodySmall),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<String>(
-            value: _goal,
-            decoration: InputDecoration(labelText: strings.goalLabel),
-            items: [
-              DropdownMenuItem(
-                  value: 'lose_fat', child: Text(strings.goalLoseFat)),
-              DropdownMenuItem(
-                  value: 'gain_muscle', child: Text(strings.goalGainMuscle)),
-              DropdownMenuItem(
-                  value: 'maintain', child: Text(strings.goalMaintain)),
-              DropdownMenuItem(
-                  value: 'recomp', child: Text(strings.goalRecomp)),
-            ],
-            onChanged: (value) => setState(() => _goal = value ?? _goal),
-          ),
-          const SizedBox(height: 16),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: appState.isLoading ? null : _save,
-              child: Text(strings.saveProfile),
             ),
-          ),
-        ],
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: appState.isLoading ? null : _save,
+                child: Text(strings.saveProfile),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -40,6 +40,20 @@ class AppStrings {
 
   String get verifyCodeButton => isEnglish ? 'Verify code' : 'Verificar codigo';
 
+  String get otpCheckLabel => isEnglish ? 'OTP CHECK' : 'VERIFICACION OTP';
+
+  String get otpCheckTitle =>
+      isEnglish ? 'Check your email' : 'Revisa tu email';
+
+  String otpCheckDescription(String email) => isEnglish
+      ? 'Enter the 6-digit verification code sent to $email. The code is valid for 30 minutes.'
+      : 'Ingresa el codigo de verificacion de 6 digitos enviado a $email. El codigo es valido por 30 minutos.';
+
+  String get resendCodeButton => isEnglish ? 'Resend code' : 'Reenviar codigo';
+
+  String resendCodeIn(int seconds) =>
+      isEnglish ? 'Resend code (${seconds}s)' : 'Reenviar codigo (${seconds}s)';
+
   String get receiveAccessCodeButton =>
       isEnglish ? 'Receive access code' : 'Recibir codigo de acceso';
 
@@ -975,6 +989,9 @@ class AppStrings {
 
   String get dailyEnergyBalanceTitle =>
       isEnglish ? 'Daily energy balance' : 'Balance energetico diario';
+
+  String get caloriesRemainingLabel =>
+      isEnglish ? 'kcal left' : 'kcal restantes';
 
   String energyBalanceStatus(int calories) {
     if (isEnglish) {

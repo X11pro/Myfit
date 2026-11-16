@@ -13,6 +13,8 @@ Este repositorio ya incluye:
 - Script de sincronizacion con GitHub.
 - App Flutter real generada en `mobile/fitness_app`.
 - Scaffold inicial de `login`, `onboarding` y `dashboard`.
+- Flujos de comida, barcode, foto IA, workout manual, rutinas, progreso y persistencia híbrida guest/cuenta.
+- Rediseño dark minimalista aplicado a dashboard, onboarding y componentes compartidos.
 - Primera migracion SQL de Supabase con tablas y RLS base.
 - `flutter analyze` y `flutter test` en verde en el ultimo entorno Windows.
 
@@ -48,11 +50,10 @@ Myfit/
 
 ## Siguientes pasos tecnicos
 
-1. Conectar `Supabase Auth` real en `mobile/fitness_app`.
-2. Persistir onboarding en `profiles`.
-3. Crear el flujo de registro manual de comida.
-4. Calcular `daily_energy_summary` local/base.
-5. Preparar primera `Edge Function` para `food/parse-text`.
+1. Completar QA visual móvil del rediseño actual.
+2. Preparar firma Android, política de privacidad pública y soporte export/delete.
+3. Consolidar migración guest a cuenta y rehidratación remota.
+4. Continuar con Health Connect/HealthKit después de esos cierres.
 
 ## Retomar en otro sistema
 

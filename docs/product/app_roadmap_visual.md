@@ -1,6 +1,6 @@
 # Myfit: Mapa Visual y Roadmap
 
-Actualizado: 2026-10-12.
+Actualizado: 2026-11-16.
 
 Este documento muestra las pantallas navegables, las funciones disponibles y el orden de trabajo. Es la referencia visual actual; el detalle tecnico permanece en `docs/handoff/current_status.md`.
 
@@ -15,10 +15,11 @@ Para una vista de árbol genealógico de todas las funciones, abrir `docs/produc
 
 ## Paleta Actual
 
-- 60%: blanco y gris cálido (`#F7F7F5`, `#FFFFFF`, `#F0F0ED`) para fondo y superficies.
-- 30%: carbón (`#202124`) para texto, iconos y estructura visual.
-- 10%: naranja energético (`#E6511E`) para CTAs y acciones principales.
-- Estados: verde (`#2E7D32`) para éxito, rojo (`#C62828`) para error y naranja ámbar (`#F57C00`) para avisos.
+- Fondo: verde bosque oscuro (`#101815`) y capa secundaria (`#151F1B`).
+- Superficies: verde profundo (`#1B2822`) y muted (`#26352E`).
+- Progreso y éxito: verde menta (`#8FE3B0`).
+- Energía y avisos: coral (`#FFA36C`); error: rojo suave (`#FF8C8C`).
+- Estilo: tarjetas de 22 px, ritmo de 8 px e iconos Material outline.
 
 ## Mapa De Navegacion
 
@@ -52,8 +53,8 @@ flowchart TD
 |---|---|---|---|
 | Welcome | `/splash` | Idioma EN/ESP, entrar como guest, entrar con cuenta, abrir app con sesion existente. | LISTO |
 | Perfil energético | `/onboarding`, `/profile` | Peso, altura, fecha de nacimiento, sexo opcional, objetivo y actividad diaria en cuatro niveles. Se edita tocando el gasto diario estimado del dashboard. | LISTO |
-| Cuenta | `/auth`, `/auth/verify` | Email OTP, sesion persistente, sign out, exportar datos y borrar datos remotos. | LISTO |
-| Dashboard | `/dashboard` | Resumen diario, macros, objetivo, comida, peso, actividad, gasto diario estimado y estado de balance. | EN CURSO: integrar mejor los tiempos y datos remotos en analitica. |
+| Cuenta | `/auth`, `/auth/verify` | Email OTP, verificación de seis dígitos en pantalla dedicada, reenvío con espera, sesion persistente, sign out, exportar datos y borrar datos remotos. | LISTO |
+| Dashboard | `/dashboard` | Balance diario, macros, acciones rápidas, actividad, gasto, peso, historial y acceso a progreso. | EN CURSO: integrar mejor los tiempos y datos remotos en analitica. |
 | Peso | Dashboard | Registro e historial de peso diario, con persistencia hibrida. | LISTO |
 | Comida manual | `/food/manual` | Nombre, tipo, kcal, proteina, carbs, grasas, azucar, fibra, editar y borrar. | LISTO |
 | Barcode | Dentro de comida y catalogo | Camara o codigo manual; cache Supabase, Open Food Facts y fallback USDA. | LISTO |
@@ -91,7 +92,7 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    A[Ahora\nUX/UI light + registro de sets rapido] --> B[Release y privacidad\nfirma Android, policy publica, soporte]
+    A[Ahora\nQA visual dark + registro de sets rapido] --> B[Release y privacidad\nfirma Android, policy publica, soporte]
     B --> C[Migracion guest a cuenta\nsin perdidas ni duplicados]
     C --> D[Persistencia consolidada\nrutinas, dashboard y progreso remoto]
     D --> E[Salud\nHealth Connect + HealthKit]

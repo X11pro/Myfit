@@ -1,22 +1,25 @@
 # Myfit Project Status
 
-Actualizado: 2026-10-12.
+Actualizado: 2026-11-16.
 
 ## Punto De Reanudacion
 
-Myfit esta en una primera iteracion de rediseño UX/UI light, con prioridad absoluta en registrar sets de entrenamiento en menos de cinco segundos. No reiniciar auth, barcode, foto IA, timers ni export/delete: ya fueron validados en Android real salvo una regresion nueva.
+Myfit tiene un rediseño dark minimalista aplicado sobre los flujos existentes. El foco de producto vuelve a ser el cierre de release, privacidad y la consolidación de la migración guest a cuenta, sin reiniciar los flujos ya implementados.
 
 ## Ultimo Trabajo Hecho
 
-- El tema global cambio a light mode.
-- La paleta light usa la regla 60-30-10: fondo neutro, estructura carbón y naranja energético para acciones; rojo solo para errores y verde para éxito.
+- El tema global usa superficies verde bosque oscuras, verde menta para progreso y coral para avisos/energía.
+- El dashboard se reorganizó para priorizar balance, macros, acciones rápidas, actividad y métricas secundarias.
+- Onboarding, tarjetas compartidas, campos, botones y barra superior usan el mismo sistema visual; la barra superior muestra una única acción de más opciones.
+- La navegación inferior mantiene cuatro destinos: inicio, entreno, nutrición y progreso.
+- El flujo OTP cuenta con verificación de seis dígitos y reenvío con espera.
 - El workout manual resume cada ejercicio en una tarjeta desplegable; al abrirlo, muestra sus sets y controles rápidos.
 - `KG` y `REPS` se editan directamente en cada set.
 - El dialogo detallado sigue disponible para ejercicio, grupo muscular, RPE y acciones secundarias.
 - El onboarding recoge perfil energético: peso, altura, fecha de nacimiento, sexo opcional y actividad diaria baja/media/media-alta/alta. El dashboard usa Mifflin-St Jeor cuando el perfil está completo; conserva el cálculo previo como fallback.
 - El perfil energético completo es obligatorio antes del dashboard, tanto después de OTP como en modo guest. Se puede editar después tocando la tarjeta de gasto diario estimado.
 - Se agregaron los mapas `docs/product/app_roadmap_visual.md` y `docs/product/function_family_tree.md`.
-- El plan de este trabajo es `.agent/plans/2026-10-12_light_workout_ux_execplan.md`.
+- El plan de este trabajo es `.agent/plans/2026-11-16-ui-ux-refresh.md`.
 
 ## Estado iOS
 
@@ -27,24 +30,29 @@ Myfit esta en una primera iteracion de rediseño UX/UI light, con prioridad abso
 
 ## Verificaciones
 
-Desde `mobile/fitness_app` pasaron:
+Desde `mobile/fitness_app` pasaron el 2026-11-16:
 
 ```bash
-flutter test test/features/workout/manual_workout_screen_test.dart
 flutter test
 ```
 
-`flutter analyze` no tuvo errores nuevos; conserva 10 avisos deprecados preexistentes sobre campos de formulario.
+`flutter analyze` no tuvo errores; conserva 8 avisos informativos preexistentes sobre `value` de campos de formulario. `git diff --check` también pasó.
+
+## Estado Android
+
+- El AVD `Pixel_10_Pro` arrancó como `emulator-5554` (Android 17, API 37).
+- La app se compiló, instaló y abrió correctamente con `flutter run -d emulator-5554 --no-resident`.
+- La compilación muestra avisos no bloqueantes de compatibilidad futura de Kotlin/Flutter.
 
 ## Siguiente Paso
 
-1. Revisar la pantalla light de workout en iOS Simulator.
-2. Decidir entre precargar el ultimo `kg/reps` por ejercicio o añadir gestos para copiar/eliminar sets.
-3. Retomar firma Android, privacy policy publica y soporte export/delete.
-4. Consolidar migracion guest a cuenta antes de Health Connect/HealthKit.
+1. Hacer QA visual del nuevo dashboard, onboarding, comida y workout en Android e iOS.
+2. Preparar firma Android, privacy policy pública y soporte para export/delete.
+3. Consolidar migración guest a cuenta sin pérdidas ni duplicados.
+4. Confirmar rehidratación remota completa antes de Health Connect/HealthKit.
 
 ## Notas De Git
 
-- Continuidad documental publicada en `7f766d5 Add visual roadmap and continuity status`.
-- Hay cambios previos no relacionados junto con el rediseño light. No hacer reversiones masivas.
+- El último commit base antes de este paquete es `da504dc Add light workout and energy profile flow`.
+- Hay cambios previos no relacionados junto con el rediseño, iconos iOS, OTP y Android. No hacer reversiones masivas.
 - No versionar `mobile/fitness_app/dart_defines.local.json` ni secretos.

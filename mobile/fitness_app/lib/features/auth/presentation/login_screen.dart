@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -14,6 +15,7 @@ import '../../../shared/ui/widgets/premium_card.dart';
 import '../../../shared/ui/widgets/premium_screen.dart';
 import '../../../shared/widgets/app_top_bar.dart';
 import '../application/auth_controller.dart';
+import 'widgets/otp_code_input.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen(
@@ -32,6 +34,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _codeSent = false;
   String? _submittedEmail;
+  Timer? _resendTimer;
+  int _secondsUntilResend = 60;
 
   @override
   void initState() {
@@ -40,12 +44,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _submittedEmail =
         widget.initialEmail.trim().isEmpty ? null : widget.initialEmail.trim();
     _codeSent = widget.startInCodeMode;
+    if (_codeSent) {
+      _startResendCountdown();
+    }
   }
 
   @override
   void dispose() {
     _emailController.dispose();
     _codeController.dispose();
+    _resendTimer?.cancel();
     super.dispose();
   }
 
@@ -57,6 +65,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final isBusy = appState.isLoading;
     final isAuthenticated = appState.isAuthenticated;
     final strings = stringsFor(ref);
+
+    if (_codeSent) {
+      return _buildCodeCheckScreen(
+        context: context,
+        controller: controller,
+        strings: strings,
+        isConfigured: isConfigured,
+        isBusy: isBusy,
+      );
+    }
 
     return Scaffold(
       appBar: AppTopBar(
@@ -265,6 +283,165 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildCodeCheckScreen({
+    required BuildContext context,
+    required AuthController controller,
+    required AppStrings strings,
+    required bool isConfigured,
+    required bool isBusy,
+  }) {
+    final email = _submittedEmail ?? _emailController.text.trim();
+    final code = _codeController.text;
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark,
+      child: Scaffold(
+        backgroundColor: AppTheme.background,
+        body: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              24,
+              18,
+              24,
+              24 + MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: Column(
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: IconButton(
+                    onPressed: isBusy ? null : () => context.go('/auth'),
+                    tooltip: strings.changeEmailButton,
+                    style: IconButton.styleFrom(
+                      foregroundColor: AppTheme.charcoal,
+                      backgroundColor: AppTheme.surface,
+                      side: const BorderSide(color: AppTheme.border),
+                    ),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ),
+                const Spacer(flex: 2),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                  child: Text(
+                    strings.otpCheckLabel,
+                    style: const TextStyle(
+                      color: AppTheme.primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  strings.otpCheckTitle,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        color: AppTheme.charcoal,
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  strings.otpCheckDescription(email),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppTheme.charcoal,
+                        height: 1.45,
+                      ),
+                ),
+                const SizedBox(height: 32),
+                OtpCodeInput(
+                  controller: _codeController,
+                  enabled: !isBusy,
+                  onChanged: (_) => setState(() {}),
+                  label: strings.accessCodeLabel,
+                ),
+                const SizedBox(height: 24),
+                TextButton(
+                  onPressed: isBusy || _secondsUntilResend > 0
+                      ? null
+                      : () => _resendCode(controller),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppTheme.primary,
+                    disabledForegroundColor:
+                        AppTheme.charcoal.withValues(alpha: 0.45),
+                  ),
+                  child: Text(
+                    _secondsUntilResend > 0
+                        ? strings.resendCodeIn(_secondsUntilResend)
+                        : strings.resendCodeButton,
+                  ),
+                ),
+                const Spacer(flex: 3),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: FilledButton(
+                    onPressed: !isConfigured || isBusy || code.length != 6
+                        ? null
+                        : () => _verifyCode(controller),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppTheme.primary,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor:
+                          AppTheme.primary.withValues(alpha: 0.32),
+                      disabledForegroundColor: Colors.white70,
+                    ),
+                    child: Text(strings.verifyCodeButton),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: isBusy ? null : () => context.go('/auth'),
+                  style:
+                      TextButton.styleFrom(foregroundColor: AppTheme.charcoal),
+                  child: Text(strings.changeEmailButton),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _startResendCountdown() {
+    _resendTimer?.cancel();
+    _secondsUntilResend = 60;
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted || _secondsUntilResend <= 1) {
+        timer.cancel();
+        if (mounted) {
+          setState(() => _secondsUntilResend = 0);
+        }
+        return;
+      }
+      setState(() => _secondsUntilResend--);
+    });
+  }
+
+  Future<void> _resendCode(AuthController controller) async {
+    final strings = stringsFor(ref);
+    final email = _submittedEmail ?? _emailController.text.trim();
+
+    try {
+      await controller.sendSignInCode(email);
+      if (!mounted) {
+        return;
+      }
+      _startResendCountdown();
+      _showMessage(strings.codeSentMessage);
+    } catch (error) {
+      _showMessage(strings.sendCodeErrorMessage(error));
+    }
   }
 
   Future<void> _sendCode(AuthController controller) async {

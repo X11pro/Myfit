@@ -12,6 +12,7 @@ Recoger un perfil energético breve durante el onboarding para estimar el gasto 
 - Usar Mifflin-St Jeor cuando el perfil está completo.
 - Mantener el cálculo anterior como fallback para perfiles existentes incompletos.
 - Mostrar en dashboard que el balance es una estimación y su gasto diario calculado.
+- Mostrar las calorías restantes del objetivo dentro de una dona crystal que se llena con la ingesta diaria.
 
 ## Límites
 

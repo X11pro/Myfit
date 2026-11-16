@@ -6,7 +6,7 @@ class PremiumScreen extends StatelessWidget {
   const PremiumScreen({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.fromLTRB(24, 20, 24, 24),
+    this.padding = const EdgeInsets.fromLTRB(20, 20, 20, 28),
     this.scrollable = true,
   });
 
@@ -19,17 +19,9 @@ class PremiumScreen extends StatelessWidget {
     final body = Padding(padding: padding, child: child);
 
     return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            AppTheme.backgroundSecondary,
-            AppTheme.background,
-          ],
-        ),
-      ),
+      decoration: const BoxDecoration(color: AppTheme.background),
       child: SafeArea(
+        top: false,
         child: scrollable ? ListView(children: [body]) : body,
       ),
     );

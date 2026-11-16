@@ -1,5 +1,17 @@
 # Estado actual
 
+## Continuidad AMARILLO 2026-11-16
+
+- Se aplicó un rediseño dark minimalista sin alterar la lógica ni las rutas existentes: superficies verde bosque, verde menta para progreso y coral para estados de energía/acción.
+- `dashboard_screen.dart` prioriza balance diario, macros, acciones rápidas, actividad, gasto, peso, historial y progreso. La navegación mantiene inicio, entreno, nutrición y progreso.
+- `onboarding_screen.dart`, campos, botones y tarjetas comparten el sistema visual. La barra superior quedó simplificada a volver y menú de más opciones.
+- El flujo OTP incorporado en el worktree muestra seis celdas, ofrece reenvío con contador y tiene tests específicos.
+- Se añadió `.agent/plans/2026-11-16-ui-ux-refresh.md` con la dirección visual y las verificaciones.
+- El AVD `Pixel_10_Pro` se inició como `emulator-5554`; la build debug se compiló, instaló y abrió con `flutter run -d emulator-5554 --no-resident`.
+- Verificación actual desde `mobile/fitness_app`: `flutter test` pasó con 32 pruebas; `flutter analyze` no tiene errores y muestra 8 avisos informativos deprecados preexistentes; `git diff --check` pasó.
+- Punto exacto de continuación: hacer QA visual móvil del rediseño, completar firma Android/privacy policy/soporte export-delete y consolidar guest a cuenta con rehidratación remota. No reiniciar OTP, barcode, foto IA, timers ni export/delete salvo regresión.
+- Commit base antes de esta continuidad: `da504dc Add light workout and energy profile flow` en `main`.
+
 ## Resumen
 
 El repo quedo listo para continuar en CachyOS con una app Flutter guest-first pero ya muy cerca de `v1.0`: auth OTP funcional, persistencia remota base para `weight + manual meals + meal photos + manual workouts`, export/delete remoto minimo, release Android base saneada, idioma ingles por defecto, selector `EN / ESP`, light mode, top bar global, barcode/AI/comida conectados a Supabase/OpenRouter, y timers de workout ya probados en dispositivo.

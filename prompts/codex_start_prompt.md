@@ -9,6 +9,9 @@ Lee tambien docs/research/free_food_photo_llm_recommendation.md.
 Quiero continuar Myfit exactamente desde el ultimo punto.
 
 Contexto inmediato:
+- La continuidad más reciente es del 2026-11-16. Se aplicó un rediseño dark minimalista: superficies verde bosque, progreso verde menta y avisos coral. Leer `.agent/plans/2026-11-16-ui-ux-refresh.md` y `PROJECT_STATUS.md` antes de cambiar UI.
+- El dashboard ahora prioriza balance, macros, acciones rápidas, actividad y métricas secundarias; onboarding, tarjetas, formularios y top bar usan el mismo sistema. La top bar se simplificó a volver y menú de más opciones.
+- `Pixel_10_Pro` inició correctamente como `emulator-5554`; la app se instaló y abrió con `flutter run -d emulator-5554 --no-resident`. `flutter test` pasó con 32 pruebas y `flutter analyze` conserva 8 avisos informativos preexistentes de formularios.
 - Ya existe flujo guest-first funcional.
 - Ya existe modulo de gym con sesiones, sets, edicion y progreso, con persistencia hibrida local/remota para usuarios autenticados.
 - Ya existe top bar global con back/home/menu.
@@ -67,10 +70,10 @@ Tareas al retomar:
 5. Verificar primero si la shell actual ya tiene `SUPABASE_URL`, `SUPABASE_ANON_KEY` y opcionalmente `SUPABASE_ACCESS_TOKEN`; si faltan, recargarlas manualmente sin escribirlas en archivos del repo.
 6. No repetir QA Android ya aprobada salvo una regresion: REST, sign out, barcode manual/no-match/sin red, error backend y editar/borrar workout estan validados.
 7. Si se trabaja con iOS, confirmar el watcher Mac mini y arrancar el Simulator antes de ejecutar Flutter en la Mac mini.
-8. Revisar visualmente el workout light en iOS Simulator y decidir la siguiente mejora de velocidad: precarga de ultimo peso/reps o gestos de set.
+8. Hacer QA visual del dashboard, onboarding, comida y workout del rediseño dark en Android e iOS.
 9. Preparar la firma release Android, publicar la privacy policy final y cerrar el canal/proceso de soporte para export/delete.
 10. Consolidar la migracion guest -> cuenta sin perdida de datos ni duplicados.
-11. Reevaluar el rediseño total de UI/UX solo despues de esos cierres.
+11. Confirmar rehidratacion remota completa antes de Health Connect/HealthKit.
 12. Seguir desde ahi sin reiniciar nada desde cero.
 13. Mantener respuestas en espanol.
 
