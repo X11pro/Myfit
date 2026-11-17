@@ -1,18 +1,20 @@
 # Retomar en Mac mini
 
-## Estado local macOS, 2026-11-16
+## Estado local macOS, 2026-11-17
 
-Este entorno detecta `iPhone 18 Pro` Simulator con ID `AB8AD4CB-BE80-4011-B664-3B062DC0EB07`. Myfit compiló, instaló e inició con Supabase correcto, pero la sesión debug perdió conexión después del arranque. Confirmar la UI y hot reload antes de tomarlo como QA iOS concluyente.
+Este entorno detecta `iPhone 18 Pro` Simulator con ID `A048785F-667B-4FD7-97BD-CB97035601A4`. Myfit compiló, se instaló e inició mediante `xcrun simctl` el 2026-11-17. Confirmar la UI y hot reload antes de tomarlo como QA iOS concluyente.
 
 ```bash
 cd /Volumes/HDD/Github/Myfit/mobile/fitness_app
-flutter run -d AB8AD4CB-BE80-4011-B664-3B062DC0EB07 \
+flutter run -d A048785F-667B-4FD7-97BD-CB97035601A4 \
   --dart-define-from-file=dart_defines.local.json
 ```
 
 No versionar `dart_defines.local.json`.
 
 La rama actual incluye el rediseño dark minimalista del dashboard, onboarding y componentes compartidos. Tras iniciar, comprobar primero el layout en teléfono, tipografía dinámica y navegación de las cuatro pestañas antes de retomar trabajo de producto.
+
+La rutina semanal ahora sincroniza con `public.workout_routines` cuando la migración `20261117_000004_workout_routines.sql` esté aplicada. La extensión Chrome relacionada está en `extensions/myfit-routine-builder`; seguir `docs/setup/chrome_routine_builder.md` para cargarla y autenticarla con la misma cuenta OTP.
 
 ## Sincronizar desde CachyOS
 
@@ -44,6 +46,14 @@ En Terminal de la Mac mini:
 
 ```bash
 open -a Simulator
+```
+
+En este Mac concreto no se encontró `Simulator.app`, por lo que ese comando falla. Como alternativa headless, desde `mobile/fitness_app`:
+
+```bash
+flutter build ios --simulator
+xcrun simctl install A048785F-667B-4FD7-97BD-CB97035601A4 "build/ios/iphonesimulator/Runner.app"
+xcrun simctl launch A048785F-667B-4FD7-97BD-CB97035601A4 com.example.fitnessApp
 ```
 
 Con el simulador iniciado, ejecutar la app desde el repositorio:

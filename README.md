@@ -14,6 +14,7 @@ Este repositorio ya incluye:
 - App Flutter real generada en `mobile/fitness_app`.
 - Scaffold inicial de `login`, `onboarding` y `dashboard`.
 - Flujos de comida, barcode, foto IA, workout manual, rutinas, progreso y persistencia híbrida guest/cuenta.
+- Extensión Chrome local para construir rutinas semanales y sincronizarlas por Supabase/OTP.
 - Rediseño dark minimalista aplicado a dashboard, onboarding y componentes compartidos.
 - Primera migracion SQL de Supabase con tablas y RLS base.
 - `flutter analyze` y `flutter test` en verde en el ultimo entorno Windows.
@@ -62,6 +63,7 @@ Myfit/
 - `AGENTS.md`: instrucciones persistentes para el agente en la raiz del repo.
 - `.agent/PLANS.md`: plantilla para planes de ejecucion largos.
 - `prompts/codex_start_prompt.md`: prompt inicial recomendado para abrir el repo con un agente.
+- `docs/setup/chrome_routine_builder.md`: instalación y conexión de la extensión Chrome de rutinas.
 
 ## GitHub
 

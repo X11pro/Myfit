@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Myfit Routine Builder settings</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body class="options-page">
+    <main class="options-shell card">
+      <p class="eyebrow">MYFIT / CONNECTION</p>
+      <h1>Supabase connection</h1>
+      <p>Use the public project URL and anonymous key. Never enter a service-role key here.</p>
+      <form id="settings-form" novalidate>
+        <label for="supabase-url">Supabase project URL</label>
+        <input id="supabase-url" type="url" placeholder="https://project.supabase.co" required>
+        <label for="supabase-anon-key">Supabase anonymous key</label>
+        <textarea id="supabase-anon-key" rows="5" required></textarea>
+        <p id="settings-error" class="field-error" role="alert"></p>
+        <button class="primary-button" type="submit">Save connection</button>
+      </form>
+      <p id="settings-status" class="status" role="status" aria-live="polite"></p>
+    </main>
+    <script src="options.js"></script>
+  </body>
+</html>

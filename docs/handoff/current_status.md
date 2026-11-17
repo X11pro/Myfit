@@ -1,5 +1,17 @@
 # Estado actual
 
+## Continuidad AMARILLO 2026-11-17
+
+- Se implementó `extensions/myfit-routine-builder`, una extensión Manifest V3 para Chrome con UI oscura, navegación por días y edición de rutinas, ejercicios, sets, reps, kg, superseries y trisets.
+- La extensión se configura localmente con `SUPABASE_URL` y la clave pública `SUPABASE_ANON_KEY`; solicita el mismo OTP por email que Myfit. No contiene ni acepta una clave `service_role`.
+- La nueva migración `backend/supabase/migrations/20261117_000004_workout_routines.sql` crea `public.workout_routines` con una biblioteca JSON por usuario, timestamp y RLS. Aún no se aplicó al proyecto remoto: es el bloqueo inmediato para una prueba real.
+- `weekly_workout_routine_controller.dart` ahora conserva SharedPreferences como cache/offline, carga la biblioteca remota tras autenticación y hace upsert tras cada edición local. La política de conflicto es last-write-wins.
+- Carga de la extensión: abrir `chrome://extensions`, activar Developer mode y elegir `extensions/myfit-routine-builder` mediante Load unpacked. La guía completa es `docs/setup/chrome_routine_builder.md`.
+- Validación: `node --check popup.js && node --check options.js`, `flutter test` (32 pruebas) y `git diff --check` pasaron. `flutter analyze` no tiene errores nuevos y conserva 8 avisos deprecados preexistentes.
+- El simulador iOS actualmente utilizable es `iPhone 18 Pro` (`A048785F-667B-4FD7-97BD-CB97035601A4`); la app se compiló, instaló e inició con `xcrun simctl`. `Simulator.app` no está disponible en este equipo, por lo que `open -a Simulator` falla.
+- Cambios sin incluir: las modificaciones de Xcode en `ios/Runner.xcodeproj` eran preexistentes/ajenas. Mantener también `.agent/skills/`, `.impeccable/`, `DESIGN.md` y `PRODUCT.md` sin seguimiento salvo instrucción explícita.
+- Punto exacto de reanudación: aplicar la migración, probar OTP y una sincronización browser -> Flutter con la misma cuenta y resolver cualquier fallo antes de continuar con Health Connect/HealthKit o release closure.
+
 ## Continuidad AMARILLO 2026-11-16
 
 - Se aplicó un rediseño dark minimalista sin alterar la lógica ni las rutas existentes: superficies verde bosque, verde menta para progreso y coral para estados de energía/acción.

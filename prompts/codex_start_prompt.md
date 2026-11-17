@@ -9,7 +9,8 @@ Lee tambien docs/research/free_food_photo_llm_recommendation.md.
 Quiero continuar Myfit exactamente desde el ultimo punto.
 
 Contexto inmediato:
-- La continuidad más reciente es del 2026-11-16. Se aplicó un rediseño dark minimalista: superficies verde bosque, progreso verde menta y avisos coral. Leer `.agent/plans/2026-11-16-ui-ux-refresh.md` y `PROJECT_STATUS.md` antes de cambiar UI.
+- La continuidad más reciente es del 2026-11-17. Se aplicó un rediseño dark minimalista: superficies verde bosque, progreso verde menta y avisos coral. Leer `.agent/plans/2026-11-16-ui-ux-refresh.md`, `.agent/plans/2026-11-17-chrome-routine-builder.md` y `PROJECT_STATUS.md` antes de cambiar UI.
+- Existe una extensión Chrome en `extensions/myfit-routine-builder` para crear rutinas semanales mediante el mismo OTP de Supabase. Antes de probar sincronización real, aplicar `backend/supabase/migrations/20261117_000004_workout_routines.sql`; consultar `docs/setup/chrome_routine_builder.md`. Flutter conserva SharedPreferences como cache offline y el conflicto remoto actual es last-write-wins.
 - La entrega publicada es `eeea9bd Refresh dark UI and continuity`. Mantener `.agent/skills/impeccable/` sin seguimiento: es una inicialización externa, no código de Myfit.
 - El dashboard ahora prioriza balance, macros, acciones rápidas, actividad y métricas secundarias; onboarding, tarjetas, formularios y top bar usan el mismo sistema. La top bar se simplificó a volver y menú de más opciones.
 - `Pixel_10_Pro` inició correctamente como `emulator-5554`; la app se instaló y abrió con `flutter run -d emulator-5554 --no-resident`. `flutter test` pasó con 32 pruebas y `flutter analyze` conserva 8 avisos informativos preexistentes de formularios.

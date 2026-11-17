@@ -1,10 +1,10 @@
 # Myfit Project Status
 
-Actualizado: 2026-11-16.
+Actualizado: 2026-11-17.
 
 ## Punto De Reanudacion
 
-Myfit tiene un rediseño dark minimalista aplicado sobre los flujos existentes. El foco de producto vuelve a ser el cierre de release, privacidad y la consolidación de la migración guest a cuenta, sin reiniciar los flujos ya implementados.
+Myfit tiene una extensión Chrome inicial para construir rutinas semanales en escritorio. Flutter y la extensión comparten un documento remoto de rutinas por usuario autenticado; el almacenamiento local de Flutter permanece como respaldo offline.
 
 ## Ultimo Trabajo Hecho
 
@@ -20,6 +20,10 @@ Myfit tiene un rediseño dark minimalista aplicado sobre los flujos existentes. 
 - El perfil energético completo es obligatorio antes del dashboard, tanto después de OTP como en modo guest. Se puede editar después tocando la tarjeta de gasto diario estimado.
 - Se agregaron los mapas `docs/product/app_roadmap_visual.md` y `docs/product/function_family_tree.md`.
 - El plan de este trabajo es `.agent/plans/2026-11-16-ui-ux-refresh.md`.
+- La nueva implementación está descrita en `.agent/plans/2026-11-17-chrome-routine-builder.md`.
+- La extensión está en `extensions/myfit-routine-builder`; usa OTP, no usa claves privilegiadas y permite editar bloques normales, superseries y trisets de lunes a domingo.
+- La migración pendiente `backend/supabase/migrations/20261117_000004_workout_routines.sql` crea `public.workout_routines` con RLS. Debe aplicarse antes de probar sincronización real.
+- La guía de instalación y conexión está en `docs/setup/chrome_routine_builder.md`.
 
 ## Estado iOS
 
@@ -30,13 +34,13 @@ Myfit tiene un rediseño dark minimalista aplicado sobre los flujos existentes. 
 
 ## Verificaciones
 
-Desde `mobile/fitness_app` pasaron el 2026-11-16:
+Desde `mobile/fitness_app` pasaron el 2026-11-17:
 
 ```bash
 flutter test
 ```
 
-`flutter analyze` no tuvo errores; conserva 8 avisos informativos preexistentes sobre `value` de campos de formulario. `git diff --check` también pasó.
+`flutter analyze` no tuvo errores nuevos; conserva 8 avisos informativos preexistentes sobre `value` de campos de formulario. `node --check` pasó para `popup.js` y `options.js`; `git diff --check` también pasó.
 
 ## Estado Android
 
@@ -46,10 +50,10 @@ flutter test
 
 ## Siguiente Paso
 
-1. Hacer QA visual del nuevo dashboard, onboarding, comida y workout en Android e iOS.
-2. Preparar firma Android, privacy policy pública y soporte para export/delete.
-3. Consolidar migración guest a cuenta sin pérdidas ni duplicados.
-4. Confirmar rehidratación remota completa antes de Health Connect/HealthKit.
+1. Aplicar la migración `20261117_000004_workout_routines.sql` en Supabase.
+2. Cargar la extensión desde `chrome://extensions`, configurar URL/anon key, autenticar con OTP y probar sincronización con Flutter en la misma cuenta.
+3. Hacer QA visual del dashboard, onboarding, comida y workout en Android e iOS.
+4. Preparar firma Android, privacy policy pública y soporte para export/delete.
 
 ## Notas De Git
 
@@ -57,3 +61,4 @@ flutter test
 - Hay cambios previos no relacionados junto con el rediseño, iconos iOS, OTP y Android. No hacer reversiones masivas.
 - `.agent/skills/impeccable/` queda intencionalmente sin seguimiento: fue generado por una inicialización externa y no forma parte de Myfit.
 - No versionar `mobile/fitness_app/dart_defines.local.json` ni secretos.
+- Los cambios de Xcode en `ios/Runner.xcodeproj` son ajenos a esta entrega y permanecen sin incluir en el commit de rutinas.
