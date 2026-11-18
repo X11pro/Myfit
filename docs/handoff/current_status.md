@@ -9,7 +9,8 @@
 - Carga de la extensión: abrir `chrome://extensions`, activar Developer mode y elegir `extensions/myfit-routine-builder` mediante Load unpacked. La guía completa es `docs/setup/chrome_routine_builder.md`.
 - Validación: `node --check popup.js && node --check options.js`, `flutter test` (32 pruebas) y `git diff --check` pasaron. `flutter analyze` no tiene errores nuevos y conserva 8 avisos deprecados preexistentes.
 - El simulador iOS actualmente utilizable es `iPhone 18 Pro` (`A048785F-667B-4FD7-97BD-CB97035601A4`); la app se compiló, instaló e inició con `xcrun simctl`. `Simulator.app` no está disponible en este equipo, por lo que `open -a Simulator` falla.
-- Cambios sin incluir: las modificaciones de Xcode en `ios/Runner.xcodeproj` eran preexistentes/ajenas. Mantener también `.agent/skills/`, `.impeccable/`, `DESIGN.md` y `PRODUCT.md` sin seguimiento salvo instrucción explícita.
+- La build Release se compiló y firmó para `Mariano's iPhone` (iPhone 16, UDID `00008140-0002313E1141801C`) usando `33SY9X526C`; `xcrun devicectl` confirmó su instalación. El intento de lanzamiento remoto fue rechazado porque el teléfono estaba bloqueado. Tras desbloquearlo, Myfit debe abrirse desde el icono sin Flutter conectado.
+- Los cambios de Xcode de firma se incluyen. Mantener `.agent/skills/`, `.impeccable/`, `DESIGN.md` y `PRODUCT.md` sin seguimiento salvo instrucción explícita.
 - Punto exacto de reanudación: aplicar la migración, probar OTP y una sincronización browser -> Flutter con la misma cuenta y resolver cualquier fallo antes de continuar con Health Connect/HealthKit o release closure.
 
 ## Continuidad AMARILLO 2026-11-16

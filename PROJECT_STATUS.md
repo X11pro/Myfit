@@ -27,6 +27,8 @@ Myfit tiene una extensión Chrome inicial para construir rutinas semanales en es
 
 ## Estado iOS
 
+- El 2026-11-18 se compiló y firmó una build Release para `Mariano's iPhone` (iPhone 16, UDID `00008140-0002313E1141801C`) usando el equipo `33SY9X526C`; `xcrun devicectl` confirmó su instalación como `com.example.fitnessApp`.
+- El lanzamiento remoto falló únicamente porque el teléfono estaba bloqueado. Desbloquearlo y abrir Myfit desde el icono: una build Release no requiere Flutter conectado.
 - El 2026-10-12 Myfit compiló, instaló e inició en `iPhone 18 Pro` Simulator (`AB8AD4CB-BE80-4011-B664-3B062DC0EB07`).
 - Supabase inicializó correctamente.
 - La sesión de depuración se desconectó tras iniciar (`The Dart compiler exited unexpectedly`), sin error de build. Confirmar visualmente la app y el hot reload antes de considerar iOS validado.
@@ -61,4 +63,4 @@ flutter test
 - Hay cambios previos no relacionados junto con el rediseño, iconos iOS, OTP y Android. No hacer reversiones masivas.
 - `.agent/skills/impeccable/` queda intencionalmente sin seguimiento: fue generado por una inicialización externa y no forma parte de Myfit.
 - No versionar `mobile/fitness_app/dart_defines.local.json` ni secretos.
-- Los cambios de Xcode en `ios/Runner.xcodeproj` son ajenos a esta entrega y permanecen sin incluir en el commit de rutinas.
+- Los ajustes de Xcode ahora se incluyen para preservar la firma Release del equipo `33SY9X526C` usada en el iPhone físico.

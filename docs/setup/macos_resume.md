@@ -16,6 +16,18 @@ La rama actual incluye el rediseño dark minimalista del dashboard, onboarding y
 
 La rutina semanal ahora sincroniza con `public.workout_routines` cuando la migración `20261117_000004_workout_routines.sql` esté aplicada. La extensión Chrome relacionada está en `extensions/myfit-routine-builder`; seguir `docs/setup/chrome_routine_builder.md` para cargarla y autenticarla con la misma cuenta OTP.
 
+## Instalar en iPhone físico
+
+El iPhone conectado es `Mariano's iPhone` (iPhone 16, UDID `00008140-0002313E1141801C`). Para instalar una build que se pueda abrir desde el icono sin depurador:
+
+```bash
+cd /Volumes/HDD/Github/Myfit/mobile/fitness_app
+flutter run --release --no-resident -d 00008140-0002313E1141801C \
+  --dart-define-from-file=dart_defines.local.json
+```
+
+La firma Release usa el equipo Xcode `33SY9X526C`. Mantener el teléfono desbloqueado durante instalación y lanzamiento. Una build Debug solo se puede abrir mediante `flutter run` o Xcode en iOS 14+.
+
 ## Sincronizar desde CachyOS
 
 El repositorio local debe estar limpio y los cambios deben estar committeados. Desde CachyOS:
