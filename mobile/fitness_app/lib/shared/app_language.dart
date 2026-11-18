@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'date_format.dart';
+
 enum AppLanguage { en, es }
 
 final appLanguageProvider = StateProvider<AppLanguage>((ref) => AppLanguage.en);
@@ -970,8 +972,10 @@ class AppStrings {
   String get openSharedCatalog =>
       isEnglish ? 'Open shared catalog' : 'Abrir catalogo compartido';
 
-  String dateSummarySubtitle(String dateKey, int count) =>
-      isEnglish ? '$dateKey • $count meals' : '$dateKey • $count comidas';
+  String dateSummarySubtitle(String dateKey, int count) {
+    final date = formatDisplayDateKey(dateKey);
+    return isEnglish ? '$date • $count meals' : '$date • $count comidas';
+  }
 
   String entriesCount(int count) =>
       isEnglish ? '$count entries today' : '$count registros hoy';

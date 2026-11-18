@@ -34,6 +34,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _codeSent = false;
   String? _submittedEmail;
+  String? _verificationError;
   Timer? _resendTimer;
   int _secondsUntilResend = 60;
 
@@ -361,9 +362,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 OtpCodeInput(
                   controller: _codeController,
                   enabled: !isBusy,
-                  onChanged: (_) => setState(() {}),
+                  onChanged: (value) {
+                    setState(() => _verificationError = null);
+                    if (value.length == 6 && isConfigured && !isBusy) {
+                      FocusScope.of(context).unfocus();
+                      unawaited(_verifyCode(controller));
+                    }
+                  },
                   label: strings.accessCodeLabel,
                 ),
+                if (_verificationError != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    _verificationError!,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                  ),
+                ],
                 const SizedBox(height: 24),
                 TextButton(
                   onPressed: isBusy || _secondsUntilResend > 0
@@ -387,7 +404,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: FilledButton(
                     onPressed: !isConfigured || isBusy || code.length != 6
                         ? null
-                        : () => _verifyCode(controller),
+                        : () {
+                            FocusScope.of(context).unfocus();
+                            unawaited(_verifyCode(controller));
+                          },
                     style: FilledButton.styleFrom(
                       backgroundColor: AppTheme.primary,
                       foregroundColor: Colors.white,
@@ -395,7 +415,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           AppTheme.primary.withValues(alpha: 0.32),
                       disabledForegroundColor: Colors.white70,
                     ),
-                    child: Text(strings.verifyCodeButton),
+                    child: isBusy
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(strings.verifyCodeButton),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -497,7 +526,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       // returning users, and the router redirects completed profiles home.
       context.go('/onboarding');
     } catch (error) {
-      _showMessage(strings.verifyCodeErrorMessage(error));
+      if (mounted) {
+        setState(
+          () => _verificationError = strings.verifyCodeErrorMessage(error),
+        );
+      }
     }
   }
 

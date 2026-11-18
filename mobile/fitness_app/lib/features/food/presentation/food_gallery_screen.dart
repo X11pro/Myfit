@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../shared/app_language.dart';
+import '../../../shared/date_format.dart';
 import '../../../shared/ui/widgets/premium_card.dart';
 import '../../../shared/ui/widgets/premium_screen.dart';
 import '../../../shared/ui/widgets/section_header.dart';
@@ -208,12 +209,7 @@ class _FoodGalleryCard extends ConsumerWidget {
   }
 
   String _formatDate(DateTime value) {
-    final local = value.toLocal();
-    final month = local.month.toString().padLeft(2, '0');
-    final day = local.day.toString().padLeft(2, '0');
-    final hour = local.hour.toString().padLeft(2, '0');
-    final minute = local.minute.toString().padLeft(2, '0');
-    return '${local.year}-$month-$day $hour:$minute';
+    return formatDisplayDateTime(value);
   }
 }
 

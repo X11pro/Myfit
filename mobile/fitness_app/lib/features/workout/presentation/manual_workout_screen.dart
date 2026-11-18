@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vibration/vibration.dart';
 
 import '../../../shared/app_language.dart';
+import '../../../shared/date_format.dart';
 import '../../../shared/ui/widgets/premium_card.dart';
 import '../../../shared/ui/widgets/premium_screen.dart';
 import '../../../shared/ui/widgets/section_header.dart';
@@ -193,7 +194,7 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                     ],
                   ),
                   Text(
-                    '${strings.workoutDateLabel}: ${dateKeyFor(_selectedDate)}',
+                    '${strings.workoutDateLabel}: ${formatDisplayDate(_selectedDate)}',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const SizedBox(height: 14),
@@ -1974,7 +1975,7 @@ class _WorkoutHistoryCard extends ConsumerWidget {
                           style: Theme.of(context).textTheme.titleMedium),
                       const SizedBox(height: 4),
                       Text(strings.workoutDateSetsSummary(
-                        session.dateKey,
+                        formatDisplayDateKey(session.dateKey),
                         session.totalSets,
                         session.totalReps,
                       )),

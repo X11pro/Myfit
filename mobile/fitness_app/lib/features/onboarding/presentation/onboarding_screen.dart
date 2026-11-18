@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../shared/app_language.dart';
 import '../../../shared/app_state.dart';
+import '../../../shared/date_format.dart';
 import '../../../shared/ui/widgets/premium_card.dart';
 import '../../../shared/ui/widgets/premium_screen.dart';
 import '../../../shared/ui/widgets/section_header.dart';
@@ -100,7 +101,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     label: Text(
                       _dateOfBirth == null
                           ? strings.selectBirthDate
-                          : '${_dateOfBirth!.day.toString().padLeft(2, '0')}/${_dateOfBirth!.month.toString().padLeft(2, '0')}/${_dateOfBirth!.year}',
+                          : formatDisplayDate(_dateOfBirth!),
                     ),
                   ),
                   const SizedBox(height: 16),

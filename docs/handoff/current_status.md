@@ -12,6 +12,8 @@
 - La build Release se compiló y firmó para `Mariano's iPhone` (iPhone 16, UDID `00008140-0002313E1141801C`) usando `33SY9X526C`; `xcrun devicectl` confirmó su instalación. El intento de lanzamiento remoto fue rechazado porque el teléfono estaba bloqueado. Tras desbloquearlo, Myfit debe abrirse desde el icono sin Flutter conectado.
 - Los cambios de Xcode de firma se incluyen. Mantener `.agent/skills/`, `.impeccable/`, `DESIGN.md` y `PRODUCT.md` sin seguimiento salvo instrucción explícita.
 - Se corrigió el flujo OTP: tras `verifyOTP` correcto, `login_screen.dart` navega a `/onboarding` y deja que el router lleve los perfiles completos al dashboard. La Release con este fix se compiló e instaló en el iPhone 16; el único bloqueo de lanzamiento remoto fue la pantalla bloqueada del dispositivo.
+- La verificación OTP se inicia automáticamente al ingresar seis dígitos, cierra el teclado y muestra estado de carga o un error inline para no depender de Snackbars ocultos.
+- Se configuró `flutter_localizations` con `en_GB` para fechas Material y se unificó la presentación de fechas en `DD/MM/YYYY`. Las claves guardadas/remotas siguen ISO para orden y compatibilidad.
 - Punto exacto de reanudación: aplicar la migración, probar OTP y una sincronización browser -> Flutter con la misma cuenta y resolver cualquier fallo antes de continuar con Health Connect/HealthKit o release closure.
 
 ## Continuidad AMARILLO 2026-11-16

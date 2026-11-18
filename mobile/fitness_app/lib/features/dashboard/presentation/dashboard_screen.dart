@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../shared/app_language.dart';
+import '../../../shared/date_format.dart';
 import '../../../shared/app_state.dart';
 import '../../../shared/ui/theme/app_theme.dart';
 import '../../../shared/ui/widgets/crystal_progress_ring.dart';
@@ -1733,7 +1734,7 @@ class _DailyHistoryCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(summary.dateKey),
+                  Text(formatDisplayDateKey(summary.dateKey)),
                   const SizedBox(height: 4),
                   Text(strings.dateSummarySubtitle(
                       summary.dateKey, summary.entryCount)),
@@ -1938,7 +1939,7 @@ class _WorkoutHistoryCard extends ConsumerWidget {
                       const SizedBox(height: 4),
                       Text(
                         strings.workoutDateSetsSummary(
-                          session.dateKey,
+                          formatDisplayDateKey(session.dateKey),
                           session.totalSets,
                           session.totalReps,
                         ),

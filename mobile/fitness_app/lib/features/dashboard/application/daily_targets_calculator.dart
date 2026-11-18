@@ -7,6 +7,7 @@ import '../../../shared/app_state.dart';
 import '../../workout/application/manual_workout_controller.dart';
 import '../../workout/domain/gym_set_entry.dart';
 import '../../workout/domain/manual_workout_session.dart';
+import '../../../shared/date_format.dart';
 import '../domain/daily_targets.dart';
 import '../application/daily_weight_controller.dart';
 
@@ -507,8 +508,5 @@ List<ProgressPoint> _normalize(List<ProgressPoint> points,
 }
 
 String _shortDate(String dateKey) {
-  if (dateKey.length < 10) {
-    return dateKey;
-  }
-  return dateKey.substring(5);
+  return formatDisplayDateKey(dateKey);
 }
