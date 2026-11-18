@@ -45,6 +45,30 @@ async function request(path, options = {}, authenticated = true) {
   return response.status === 204 ? null : response.json();
 }
 
+async function refreshSession() {
+  if (!session?.refresh_token) throw new Error('Your sign-in session has expired.');
+  const response = await fetch(`${config.supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
+    method: 'POST',
+    headers: {
+      apikey: config.supabaseAnonKey,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ refresh_token: session.refresh_token }),
+  });
+  if (!response.ok) throw new Error('Your sign-in session has expired.');
+  session = await response.json();
+  await chrome.storage.local.set({ session });
+}
+
+async function clearExpiredSession() {
+  await chrome.storage.local.remove('session');
+  session = undefined;
+  builderView.hidden = true;
+  $('#sign-out').hidden = true;
+  authView.hidden = false;
+  showStatus('Your session expired. Sign in again to continue.');
+}
+
 async function loadLibrary() {
   const userId = session.user.id;
   const rows = await request(`/rest/v1/workout_routines?select=library&user_id=eq.${encodeURIComponent(userId)}`);
@@ -195,7 +219,13 @@ async function saveLibrary() {
 }
 
 function setAuthenticatedView() {
-  loadLibrary().catch((error) => showStatus(error.message, true));
+  loadLibrary().catch(async (error) => {
+    if (error.message === 'JWT expired') {
+      await clearExpiredSession();
+      return;
+    }
+    showStatus(error.message, true);
+  });
 }
 
 async function initialize() {
@@ -205,6 +235,12 @@ async function initialize() {
     return;
   }
   if (session?.access_token && session?.user?.id) {
+    try {
+      await refreshSession();
+    } catch (_) {
+      await clearExpiredSession();
+      return;
+    }
     setAuthenticatedView();
     return;
   }
