@@ -1,5 +1,14 @@
 # Estado actual
 
+## Continuidad AMARILLO 2026-11-18
+
+- Se aplicaron en Supabase remoto las cuatro migraciones que faltaban, incluida `20261117_000004_workout_routines.sql`; `public.workout_routines` existe con RLS en el proyecto enlazado `cyecalxewqcyxxglxloa`.
+- Se probó la extensión Chrome con OTP real. Se corrigieron dos fallos de cliente: `JWT expired` ahora renueva la sesión con `refresh_token` o vuelve al acceso OTP, y el guardado acepta una respuesta exitosa vacía de Supabase.
+- Los fixes de extensión están publicados como `c6f0238 Refresh expired extension sessions` y `5a52fdd Handle empty routine save responses`; recargar la extensión en `chrome://extensions` para usarlos.
+- La navegación móvil de rutinas era poco visible: desde `Manual workout` ahora hay un botón de texto `Edit weekly routine`, y la pantalla `Weekly routine` incluye `Reload routines` para descargar manualmente la biblioteca remota. Está publicado como `7fb7afc Add manual routine refresh action`.
+- Punto exacto de reanudación: en la Mac mini, hacer `git pull --ff-only origin main`, recompilar/instalar Myfit, autenticar con el mismo correo OTP de Chrome y comprobar `Manual workout` → `Edit weekly routine` → `Reload routines`. La rutina `Prueba Chrome` guardada desde la extensión debe aparecer.
+- Verificación del bloque: `node --check extensions/myfit-routine-builder/popup.js`, `node --check extensions/myfit-routine-builder/options.js`, `git diff --check` y `flutter test test/features/workout/manual_workout_controller_test.dart` pasaron. En CachyOS, `flutter analyze` tiene dos errores preexistentes de compatibilidad en `onboarding_screen.dart` por `DropdownButtonFormField.initialValue`; no continuar asumiendo que el análisis completo está verde hasta resolverlos.
+
 ## Continuidad AMARILLO 2026-11-17
 
 - Se implementó `extensions/myfit-routine-builder`, una extensión Manifest V3 para Chrome con UI oscura, navegación por días y edición de rutinas, ejercicios, sets, reps, kg, superseries y trisets.

@@ -1,11 +1,11 @@
 # Retomar en Mac mini
 
-## Estado local macOS, 2026-11-17
+## Estado local macOS, 2026-11-18
 
 Este entorno detecta `iPhone 18 Pro` Simulator con ID `A048785F-667B-4FD7-97BD-CB97035601A4`. Myfit compiló, se instaló e inició mediante `xcrun simctl` el 2026-11-17. Confirmar la UI y hot reload antes de tomarlo como QA iOS concluyente.
 
 ```bash
-cd /Volumes/HDD/Github/Myfit/mobile/fitness_app
+cd /Users/macmini/Projects/Myfit/mobile/fitness_app
 flutter run -d A048785F-667B-4FD7-97BD-CB97035601A4 \
   --dart-define-from-file=dart_defines.local.json
 ```
@@ -14,14 +14,22 @@ No versionar `dart_defines.local.json`.
 
 La rama actual incluye el rediseño dark minimalista del dashboard, onboarding y componentes compartidos. Tras iniciar, comprobar primero el layout en teléfono, tipografía dinámica y navegación de las cuatro pestañas antes de retomar trabajo de producto.
 
-La rutina semanal ahora sincroniza con `public.workout_routines` cuando la migración `20261117_000004_workout_routines.sql` esté aplicada. La extensión Chrome relacionada está en `extensions/myfit-routine-builder`; seguir `docs/setup/chrome_routine_builder.md` para cargarla y autenticarla con la misma cuenta OTP.
+La migración `20261117_000004_workout_routines.sql` ya está aplicada en Supabase. Tras actualizar el repositorio, la extensión Chrome relacionada está en `extensions/myfit-routine-builder`; seguir `docs/setup/chrome_routine_builder.md`, cargarla y autenticarla con la misma cuenta OTP que Myfit.
+
+Para comprobar una rutina creada en Chrome, recompilar la app y abrir:
+
+```text
+Manual workout → Edit weekly routine → Reload routines
+```
+
+`Reload routines` descarga manualmente la biblioteca remota. La build debe incluir al menos el commit `7fb7afc Add manual routine refresh action`.
 
 ## Instalar en iPhone físico
 
 El iPhone conectado es `Mariano's iPhone` (iPhone 16, UDID `00008140-0002313E1141801C`). Para instalar una build que se pueda abrir desde el icono sin depurador:
 
 ```bash
-cd /Volumes/HDD/Github/Myfit/mobile/fitness_app
+cd /Users/macmini/Projects/Myfit/mobile/fitness_app
 flutter run --release --no-resident -d 00008140-0002313E1141801C \
   --dart-define-from-file=dart_defines.local.json
 ```

@@ -1,10 +1,10 @@
 # Myfit Project Status
 
-Actualizado: 2026-11-17.
+Actualizado: 2026-11-18.
 
 ## Punto De Reanudacion
 
-Myfit tiene una extensión Chrome inicial para construir rutinas semanales en escritorio. Flutter y la extensión comparten un documento remoto de rutinas por usuario autenticado; el almacenamiento local de Flutter permanece como respaldo offline.
+Myfit tiene una extensión Chrome para construir rutinas semanales en escritorio. Flutter y la extensión comparten un documento remoto de rutinas por usuario autenticado; el almacenamiento local de Flutter permanece como respaldo offline. El próximo punto exacto es recompilar Myfit en iOS desde `7fb7afc`, entrar con la misma cuenta OTP que Chrome y comprobar `Manual workout` → `Edit weekly routine` → `Reload routines`.
 
 ## Ultimo Trabajo Hecho
 
@@ -22,8 +22,10 @@ Myfit tiene una extensión Chrome inicial para construir rutinas semanales en es
 - El plan de este trabajo es `.agent/plans/2026-11-16-ui-ux-refresh.md`.
 - La nueva implementación está descrita en `.agent/plans/2026-11-17-chrome-routine-builder.md`.
 - La extensión está en `extensions/myfit-routine-builder`; usa OTP, no usa claves privilegiadas y permite editar bloques normales, superseries y trisets de lunes a domingo.
-- La migración pendiente `backend/supabase/migrations/20261117_000004_workout_routines.sql` crea `public.workout_routines` con RLS. Debe aplicarse antes de probar sincronización real.
+- Las migraciones remotas pendientes se aplicaron al proyecto Supabase `cyecalxewqcyxxglxloa`, incluida `20261117_000004_workout_routines.sql`, que crea `public.workout_routines` con RLS.
 - La guía de instalación y conexión está en `docs/setup/chrome_routine_builder.md`.
+- La extensión está en versión `0.1.1`: renueva su sesión Supabase al abrirse y, si la renovación falla, vuelve al formulario OTP. También acepta la respuesta vacía exitosa de Supabase al guardar rutinas.
+- La app expone ahora un botón visible `Edit weekly routine` desde `Manual workout`. La pantalla `Weekly routine` incluye `Reload routines`, que vuelve a descargar la biblioteca desde Supabase bajo demanda.
 - Tras verificar correctamente un OTP, el login navega explícitamente a onboarding; el router redirige perfiles ya completos al dashboard. Esto evita que la pantalla de código parezca no responder mientras se actualiza la sesión asíncrona.
 - El sexto dígito OTP ahora verifica automáticamente, cierra el teclado y muestra carga o error visible en la pantalla.
 - Inglés usa locale `en_GB` y fechas visibles `DD/MM/YYYY`; ISO continúa reservado para claves y persistencia.
@@ -39,13 +41,13 @@ Myfit tiene una extensión Chrome inicial para construir rutinas semanales en es
 
 ## Verificaciones
 
-Desde `mobile/fitness_app` pasaron el 2026-11-17:
+Desde `mobile/fitness_app` pasó el 2026-11-18:
 
 ```bash
-flutter test
+flutter test test/features/workout/manual_workout_controller_test.dart
 ```
 
-`flutter analyze` no tuvo errores nuevos; conserva 8 avisos informativos preexistentes sobre `value` de campos de formulario. `node --check` pasó para `popup.js` y `options.js`; `git diff --check` también pasó.
+`node --check` pasó para `popup.js` y `options.js`; `git diff --check` también pasó. En este entorno, `flutter analyze` queda bloqueado por dos errores preexistentes en `onboarding_screen.dart` (`DropdownButtonFormField.initialValue` no está disponible en la versión local de Flutter); no fueron introducidos por la sincronización de rutinas.
 
 ## Estado Android
 
@@ -55,10 +57,10 @@ flutter test
 
 ## Siguiente Paso
 
-1. Aplicar la migración `20261117_000004_workout_routines.sql` en Supabase.
-2. Cargar la extensión desde `chrome://extensions`, configurar URL/anon key, autenticar con OTP y probar sincronización con Flutter en la misma cuenta.
-3. Hacer QA visual del dashboard, onboarding, comida y workout en Android e iOS.
-4. Preparar firma Android, privacy policy pública y soporte para export/delete.
+1. En la Mac mini, hacer `git pull --ff-only origin main`, recompilar/instalar Myfit desde `7fb7afc` y autenticarse con el mismo email OTP usado en Chrome.
+2. Abrir `Manual workout` → `Edit weekly routine` → `Reload routines` y confirmar que aparece la rutina guardada desde Chrome, incluidos sus bloques por día.
+3. Si no aparece, comprobar el usuario de Supabase y los `dart-define` de la build móvil antes de cambiar el modelo de sincronización.
+4. Hacer QA visual del dashboard, onboarding, comida y workout en Android e iOS; después preparar firma Android, privacy policy pública y soporte para export/delete.
 
 ## Notas De Git
 
@@ -67,3 +69,4 @@ flutter test
 - `.agent/skills/impeccable/` queda intencionalmente sin seguimiento: fue generado por una inicialización externa y no forma parte de Myfit.
 - No versionar `mobile/fitness_app/dart_defines.local.json` ni secretos.
 - Los ajustes de Xcode ahora se incluyen para preservar la firma Release del equipo `33SY9X526C` usada en el iPhone físico.
+- Los commits recientes publicados son `c6f0238 Refresh expired extension sessions`, `5a52fdd Handle empty routine save responses` y `7fb7afc Add manual routine refresh action`.

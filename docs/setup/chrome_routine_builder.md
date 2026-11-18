@@ -24,10 +24,13 @@ The extension lets an authenticated Myfit user build weekly gym routines from a 
 4. Paste the email OTP in the extension. Pasting is intentionally allowed for accessibility and password-manager support.
 5. Create/edit routines and select **Save changes**.
 
+If the popup was already open before this update, reload the extension from `chrome://extensions`. Version `0.1.1` renews a valid saved session automatically; if it cannot be renewed, it shows the OTP sign-in form again.
+
 ## Synchronization behavior
 
 - The browser stores one `WorkoutRoutineLibrary` document per authenticated user in `public.workout_routines`.
 - Flutter reads that document after authentication and writes each later routine edit to it.
+- In Flutter, open **Manual workout** → **Edit weekly routine** → **Reload routines** to force a manual download after a browser save.
 - The local Flutter data remains an offline cache.
 - Simultaneous browser and phone edits use last-write-wins. Avoid editing the same routine in both places at once.
 
