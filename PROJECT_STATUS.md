@@ -24,6 +24,7 @@ Myfit tiene una extensión Chrome inicial para construir rutinas semanales en es
 - La extensión está en `extensions/myfit-routine-builder`; usa OTP, no usa claves privilegiadas y permite editar bloques normales, superseries y trisets de lunes a domingo.
 - La migración pendiente `backend/supabase/migrations/20261117_000004_workout_routines.sql` crea `public.workout_routines` con RLS. Debe aplicarse antes de probar sincronización real.
 - La guía de instalación y conexión está en `docs/setup/chrome_routine_builder.md`.
+- Tras verificar correctamente un OTP, el login navega explícitamente a onboarding; el router redirige perfiles ya completos al dashboard. Esto evita que la pantalla de código parezca no responder mientras se actualiza la sesión asíncrona.
 
 ## Estado iOS
 

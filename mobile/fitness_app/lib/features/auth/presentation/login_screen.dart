@@ -489,6 +489,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     try {
       await controller.verifySignInCode(email: email, token: token);
+      if (!mounted) {
+        return;
+      }
+
+      // Auth state refreshes asynchronously; onboarding is valid for new and
+      // returning users, and the router redirects completed profiles home.
+      context.go('/onboarding');
     } catch (error) {
       _showMessage(strings.verifyCodeErrorMessage(error));
     }
