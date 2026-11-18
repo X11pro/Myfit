@@ -66,6 +66,7 @@ The JSON is the existing `WorkoutRoutineLibrary.toJson()` output, preserving the
 - [x] Format, analyze and test relevant targets.
 - [x] Refresh Supabase browser sessions on popup initialization; an invalid refresh token returns the user to OTP sign-in rather than leaving the editor blocked by `JWT expired`.
 - [x] Accept successful empty Supabase responses when saving a routine library.
+- [x] Make the mobile weekly-routine editor discoverable with a labeled action and let users manually refresh its remote library.
 
 ## Tests
 

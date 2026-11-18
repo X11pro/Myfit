@@ -32,10 +32,24 @@ class WeeklyWorkoutRoutineScreen extends ConsumerWidget {
               subtitle: strings.weeklyRoutineSubtitle,
             ),
             const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: () => _createRoutine(context, ref, strings),
-              icon: const Icon(Icons.add),
-              label: Text(strings.newRoutineButton),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                FilledButton.icon(
+                  onPressed: () => _createRoutine(context, ref, strings),
+                  icon: const Icon(Icons.add),
+                  label: Text(strings.newRoutineButton),
+                ),
+                OutlinedButton.icon(
+                  key: const Key('reload-routines-button'),
+                  onPressed: () => ref
+                      .read(weeklyWorkoutRoutineProvider.notifier)
+                      .refreshFromRemote(),
+                  icon: const Icon(Icons.refresh_outlined),
+                  label: Text(strings.reloadRoutinesButton),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             if (routine == null)

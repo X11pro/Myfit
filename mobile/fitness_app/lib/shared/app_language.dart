@@ -301,6 +301,9 @@ class AppStrings {
   String get editWeeklyRoutineButton =>
       isEnglish ? 'Edit weekly routine' : 'Editar rutina semanal';
 
+  String get reloadRoutinesButton =>
+      isEnglish ? 'Reload routines' : 'Actualizar rutinas';
+
   String loadRoutineForDay(String day) =>
       isEnglish ? 'Load $day routine' : 'Cargar rutina de $day';
 

@@ -105,6 +105,11 @@ class WeeklyWorkoutRoutineNotifier extends Notifier<WorkoutRoutineLibrary> {
     await _persistAndSync();
   }
 
+  Future<void> refreshFromRemote() async {
+    _remoteUserId = null;
+    await _rehydrateRemote();
+  }
+
   Future<void> _loadLocal() async {
     final prefs = await SharedPreferences.getInstance();
     final rawRoutine = prefs.getString(_storageKey);

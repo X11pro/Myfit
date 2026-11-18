@@ -382,13 +382,17 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                           icon: const Icon(Icons.content_copy_outlined),
                         ),
                       ],
-                      const SizedBox(width: 8),
-                      IconButton.outlined(
-                        tooltip: strings.editWeeklyRoutineButton,
-                        onPressed: () => context.push('/workout/routine'),
-                        icon: const Icon(Icons.calendar_month_outlined),
-                      ),
                     ],
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      key: const Key('edit-weekly-routine-button'),
+                      onPressed: () => context.push('/workout/routine'),
+                      icon: const Icon(Icons.calendar_month_outlined),
+                      label: Text(strings.editWeeklyRoutineButton),
+                    ),
                   ),
                   if (!_isEditing &&
                       _draftSets.isEmpty &&
