@@ -38,11 +38,13 @@ async function request(path, options = {}, authenticated = true) {
   };
   if (authenticated) headers.Authorization = `Bearer ${session.access_token}`;
   const response = await fetch(`${config.supabaseUrl}${path}`, { ...options, headers });
+  const bodyText = await response.text();
   if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
+    let body = {};
+    try { body = JSON.parse(bodyText || '{}'); } catch (_) {}
     throw new Error(body.msg || body.message || body.error_description || 'The request could not be completed.');
   }
-  return response.status === 204 ? null : response.json();
+  return bodyText ? JSON.parse(bodyText) : null;
 }
 
 async function refreshSession() {
