@@ -1,5 +1,12 @@
 # Retomar en CachyOS
 
+## Estado de reanudación 2026-11-19
+
+- El emulador Android a usar es **siempre el local de esta PC**, `emulator-5554` (`Pixel_10_Pro`), no uno remoto.
+- El Flutter local es 3.32.0 y presenta dos errores de compatibilidad en onboarding (`DropdownButtonFormField.initialValue`); la Mac tiene Flutter 3.47.6. La configuración local `mobile/fitness_app/dart_defines.local.json` falta en esta PC. No generar builds sin configuración Supabase ni guardar secretos en Git.
+- La última APK debug de la UI se compiló en la Mac con su configuración local y se instaló en el emulador local sin borrar datos. Revisar visualmente antes de release.
+- La Mac responde en `Mariano@192.168.1.244`; el repo Git real está en `/Volumes/HDD/Github/Myfit`. Contiene cambios de UI copiados desde esta PC; comprobar `git status` antes de sincronizar.
+
 ## 1. Clonar el repo
 
 ```bash

@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Deep forest surfaces keep focus on daily progress and actions.
-  static const background = Color(0xFF101815);
-  static const backgroundSecondary = Color(0xFF151F1B);
-  static const surface = Color(0xFF1B2822);
-  static const surfaceMuted = Color(0xFF26352E);
-  static const border = Color(0xFF34473D);
-  static const charcoal = Color(0xFFF2F7F3);
-  static const primary = Color(0xFF8FE3B0);
-  static const success = Color(0xFF8FE3B0);
-  static const warning = Color(0xFFFFA36C);
-  static const danger = Color(0xFFFF8C8C);
-  static const mutedText = Color(0xFFB1C0B7);
+  // Neutral, layered surfaces give data and primary actions more prominence.
+  static const background = Color(0xFF10151B);
+  static const backgroundSecondary = Color(0xFF171E26);
+  static const surface = Color(0xFF1C252E);
+  static const surfaceMuted = Color(0xFF27323D);
+  static const border = Color(0xFF3B4854);
+  static const charcoal = Color(0xFFF3F6F8);
+  static const primary = Color(0xFF9EE8CC);
+  static const success = Color(0xFF9EE8CC);
+  static const warning = Color(0xFFFFBA87);
+  static const danger = Color(0xFFFFA5A5);
+  static const mutedText = Color(0xFFBCC9D1);
 
   static ThemeData dark() {
     final colorScheme = ColorScheme.fromSeed(
@@ -46,6 +46,13 @@ class AppTheme {
       textTheme: Typography.material2021().white.apply(
             bodyColor: charcoal,
             displayColor: charcoal,
+          ).copyWith(
+            titleLarge: const TextStyle(
+              color: charcoal,
+              fontSize: 21,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.3,
+            ),
           ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: surfaceMuted,
@@ -88,7 +95,7 @@ class AppTheme {
           minimumSize: const Size(0, 54),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          textStyle: const TextStyle(fontWeight: FontWeight.w800),
+          textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -96,6 +103,7 @@ class AppTheme {
           foregroundColor: charcoal,
           minimumSize: const Size(0, 52),
           side: const BorderSide(color: border),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),

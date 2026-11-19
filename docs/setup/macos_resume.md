@@ -1,5 +1,9 @@
 # Retomar en Mac mini
 
+## Actualización 2026-11-19
+
+La IP SSH confirmada es `Mariano@192.168.1.244` y la copia Git real es `/Volumes/HDD/Github/Myfit`; `/Users/macmini/Projects/Myfit` es un espejo sin `.git`. Los archivos de UI se copiaron a la copia Git real y pueden aparecer modificados: revisar `git status` antes de hacer pull, sin descartarlos. El simulador iOS ejecutó la nueva UI. La instalación Release en el iPhone físico quedó bloqueada por CocoaPods ausente o fuera del PATH de SSH.
+
 ## Estado local macOS, 2026-11-18
 
 Este entorno detecta `iPhone 18 Pro` Simulator con ID `A048785F-667B-4FD7-97BD-CB97035601A4`. Myfit compiló, se instaló e inició mediante `xcrun simctl` el 2026-11-17. Confirmar la UI y hot reload antes de tomarlo como QA iOS concluyente.

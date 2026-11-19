@@ -1,13 +1,15 @@
 # Myfit Project Status
 
-Actualizado: 2026-11-18.
+Actualizado: 2026-11-19.
 
 ## Punto De Reanudacion
 
-Myfit tiene una extensión Chrome para construir rutinas semanales en escritorio. Flutter y la extensión comparten un documento remoto de rutinas por usuario autenticado; el almacenamiento local de Flutter permanece como respaldo offline. El próximo punto exacto es recompilar Myfit en iOS desde `7fb7afc`, entrar con la misma cuenta OTP que Chrome y comprobar `Manual workout` → `Edit weekly routine` → `Reload routines`.
+Myfit tiene una extensión Chrome para construir rutinas semanales en escritorio. Flutter y la extensión comparten un documento remoto de rutinas por usuario autenticado; el almacenamiento local de Flutter permanece como respaldo offline. La primera pasada de UI con superficies azul grisáceas y acentos menta está instalada en los simuladores Android local e iOS de la Mac; falta QA visual y confirmar la sincronización de rutinas con la misma cuenta OTP.
 
 ## Ultimo Trabajo Hecho
 
+- Se actualizó el tema compartido, la jerarquía de secciones y la extensión Chrome para usar la misma paleta. El dashboard ya no muestra una variación de peso fija ficticia; muestra la acción de registrar peso.
+- Android se compiló en la Mac y se instaló en el emulador **local** `emulator-5554`; iOS se compiló e inició en el simulador de la Mac. Falta revisión visual, accesibilidad y texto grande.
 - El tema global usa superficies verde bosque oscuras, verde menta para progreso y coral para avisos/energía.
 - El dashboard se reorganizó para priorizar balance, macros, acciones rápidas, actividad y métricas secundarias.
 - Onboarding, tarjetas compartidas, campos, botones y barra superior usan el mismo sistema visual; la barra superior muestra una única acción de más opciones.
@@ -57,8 +59,8 @@ flutter test test/features/workout/manual_workout_controller_test.dart
 
 ## Siguiente Paso
 
-1. En la Mac mini, hacer `git pull --ff-only origin main`, recompilar/instalar Myfit desde `7fb7afc` y autenticarse con el mismo email OTP usado en Chrome.
-2. Abrir `Manual workout` → `Edit weekly routine` → `Reload routines` y confirmar que aparece la rutina guardada desde Chrome, incluidos sus bloques por día.
+1. Revisar la nueva UI en el emulador Android local y el simulador iOS de la Mac; recargar la extensión en `chrome://extensions` y revisar su apariencia.
+2. Autenticarse en el móvil con el mismo email OTP de Chrome y abrir `Manual workout` → `Edit weekly routine` → `Reload routines` para confirmar la sincronización.
 3. Si no aparece, comprobar el usuario de Supabase y los `dart-define` de la build móvil antes de cambiar el modelo de sincronización.
 4. Hacer QA visual del dashboard, onboarding, comida y workout en Android e iOS; después preparar firma Android, privacy policy pública y soporte para export/delete.
 

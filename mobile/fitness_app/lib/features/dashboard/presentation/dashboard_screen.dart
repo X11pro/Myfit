@@ -157,9 +157,7 @@ class DashboardScreen extends ConsumerWidget {
                   value: currentWeightKg == null
                       ? '--'
                       : '${currentWeightKg.toStringAsFixed(1)} kg',
-                  subtitle: currentWeightKg == null
-                      ? strings.logWeightTitle
-                      : strings.weeklyWeightDelta(0.2),
+                  subtitle: strings.logWeightTitle,
                   icon: Icons.monitor_weight_outlined,
                   accent: AppTheme.success,
                   onTap: () => _showWeightDialog(context, ref, strings),

@@ -1,5 +1,14 @@
 # Estado actual
 
+## Continuidad AMARILLO 2026-11-19
+
+- Primera pasada visual: tema compartido azul grisáceo oscuro con acento menta, mejoras de jerarquía y estilos equivalentes en `extensions/myfit-routine-builder/styles.css`. El dashboard ya no muestra una variación de peso fija de 0.2.
+- El emulador Android debe ser siempre el local de esta PC: `emulator-5554`. La APK debug se compiló en la Mac con su Flutter y configuración local, se copió temporalmente a `/tmp/opencode/` y se instaló sin borrar datos. El simulador iOS `A048785F-667B-4FD7-97BD-CB97035601A4` también ejecutó la UI nueva.
+- La Mac está accesible por SSH en `Mariano@192.168.1.244` con `~/.ssh/id_ed25519_macmini`. Su copia Git real es `/Volumes/HDD/Github/Myfit`; `/Users/macmini/Projects/Myfit` es un espejo sin `.git`. Los tres archivos Dart de UI se copiaron a la copia Git de la Mac y están modificados allí: no sobrescribirlos ni hacer pull sin revisar.
+- El iPhone físico sigue pendiente de instalación Release: Flutter por SSH reportó CocoaPods ausente o fuera del PATH. No se reinstaló la app del iPhone.
+- Validación: 9 pruebas `manual_workout_screen_test.dart`, `node --check` para ambos JS de la extensión y `git diff --check` pasaron. `flutter analyze --no-pub` en CachyOS (Flutter 3.32.0) sigue con dos errores preexistentes de `initialValue` en onboarding; la Mac usa Flutter 3.47.6. La configuración local `dart_defines.local.json` falta en CachyOS y existe en la Mac; no copiar ni versionar secretos.
+- Próximo paso: revisión visual en ambos simuladores y extensión recargada; comprobar la rutina `Prueba Chrome` con la misma cuenta, además de contraste y texto grande. No se ha validado esa sincronización end-to-end.
+
 ## Continuidad AMARILLO 2026-11-18
 
 - Se aplicaron en Supabase remoto las cuatro migraciones que faltaban, incluida `20261117_000004_workout_routines.sql`; `public.workout_routines` existe con RLS en el proyecto enlazado `cyecalxewqcyxxglxloa`.
