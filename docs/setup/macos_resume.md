@@ -1,5 +1,13 @@
 # Retomar en Mac mini
 
+## Firma iOS por SSH
+
+CocoaPods está en `/opt/homebrew/bin`. Para compilar desde una shell remota,
+añadir esa ruta al `PATH` y usar `LANG=en_US.UTF-8`. Si Xcode encuentra el
+certificado pero `codesign` devuelve `errSecInternalComponent`, ejecutar la
+compilación desde Terminal en la sesión gráfica de la Mac y atender cualquier
+aviso de acceso al llavero allí. No guardar ni transmitir la contraseña.
+
 ## Actualización 2026-11-19
 
 La IP SSH confirmada es `Mariano@192.168.1.244` y la copia Git real es `/Volumes/HDD/Github/Myfit`; `/Users/macmini/Projects/Myfit` es un espejo sin `.git`. Los archivos de UI se copiaron a la copia Git real y pueden aparecer modificados: revisar `git status` antes de hacer pull, sin descartarlos. El simulador iOS ejecutó la nueva UI. La instalación Release en el iPhone físico quedó bloqueada por CocoaPods ausente o fuera del PATH de SSH.

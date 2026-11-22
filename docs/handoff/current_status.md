@@ -1,5 +1,10 @@
 # Estado actual
 
+## Seguimiento 2026-11-22
+
+- Se publicó la UI de Stitch en la rama secundaria `feature/stitch-mobile-ui` (`c4f37f1`), sin integrar en `main`.
+- Se compiló e instaló la build Release correspondiente en el iPhone 16 físico desde una copia temporal de la Mac mini. CocoaPods estaba en `/opt/homebrew/bin`; la firma desde SSH falló con `errSecInternalComponent` y la compilación desde Terminal en la sesión gráfica funcionó. `devicectl` confirmó la instalación de `com.example.fitnessApp`. El lanzamiento remoto fue rechazado porque el iPhone estaba bloqueado; queda abrir la app desde su icono y verificarla en el dispositivo.
+
 ## Seguimiento 2026-11-20
 
 - **Progress & Analytics** en `/dashboard/progress`: periodos 7D/30D/90D/1Y, media móvil de peso, registro de peso, barras de ingesta y objetivo, macros medios, e1RM Epley y volumen por ejercicio. Exportación CSV del periodo mediante vista previa y copia; los gráficos detallados previos siguen accesibles. No se afirma sincronización con HealthKit ni descarga cifrada.
