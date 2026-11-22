@@ -151,19 +151,21 @@ void main() {
                 theme: AppTheme.dark(),
                 home: const ProgressScreen()))));
     await tester.pumpAndSettle();
-    final dir = Platform.environment['STITCH_CAPTURE_DIR'];
-    if (dir != null) {
+    Future<void> capture(String name) async {
+      final dir = Platform.environment['STITCH_CAPTURE_DIR'];
+      if (dir == null) return;
       final boundary =
           key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
       await tester.runAsync(() async {
         final image = await boundary.toImage(pixelRatio: 1);
         final data = await image.toByteData(format: ui.ImageByteFormat.png);
         await Directory(dir).create(recursive: true);
-        await File('$dir/progress.png')
-            .writeAsBytes(data!.buffer.asUint8List());
+        await File('$dir/$name.png').writeAsBytes(data!.buffer.asUint8List());
         image.dispose();
       });
     }
+
+    await capture('progress');
     expect(find.text('12 / 30 days logged'), findsOneWidget);
     await tester.tap(find.text('7D'));
     await tester.pumpAndSettle();
@@ -171,6 +173,14 @@ void main() {
     await tester.tap(find.text('Export'));
     await tester.pumpAndSettle();
     expect(find.textContaining('date,weight_kg,food_kcal'), findsOneWidget);
+    await capture('progress-export');
+    await tester.tap(find.text('Close'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Log'));
+    await tester.tap(find.text('Log'));
+    await tester.pumpAndSettle();
+    expect(find.text('Log today weight'), findsOneWidget);
+    await capture('progress-weight');
     expect(tester.takeException(), isNull);
   });
 }

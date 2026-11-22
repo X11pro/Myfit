@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:fitness_app/features/workout/presentation/manual_workout_screen.dart';
+import 'package:fitness_app/features/workout/domain/weekly_workout_routine.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -43,6 +44,24 @@ void main() {
     expect(find.byKey(const ValueKey('quick-set-3-KG')), findsOneWidget);
   });
 
+  testWidgets('double Add and double Finish produce one set in one session',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1080, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await _pumpManualWorkoutScreen(tester);
+    await _addBasicSet(tester, doubleTap: true);
+    final finish = find.byKey(const Key('save-workout-button'));
+    await tester.ensureVisible(finish);
+    await tester.tap(finish);
+    await tester.tap(finish);
+    await tester.pumpAndSettle();
+    final prefs = await SharedPreferences.getInstance();
+    final rows =
+        jsonDecode(prefs.getString('manual_workout_sessions')!) as List;
+    expect(rows, hasLength(1));
+    expect(rows.single['sets'], hasLength(1));
+  });
+
   testWidgets('updates a set weight directly from the workout screen', (
     WidgetTester tester,
   ) async {
@@ -66,6 +85,115 @@ void main() {
     );
     expect(field.initialValue, '85');
   });
+
+  testWidgets('routine wins overlap and does not reload edited session sets',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1080, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final routine = WeeklyWorkoutRoutine(
+      id: 'weekly',
+      name: 'Week 1',
+      blocksByWeekday: {
+        DateTime.now().weekday: const [
+          WorkoutRoutineBlock(
+            type: WorkoutRoutineBlockType.superset,
+            exercises: [
+              WorkoutRoutineExercise(
+                exerciseName: ' flat barbell  or dumbbell bench press ',
+                muscleGroup: 'Chest',
+                sets: 4,
+                reps: 8,
+                weightKg: 90,
+              ),
+              WorkoutRoutineExercise(
+                exerciseName: 'Cable row',
+                muscleGroup: 'Back',
+                sets: 2,
+                reps: 10,
+                weightKg: 30,
+              ),
+            ],
+          ),
+        ],
+      },
+    );
+    final library =
+        WorkoutRoutineLibrary(activeRoutineId: 'weekly', routines: [routine]);
+    SharedPreferences.setMockInitialValues(
+        {'weekly_workout_routine': jsonEncode(library.toJson())});
+    await _pumpManualWorkoutScreen(tester);
+    await _addBasicSet(tester);
+    final load = find.byKey(const Key('load-routine-button'));
+    await tester.ensureVisible(load);
+    final point = tester.getCenter(load);
+    await tester.tapAt(point);
+    await tester.tapAt(point);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Load routine'));
+    await tester.pumpAndSettle();
+    expect(tester.widget<FilledButton>(load).onPressed, isNull);
+    expect(find.text('flat barbell  or dumbbell bench press'), findsOneWidget);
+    final row = find.byKey(const ValueKey('exercise-group-Cable row'));
+    await tester.ensureVisible(row);
+    await tester.tap(row);
+    await tester.pumpAndSettle();
+    final weight = find.byKey(const ValueKey('quick-set-5-KG'));
+    await tester.ensureVisible(weight);
+    await tester.enterText(weight, '35');
+    await tester.pump();
+    final finish = find.byKey(const Key('save-workout-button'));
+    await tester.ensureVisible(finish);
+    await tester.tap(finish);
+    await tester.pumpAndSettle();
+    final prefs = await SharedPreferences.getInstance();
+    final sessions =
+        jsonDecode(prefs.getString('manual_workout_sessions')!) as List;
+    final sets = sessions.single['sets'] as List;
+    expect(sets.map((s) => s['setNumber']), [1, 2, 3, 4, 5, 6]);
+    expect(sets.map((s) => s['weightKg']), [90, 90, 90, 90, 35, 30]);
+    expect(jsonDecode(prefs.getString('weekly_workout_routine')!),
+        library.toJson());
+  });
+
+  for (final addToPlan in [false, true]) {
+    testWidgets('manual extra counts in saved workout; add to plan: $addToPlan',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1080, 1600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      const library =
+          WorkoutRoutineLibrary(activeRoutineId: 'weekly', routines: [
+        WeeklyWorkoutRoutine(id: 'weekly', name: 'Week 1'),
+      ]);
+      SharedPreferences.setMockInitialValues(
+          {'weekly_workout_routine': jsonEncode(library.toJson())});
+      await _pumpManualWorkoutScreen(tester);
+      await _addBasicSet(tester, sets: '2');
+      await tester.tap(find.byKey(const Key('save-workout-button')));
+      await tester.pumpAndSettle();
+      expect(find.byType(CheckboxListTile), findsOneWidget);
+      if (addToPlan) {
+        await tester.tap(find.byType(CheckboxListTile));
+        await tester.pumpAndSettle();
+        await tester.tap(find.widgetWithText(FilledButton, 'Add to routine'));
+      } else {
+        await tester.tap(find.text('Workout only'));
+      }
+      await tester.pumpAndSettle();
+      final prefs = await SharedPreferences.getInstance();
+      final sessions =
+          jsonDecode(prefs.getString('manual_workout_sessions')!) as List;
+      expect(sessions.single['sets'], hasLength(2));
+      final updated = WorkoutRoutineLibrary.fromJson(
+          jsonDecode(prefs.getString('weekly_workout_routine')!));
+      final blocks = updated.activeRoutine!.blocksFor(DateTime.now());
+      if (addToPlan) {
+        expect(blocks.single.exercises.single.sets, 2);
+        expect(blocks.single.exercises.single.weightKg, 80);
+      } else {
+        expect(blocks, isEmpty);
+      }
+    });
+  }
 
   testWidgets('adding a set does not start the rest timer', (
     WidgetTester tester,
@@ -292,7 +420,8 @@ Future<void> _pumpManualWorkoutScreen(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
-Future<void> _addBasicSet(WidgetTester tester, {String sets = '1'}) async {
+Future<void> _addBasicSet(WidgetTester tester,
+    {String sets = '1', bool doubleTap = false}) async {
   await tester.ensureVisible(find.text('Add set'));
   await tester.tap(find.text('Add set'));
   await tester.pumpAndSettle();
@@ -318,7 +447,10 @@ Future<void> _addBasicSet(WidgetTester tester, {String sets = '1'}) async {
   await tester.enterText(fields.at(1), '10');
   await tester.enterText(fields.at(2), '80');
 
-  await tester.tap(find.widgetWithText(FilledButton, 'Add'));
+  final button = find.widgetWithText(FilledButton, 'Add');
+  final point = tester.getCenter(button);
+  await tester.tapAt(point);
+  if (doubleTap) await tester.tapAt(point);
   await tester.pumpAndSettle();
 }
 

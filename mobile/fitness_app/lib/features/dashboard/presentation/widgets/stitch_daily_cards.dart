@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import '../../../../shared/app_language.dart';
 import '../../../food/domain/manual_food_entry.dart';
 import '../../../workout/domain/manual_workout_session.dart';
-import '../dashboard_theme.dart' as design;
+import '../../../../shared/ui/theme/app_theme.dart';
 
-typedef Ink = design.DashboardTheme;
+typedef Ink = AppTheme;
 
 class DailyPanel extends StatelessWidget {
   const DailyPanel(
@@ -160,15 +160,14 @@ class TrainingPanel extends StatelessWidget {
                             style: Theme.of(context).textTheme.labelSmall)))
             ])
           ],
-          FilledButton.tonalIcon(
-              style: FilledButton.styleFrom(
-                  backgroundColor: Ink.surfaceMuted,
-                  foregroundColor: Ink.charcoal),
-              onPressed: open,
-              icon: Icon(s == null ? Icons.play_arrow : Icons.chevron_right),
-              label: Text(s == null
-                  ? strings.startWorkoutButton
-                  : strings.editWorkoutButton))
+          if (s != null)
+            FilledButton.tonalIcon(
+                style: FilledButton.styleFrom(
+                    backgroundColor: Ink.surfaceMuted,
+                    foregroundColor: Ink.charcoal),
+                onPressed: open,
+                icon: const Icon(Icons.chevron_right),
+                label: Text(strings.editWorkoutButton))
         ]);
   }
 }

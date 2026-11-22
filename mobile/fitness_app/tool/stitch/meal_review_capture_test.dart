@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:fitness_app/shared/ui/theme/app_theme.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -86,7 +87,9 @@ void main() {
         child: RepaintBoundary(
             key: key,
             child: MaterialApp.router(
-                debugShowCheckedModeBanner: false, routerConfig: router))));
+                theme: AppTheme.dark(),
+                debugShowCheckedModeBanner: false,
+                routerConfig: router))));
     await t.pumpAndSettle();
 
     await t.pumpAndSettle();

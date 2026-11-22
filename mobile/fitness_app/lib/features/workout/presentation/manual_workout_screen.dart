@@ -6,6 +6,8 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'workout_editor_dialog.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vibration/vibration.dart';
@@ -13,7 +15,8 @@ import 'package:vibration/vibration.dart';
 import '../../../shared/app_language.dart';
 import '../../../shared/date_format.dart';
 import '../../../shared/ui/widgets/premium_card.dart';
-import '../../dashboard/presentation/dashboard_theme.dart';
+import '../../../shared/ui/theme/app_theme.dart';
+import '../../../shared/submission_id.dart';
 import '../../../shared/widgets/myfit_bottom_nav.dart';
 
 import '../application/manual_workout_controller.dart';
@@ -71,6 +74,11 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
   final _restGoalController = TextEditingController(text: '90');
   DateTime _selectedDate = DateTime.now();
   final List<GymSetEntry> _draftSets = [];
+  bool _setEditorOpen = false;
+  bool _savingWorkout = false;
+  bool _routineEditorOpen = false;
+  String? _submissionId;
+
   Timer? _sessionTimer;
   Timer? _restTimer;
   AudioPlayer? _restAlertPlayer;
@@ -78,6 +86,8 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
   Duration _restAccumulated = Duration.zero;
   Duration _restCurrentElapsed = Duration.zero;
   final Set<int> _completed = {};
+  final _appliedRoutineTargets = <String, WorkoutRoutineExercise>{};
+  bool _loadingRoutine = false;
   int _stepRevision = 0;
   bool _restAlertEnabled = false;
   bool _restVibrationEnabled = false;
@@ -141,10 +151,7 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
   }
 
   @override
-  Widget build(BuildContext context) =>
-      Theme(data: DashboardTheme.dark(), child: Builder(builder: _logger));
-
-  Widget _logger(BuildContext context) {
+  Widget build(BuildContext context) {
     final strings = stringsFor(ref);
     final en = strings.isEnglish;
     final sessions = ref.watch(manualWorkoutSessionsProvider);
@@ -154,6 +161,7 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
     final routineBlocks =
         weeklyRoutineLibrary.activeRoutine?.blocksFor(_selectedDate) ??
             const [];
+    final hasRoutineToLoad = _pendingRoutineExercises(routineBlocks).isNotEmpty;
 
     return Scaffold(
       appBar: AppBar(
@@ -168,10 +176,6 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                     en ? AppLanguage.es : AppLanguage.en,
                 child: const Text('EN / ES')),
             IconButton(
-                tooltip: strings.progressScreenTitle,
-                onPressed: () => context.push('/dashboard/progress'),
-                icon: const Icon(Icons.trending_up)),
-            IconButton(
                 tooltip: strings.accountTabLabel,
                 onPressed: () => context.push('/auth'),
                 icon: const Icon(Icons.account_circle_outlined))
@@ -182,22 +186,26 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
           child: ListView(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
               children: [
-                Row(children: [
-                  Expanded(
-                      child: Text(en ? '●  ACTIVE SESSION' : '●  SESIÓN ACTIVA',
+                Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    children: [
+                      Text(en ? '●  ACTIVE SESSION' : '●  SESIÓN ACTIVA',
                           style: Theme.of(context)
                               .textTheme
                               .labelSmall
-                              ?.copyWith(color: DashboardTheme.primary))),
-                  TextButton(
-                      onPressed: _pickDate,
-                      child: Text(formatDisplayDate(_selectedDate))),
-                  FilledButton.icon(
-                      key: const Key('save-workout-button'),
-                      onPressed: _saveWorkout,
-                      icon: const Icon(Icons.check_circle_outline, size: 16),
-                      label: Text(en ? 'Finish' : 'Finalizar'))
-                ]),
+                              ?.copyWith(color: AppTheme.primary)),
+                      TextButton(
+                          onPressed: _pickDate,
+                          child: Text(formatDisplayDate(_selectedDate))),
+                      FilledButton.icon(
+                          key: const Key('save-workout-button'),
+                          onPressed: _savingWorkout ? null : _saveWorkout,
+                          icon:
+                              const Icon(Icons.check_circle_outline, size: 16),
+                          label: Text(en ? 'Finish' : 'Finalizar'))
+                    ]),
                 TextField(
                     key: const Key('workout-title-field'),
                     maxLines: 2,
@@ -241,7 +249,7 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                                 Column(children: [
                                   Text(en ? '● Work' : '● Activo',
                                       style: const TextStyle(
-                                          color: DashboardTheme.primary)),
+                                          color: AppTheme.primary)),
                                   Text(_formatRestDuration(
                                       _activeTrainingElapsed))
                                 ]),
@@ -249,7 +257,7 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                                 Column(children: [
                                   Text(en ? '● Rest' : '● Pausa',
                                       style: const TextStyle(
-                                          color: DashboardTheme.warning)),
+                                          color: AppTheme.warning)),
                                   Text(_formatRestDuration(_totalRestElapsed))
                                 ]),
                                 IconButton(
@@ -267,7 +275,7 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                               const SizedBox(height: 12),
                               DecoratedBox(
                                   decoration: BoxDecoration(
-                                      color: DashboardTheme.surfaceMuted,
+                                      color: AppTheme.surfaceMuted,
                                       borderRadius: BorderRadius.circular(16)),
                                   child: Padding(
                                       padding: const EdgeInsets.all(12),
@@ -277,7 +285,7 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                                           children: [
                                             Row(children: [
                                               const Icon(Icons.timer_outlined,
-                                                  color: DashboardTheme.primary,
+                                                  color: AppTheme.primary,
                                                   size: 18),
                                               const SizedBox(width: 6),
                                               Expanded(
@@ -310,7 +318,7 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                                                                         1.0)
                                                                 : 0,
                                                             backgroundColor:
-                                                                DashboardTheme
+                                                                AppTheme
                                                                     .border),
                                                         const Icon(
                                                             Icons
@@ -387,9 +395,8 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                                                       size: 16,
                                                       color:
                                                           _restVibrationEnabled
-                                                              ? DashboardTheme
-                                                                  .primary
-                                                              : DashboardTheme
+                                                              ? AppTheme.primary
+                                                              : AppTheme
                                                                   .mutedText),
                                                   label: Text(en
                                                       ? 'Haptics'
@@ -551,9 +558,10 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                           onToggle: (i) => setState(() {
                                 if (!_completed.remove(i)) _completed.add(i);
                               }),
-                          onAdd: () => _openQuickSetDialog(
-                              recentExercises: recentExercises),
+                          onAdd: () =>
+                              _openQuickSetDialog(seed: group.value.last.value),
                           onComplete: (i) {
+                            if (_completed.contains(i)) return;
                             setState(() => _completed.add(i));
                             if (_isRestRunning) _finishRestCycle();
                             if (_restTargetDuration.inSeconds > 0) {
@@ -567,26 +575,6 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                           onEdit: (i) => _openQuickSetDialog(
                               index: i, recentExercises: recentExercises),
                           onRemove: _removeSet)),
-                for (final block in routineBlocks
-                    .where((b) => b.type != WorkoutRoutineBlockType.normal))
-                  Card(
-                      child: ExpansionTile(
-                          initiallyExpanded: true,
-                          leading: const Icon(Icons.link),
-                          title: Text(
-                              block.type == WorkoutRoutineBlockType.superset
-                                  ? strings.supersetBlockLabel
-                                  : strings.trisetBlockLabel),
-                          subtitle: Text(block.exercises
-                              .map((e) => e.exerciseName)
-                              .join(' + ')),
-                          children: [
-                        for (final ex in block.exercises)
-                          ListTile(
-                              title: Text(ex.exerciseName),
-                              trailing: Text(
-                                  '${ex.sets} × ${ex.reps} · ${ex.weightKg} kg'))
-                      ])),
                 OutlinedButton.icon(
                     onPressed: () =>
                         _openQuickSetDialog(recentExercises: recentExercises),
@@ -595,24 +583,31 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
                         ? strings.addSetButton
                         : (en ? 'Add exercise' : 'Añadir ejercicio'))),
                 const SizedBox(height: 12),
+                if (!_isEditing && routineBlocks.isNotEmpty)
+                  FilledButton.icon(
+                    key: const Key('load-routine-button'),
+                    onPressed:
+                        _savingWorkout || _loadingRoutine || !hasRoutineToLoad
+                            ? null
+                            : () => _loadRoutine(routineBlocks),
+                    icon: const Icon(Icons.playlist_add),
+                    label: Text(
+                      !hasRoutineToLoad
+                          ? (en
+                              ? 'Routine exercises already in workout'
+                              : 'Los ejercicios de la rutina ya están cargados')
+                          : strings.loadRoutineForDay(
+                              strings.weekdayLabel(_selectedDate.weekday)),
+                    ),
+                  ),
                 Card(
                     child: ListTile(
                         key: const Key('edit-weekly-routine-button'),
-                        onTap: () => context.push('/workout/routine'),
+                        onTap: _editWeeklyRoutine,
                         leading: const Icon(Icons.calendar_month_outlined,
-                            color: DashboardTheme.warning),
+                            color: AppTheme.warning),
                         title: Text(strings.editWeeklyRoutineButton),
-                        subtitle: Text(
-                            '${strings.weekdayLabel(_selectedDate.weekday)} · ${weeklyRoutineLibrary.activeRoutine?.name ?? strings.noRoutineForDay}'),
                         trailing: const Icon(Icons.chevron_right))),
-                if (!_isEditing &&
-                    _draftSets.isEmpty &&
-                    routineBlocks.isNotEmpty)
-                  OutlinedButton(
-                      key: const Key('load-routine-button'),
-                      onPressed: () => _loadRoutine(routineBlocks),
-                      child: Text(strings.loadRoutineForDay(
-                          strings.weekdayLabel(_selectedDate.weekday)))),
                 const SizedBox(height: 24),
                 ExpansionTile(
                     title: Text(strings.workoutHistoryTitle),
@@ -656,6 +651,10 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
       if (!mounted || result == null || result.isEmpty) return;
       text = result;
     }
+    if (_notesController.text.split('\n').any(
+        (line) => routineNameKey(line) == routineNameKey('$prefix: $text'))) {
+      return;
+    }
     _notesController.text = [
       if (_notesController.text.isNotEmpty) _notesController.text,
       '$prefix: $text'
@@ -683,190 +682,27 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
     }
   }
 
-  // ignore: unused_element
-  Future<void> _openLegacyQuickSetDialog({
-    int? index,
-    List<String> recentExercises = const [],
-  }) async {
-    final strings = stringsFor(ref);
-    final existingSet = index == null ? null : _draftSets[index];
-    final exerciseController =
-        TextEditingController(text: existingSet?.exerciseName ?? '');
-    final muscleGroupController =
-        TextEditingController(text: existingSet?.muscleGroup ?? '');
-    final setsController = TextEditingController(text: '1');
-    final repsController =
-        TextEditingController(text: existingSet?.reps.toString() ?? '');
-    final weightController = TextEditingController(
-      text: existingSet?.weightKg.toString() ?? '',
-    );
-    double? selectedRpe = existingSet?.rpe;
-
-    final result = await showDialog<_SetDialogResult>(
-      context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (dialogContext, setDialogState) => AlertDialog(
-          title: Text(
-              index == null ? strings.addSetButton : strings.editSetButton),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  controller: exerciseController,
-                  textCapitalization: TextCapitalization.words,
-                  autofocus: true,
-                  decoration:
-                      InputDecoration(labelText: strings.exerciseNameLabel),
-                ),
-                if (index == null && recentExercises.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: recentExercises.take(6).map((exercise) {
-                      return ActionChip(
-                        label: Text(exercise),
-                        onPressed: () => setDialogState(
-                          () => exerciseController.text = exercise,
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ],
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: weightController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
-                        decoration:
-                            InputDecoration(labelText: strings.setWeightLabel),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextField(
-                        controller: repsController,
-                        keyboardType: TextInputType.number,
-                        decoration:
-                            InputDecoration(labelText: strings.repsLabel),
-                      ),
-                    ),
-                    if (index == null) ...[
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: TextField(
-                          controller: setsController,
-                          keyboardType: TextInputType.number,
-                          decoration:
-                              InputDecoration(labelText: strings.setsLabel),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 8),
-                ExpansionTile(
-                  tilePadding: EdgeInsets.zero,
-                  title: Text(strings.rpeLabel),
-                  children: [
-                    TextField(
-                      controller: muscleGroupController,
-                      textCapitalization: TextCapitalization.words,
-                      decoration:
-                          InputDecoration(labelText: strings.muscleGroupLabel),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        ChoiceChip(
-                          label: Text(strings.noRpeLabel),
-                          selected: selectedRpe == null,
-                          onSelected: (_) =>
-                              setDialogState(() => selectedRpe = null),
-                        ),
-                        ..._rpeOptions.map((value) => ChoiceChip(
-                              label: Text(strings.rpeValueLabel(value)),
-                              selected: selectedRpe == value,
-                              onSelected: (_) => setDialogState(
-                                () => selectedRpe = value,
-                              ),
-                            )),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(strings.cancelButton),
-            ),
-            FilledButton(
-              onPressed: () {
-                final exercise = exerciseController.text.trim();
-                final reps = int.tryParse(repsController.text.trim());
-                final weight = double.tryParse(
-                  weightController.text.trim().replaceAll(',', '.'),
-                );
-                final setsCount = int.tryParse(setsController.text.trim()) ?? 1;
-                if (exercise.isEmpty ||
-                    reps == null ||
-                    weight == null ||
-                    setsCount < 1) {
-                  return;
-                }
-                Navigator.of(dialogContext).pop(
-                  _SetDialogResult(
-                    set: GymSetEntry(
-                      exerciseName: exercise,
-                      muscleGroup: muscleGroupController.text.trim(),
-                      setNumber:
-                          index == null ? _draftSets.length + 1 : index + 1,
-                      reps: reps,
-                      weightKg: weight,
-                      rpe: selectedRpe,
-                    ),
-                    setsCount: index == null ? setsCount : 1,
-                  ),
-                );
-              },
-              child: Text(
-                  index == null ? strings.addButton : strings.updateSetButton),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    await Future<void>.delayed(const Duration(milliseconds: 250));
-    exerciseController.dispose();
-    muscleGroupController.dispose();
-    setsController.dispose();
-    repsController.dispose();
-    weightController.dispose();
-
-    if (result == null) {
-      return;
+  Future<void> _openQuickSetDialog(
+      {int? index,
+      GymSetEntry? seed,
+      List<String> recentExercises = const []}) async {
+    if (_setEditorOpen || _savingWorkout) return;
+    _setEditorOpen = true;
+    try {
+      await _showSetEditor(
+          index: index, seed: seed, recentExercises: recentExercises);
+    } finally {
+      _setEditorOpen = false;
     }
-
-    _applySetDialogResult(result, index: index);
   }
 
-  Future<void> _openQuickSetDialog({
+  Future<void> _showSetEditor({
     int? index,
+    GymSetEntry? seed,
     List<String> recentExercises = const [],
   }) async {
     final strings = stringsFor(ref);
-    final existingSet = index == null ? null : _draftSets[index];
+    final existingSet = index == null ? seed : _draftSets[index];
     final exerciseController = TextEditingController();
     final repsController =
         TextEditingController(text: existingSet?.reps.toString() ?? '');
@@ -897,7 +733,23 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
       selectedExercise = _customExerciseValue;
     }
 
-    final result = await showDialog<_SetDialogResult>(
+    var submitted = false;
+    String? validation;
+    final en = strings.isEnglish;
+    final theme = Theme.of(context);
+    void shiftLoad(double delta) {
+      final raw = double.tryParse(weightController.text.replaceAll(',', '.'));
+      final current = raw != null && raw.isFinite ? raw : 0.0;
+      weightController.text = math.max(0, current + delta).toString();
+    }
+
+    void shiftReps(int delta) {
+      repsController.text = math
+          .max(1, (int.tryParse(repsController.text) ?? 0) + delta)
+          .toString();
+    }
+
+    final route = DialogRoute<_SetDialogResult>(
       context: context,
       builder: (dialogContext) {
         return StatefulBuilder(
@@ -912,293 +764,277 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
               selectedExercise = null;
             }
 
-            return AlertDialog(
-              title: Text(
-                  index == null ? strings.addSetButton : strings.editSetButton),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    DropdownButtonFormField<String>(
-                      key: const Key('muscle-group-dropdown'),
-                      value: selectedMuscleGroup,
-                      items: availableMuscleGroups
-                          .map(
-                            (group) => DropdownMenuItem(
-                              value: group,
-                              child: Text(group),
-                            ),
-                          )
-                          .toList(),
-                      decoration: InputDecoration(
-                        labelText: strings.muscleGroupLabel,
-                        hintText: strings.selectMuscleGroupLabel,
-                      ),
-                      onChanged: (value) {
-                        setDialogState(() {
-                          selectedMuscleGroup = value;
-                          useCustomExercise = false;
-                          selectedExercise = null;
-                          exerciseController.clear();
-                        });
-                      },
+            void submit({bool rest = false}) {
+              if (submitted) return;
+              final name = (useCustomExercise
+                      ? exerciseController.text
+                      : selectedExercise ?? '')
+                  .trim();
+              final group = (selectedMuscleGroup ?? '').trim();
+              final count =
+                  index == null ? int.tryParse(setsController.text.trim()) : 1;
+              final reps = int.tryParse(repsController.text.trim());
+              final kg = double.tryParse(
+                  weightController.text.trim().replaceAll(',', '.'));
+              if (name.isEmpty ||
+                  group.isEmpty ||
+                  count == null ||
+                  count < 1 ||
+                  count > 100 ||
+                  reps == null ||
+                  reps < 1 ||
+                  kg == null ||
+                  !kg.isFinite ||
+                  kg < 0) {
+                setDialogState(() => validation = en
+                    ? 'Choose an exercise, enter 1–100 sets, positive reps and a valid load.'
+                    : 'Elige un ejercicio e ingresa de 1 a 100 series, repeticiones positivas y una carga válida.');
+                return;
+              }
+              submitted = true;
+              Navigator.of(dialogContext).pop(_SetDialogResult(
+                  set: GymSetEntry(
+                      exerciseName: name,
+                      muscleGroup: group,
+                      setNumber: 0,
+                      reps: reps,
+                      weightKg: kg,
+                      rpe: selectedRpe),
+                  setsCount: count,
+                  startRest: rest));
+            }
+
+            return WorkoutEditorDialog(
+              title: index == null
+                  ? (en ? 'Add & log set' : 'Añadir serie')
+                  : strings.editSetButton,
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<String>(
+                    key: const Key('muscle-group-dropdown'),
+                    value: selectedMuscleGroup,
+                    items: availableMuscleGroups
+                        .map(
+                          (group) => DropdownMenuItem(
+                            value: group,
+                            child: Text(group),
+                          ),
+                        )
+                        .toList(),
+                    decoration: InputDecoration(
+                      labelText: strings.muscleGroupLabel,
+                      hintText: strings.selectMuscleGroupLabel,
                     ),
+                    onChanged: (value) {
+                      setDialogState(() {
+                        selectedMuscleGroup = value;
+                        useCustomExercise = false;
+                        selectedExercise = null;
+                        exerciseController.clear();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    key: const Key('exercise-dropdown'),
+                    value: selectedExercise,
+                    isExpanded: true,
+                    items: exerciseOptions
+                        .map(
+                          (exercise) => DropdownMenuItem(
+                            value: exercise,
+                            child: Text(
+                              exercise == _customExerciseValue
+                                  ? strings.addCustomExerciseOption
+                                  : exercise,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    decoration: InputDecoration(
+                      labelText: strings.exerciseNameLabel,
+                      hintText: strings.selectExerciseLabel,
+                    ),
+                    onChanged: selectedMuscleGroup == null
+                        ? null
+                        : (value) {
+                            setDialogState(() {
+                              selectedExercise = value;
+                              useCustomExercise = value == _customExerciseValue;
+                              if (!useCustomExercise) {
+                                exerciseController.clear();
+                              }
+                            });
+                          },
+                  ),
+                  if (useCustomExercise) ...[
                     const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      key: const Key('exercise-dropdown'),
-                      value: selectedExercise,
-                      isExpanded: true,
-                      items: exerciseOptions
-                          .map(
-                            (exercise) => DropdownMenuItem(
-                              value: exercise,
-                              child: Text(
-                                exercise == _customExerciseValue
-                                    ? strings.addCustomExerciseOption
-                                    : exercise,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          )
-                          .toList(),
+                    TextField(
+                      controller: exerciseController,
                       decoration: InputDecoration(
-                        labelText: strings.exerciseNameLabel,
-                        hintText: strings.selectExerciseLabel,
+                        labelText: strings.customExerciseLabel,
                       ),
-                      onChanged: selectedMuscleGroup == null
-                          ? null
-                          : (value) {
-                              setDialogState(() {
-                                selectedExercise = value;
-                                useCustomExercise =
-                                    value == _customExerciseValue;
-                                if (!useCustomExercise) {
-                                  exerciseController.clear();
-                                }
-                              });
-                            },
                     ),
-                    if (useCustomExercise) ...[
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: exerciseController,
-                        decoration: InputDecoration(
-                          labelText: strings.customExerciseLabel,
-                        ),
-                      ),
-                    ],
-                    if (index == null && recentExercises.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          strings.recentExercisesTitle,
-                          style: Theme.of(dialogContext).textTheme.bodySmall,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: recentExercises.take(6).map((exercise) {
-                          return ActionChip(
-                            label: Text(exercise),
-                            onPressed: () {
-                              setDialogState(() {
-                                selectedExercise = _customExerciseValue;
-                                useCustomExercise = true;
-                                exerciseController.text = exercise;
-                              });
-                            },
-                          );
-                        }).toList(),
-                      ),
-                    ],
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: setsController,
-                            keyboardType: TextInputType.number,
-                            enabled: index == null,
-                            decoration:
-                                InputDecoration(labelText: strings.setsLabel),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextField(
-                            controller: repsController,
-                            keyboardType: TextInputType.number,
-                            decoration:
-                                InputDecoration(labelText: strings.repsLabel),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextField(
-                            controller: weightController,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                            decoration: InputDecoration(
-                              labelText: strings.setWeightLabel,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                  ],
+                  if (index == null &&
+                      seed == null &&
+                      recentExercises.isNotEmpty) ...[
                     const SizedBox(height: 12),
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        strings.rpeLabel,
-                        style: Theme.of(dialogContext).textTheme.bodyLarge,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        strings.rpeHelpLabel,
-                        style: Theme.of(dialogContext).textTheme.bodySmall,
+                        strings.recentExercisesTitle,
+                        style: theme.textTheme.bodySmall,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    if (selectedRpe != null) ...[
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Theme.of(dialogContext)
-                              .colorScheme
-                              .surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              strings.rpeValueLabel(selectedRpe!),
-                              style: Theme.of(dialogContext)
-                                  .textTheme
-                                  .headlineMedium,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(strings.rpeEffortTitle(selectedRpe!)),
-                            const SizedBox(height: 4),
-                            Text(
-                              strings.rpeReserveHint(selectedRpe!),
-                              textAlign: TextAlign.center,
-                              style:
-                                  Theme.of(dialogContext).textTheme.bodySmall,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: [
-                        ChoiceChip(
-                          label: Text(strings.noRpeLabel),
-                          selected: selectedRpe == null,
-                          onSelected: (_) {
-                            setDialogState(() => selectedRpe = null);
+                      children: recentExercises.take(6).map((exercise) {
+                        return ActionChip(
+                          label: Text(exercise),
+                          onPressed: () {
+                            setDialogState(() {
+                              selectedExercise = _customExerciseValue;
+                              useCustomExercise = true;
+                              exerciseController.text = exercise;
+                            });
                           },
-                        ),
-                        ..._rpeOptions.map((value) {
-                          return ChoiceChip(
-                            label: Text(strings.rpeValueLabel(value)),
-                            selected: selectedRpe == value,
-                            onSelected: (_) {
-                              setDialogState(() => selectedRpe = value);
-                            },
-                          );
-                        }),
-                      ],
+                        );
+                      }).toList(),
                     ),
                   ],
-                ),
+                  const SizedBox(height: 12),
+                  DecoratedBox(
+                      decoration: BoxDecoration(
+                          color: AppTheme.backgroundSecondary,
+                          borderRadius: BorderRadius.circular(12)),
+                      child: Padding(
+                          padding: const EdgeInsets.all(10),
+                          child: Column(children: [
+                            if (index == null) ...[
+                              TextField(
+                                  controller: setsController,
+                                  keyboardType: TextInputType.number,
+                                  decoration: InputDecoration(
+                                      labelText: strings.setsLabel)),
+                              const SizedBox(height: 10)
+                            ],
+                            Row(children: [
+                              Expanded(
+                                  child: TextField(
+                                      controller: repsController,
+                                      keyboardType: TextInputType.number,
+                                      decoration: InputDecoration(
+                                          labelText: strings.repsLabel))),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                  child: TextField(
+                                      controller: weightController,
+                                      keyboardType:
+                                          const TextInputType.numberWithOptions(
+                                              decimal: true),
+                                      decoration: InputDecoration(
+                                          labelText: strings.setWeightLabel))),
+                            ]),
+                            const SizedBox(height: 4),
+                            Wrap(spacing: 5, children: [
+                              for (final delta in [-5.0, -2.5, 2.5, 5.0])
+                                ActionChip(
+                                    label: Text(
+                                        '${delta > 0 ? '+' : ''}$delta kg'),
+                                    onPressed: () => shiftLoad(delta)),
+                              for (final delta in [-1, 1, 2])
+                                ActionChip(
+                                    label: Text(
+                                        '${delta > 0 ? '+' : ''}$delta reps'),
+                                    onPressed: () => shiftReps(delta))
+                            ]),
+                          ]))),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      strings.rpeLabel,
+                      style: theme.textTheme.bodyLarge,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      strings.rpeHelpLabel,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      ChoiceChip(
+                        label: Text(strings.noRpeLabel),
+                        selected: selectedRpe == null,
+                        onSelected: (_) {
+                          setDialogState(() => selectedRpe = null);
+                        },
+                      ),
+                      ..._rpeOptions.map((value) {
+                        return ChoiceChip(
+                          label: Text(strings.rpeValueLabel(value)),
+                          selected: selectedRpe == value,
+                          onSelected: (_) {
+                            setDialogState(() => selectedRpe = value);
+                          },
+                        );
+                      }),
+                    ],
+                  ),
+                ],
               ),
               actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: Text(strings.cancelButton),
-                ),
+                if (validation != null)
+                  Text(validation!,
+                      style: const TextStyle(color: AppTheme.danger)),
+                if (index == null && _restTargetDuration > Duration.zero)
+                  OutlinedButton.icon(
+                      onPressed: () => submit(rest: true),
+                      icon: const Icon(Icons.timer_outlined),
+                      label: Text(en
+                          ? 'Save & start ${_restTargetDuration.inSeconds}s rest'
+                          : 'Guardar y descansar ${_restTargetDuration.inSeconds}s')),
                 FilledButton(
-                  onPressed: () {
-                    final exercise = useCustomExercise
-                        ? exerciseController.text.trim()
-                        : (selectedExercise ?? '').trim();
-                    final muscleGroup = (selectedMuscleGroup ?? '').trim();
-                    final setsCount =
-                        int.tryParse(setsController.text.trim()) ?? 1;
-                    final reps = int.tryParse(repsController.text.trim());
-                    final weight = double.tryParse(
-                      weightController.text.trim().replaceAll(',', '.'),
-                    );
-
-                    if (muscleGroup.isEmpty ||
-                        exercise.isEmpty ||
-                        reps == null ||
-                        weight == null ||
-                        setsCount < 1) {
-                      return;
-                    }
-
-                    Navigator.of(dialogContext).pop(
-                      _SetDialogResult(
-                        set: GymSetEntry(
-                          exerciseName: exercise,
-                          muscleGroup: muscleGroup,
-                          setNumber:
-                              index == null ? _draftSets.length + 1 : index + 1,
-                          reps: reps,
-                          weightKg: weight,
-                          rpe: selectedRpe,
-                        ),
-                        setsCount: index == null ? setsCount : 1,
-                      ),
-                    );
-                  },
-                  child: Text(index == null
-                      ? strings.addButton
-                      : strings.updateSetButton),
-                ),
+                    onPressed: submit,
+                    child: Text(index == null
+                        ? strings.addButton
+                        : strings.updateSetButton)),
               ],
             );
           },
         );
       },
     );
-
-    if (result == null) {
-      return;
-    }
-
-    setState(() {
-      if (index == null) {
-        for (var i = 0; i < result.setsCount; i++) {
-          _draftSets.add(
-            GymSetEntry(
-              exerciseName: result.set.exerciseName,
-              muscleGroup: result.set.muscleGroup,
-              setNumber: _draftSets.length + 1,
-              reps: result.set.reps,
-              weightKg: result.set.weightKg,
-              rpe: result.set.rpe,
-            ),
-          );
-        }
-      } else {
-        _draftSets[index] = result.set;
+    final result = await Navigator.of(context, rootNavigator: true).push(route);
+    if (result != null && mounted) {
+      _applySetDialogResult(result, index: index);
+      if (result.startRest && _restTargetDuration > Duration.zero) {
+        if (_isRestRunning) _finishRestCycle();
+        _startRestTimer();
       }
-      _reindexSets();
-    });
+    }
+    await route.completed;
+    for (final controller in [
+      exerciseController,
+      repsController,
+      setsController,
+      weightController
+    ]) {
+      controller.dispose();
+    }
   }
 
   List<String> _buildMuscleGroupOptions(String? existingMuscleGroup) {
@@ -1230,12 +1066,19 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
   }
 
   void _applySetDialogResult(_SetDialogResult result, {int? index}) {
+    final name = _draftSets
+            .where((entry) =>
+                routineNameKey(entry.exerciseName) ==
+                routineNameKey(result.set.exerciseName))
+            .firstOrNull
+            ?.exerciseName ??
+        result.set.exerciseName;
     setState(() {
       if (index == null) {
         for (var i = 0; i < result.setsCount; i++) {
           _draftSets.add(
             GymSetEntry(
-              exerciseName: result.set.exerciseName,
+              exerciseName: name,
               muscleGroup: result.set.muscleGroup,
               setNumber: _draftSets.length + 1,
               reps: result.set.reps,
@@ -1245,7 +1088,13 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
           );
         }
       } else {
-        _draftSets[index] = result.set;
+        _draftSets[index] = GymSetEntry(
+            exerciseName: name,
+            muscleGroup: result.set.muscleGroup,
+            setNumber: index + 1,
+            reps: result.set.reps,
+            weightKg: result.set.weightKg,
+            rpe: result.set.rpe);
       }
       _reindexSets();
     });
@@ -1279,39 +1128,134 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
     });
   }
 
-  void _loadRoutine(List<WorkoutRoutineBlock> blocks) {
-    if (_isEditing || _draftSets.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(stringsFor(ref).routineLoadBlockedMessage)),
-      );
+  Future<void> _editWeeklyRoutine() async {
+    if (_routineEditorOpen || _savingWorkout) return;
+    _routineEditorOpen = true;
+    try {
+      final result = await context.push<List<WorkoutRoutineBlock>>(
+          '/workout/routine',
+          extra: (date: _selectedDate, canApply: !_isEditing));
+      if (mounted && result != null) await _loadRoutine(result);
+    } finally {
+      _routineEditorOpen = false;
+    }
+  }
+
+  List<WorkoutRoutineExercise> _pendingRoutineExercises(
+      List<WorkoutRoutineBlock> blocks) {
+    final existing = {
+      for (final set in _draftSets) routineNameKey(set.exerciseName),
+    };
+    return [
+      for (final block in blocks)
+        for (final exercise in block.exercises)
+          if (!existing.contains(routineNameKey(exercise.exerciseName)) ||
+              _routineTarget(_appliedRoutineTargets[
+                      routineNameKey(exercise.exerciseName)]) !=
+                  _routineTarget(exercise))
+            exercise,
+    ];
+  }
+
+  (String, int, int, double)? _routineTarget(
+          WorkoutRoutineExercise? exercise) =>
+      exercise == null
+          ? null
+          : (
+              exercise.muscleGroup,
+              exercise.sets,
+              exercise.reps,
+              exercise.weightKg
+            );
+
+  Future<void> _loadRoutine(List<WorkoutRoutineBlock> blocks) async {
+    if (_isEditing || _savingWorkout || _setEditorOpen || _loadingRoutine) {
       return;
     }
-
-    setState(() {
-      for (final block in blocks) {
-        for (final exercise in block.exercises) {
+    final strings = stringsFor(ref);
+    if (duplicateRoutineMovements(blocks).isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(strings.isEnglish
+              ? 'Fix repeated movements in the weekly routine before applying.'
+              : 'Corrige los movimientos repetidos de la rutina antes de aplicarla.')));
+      return;
+    }
+    final pending = _pendingRoutineExercises(blocks);
+    if (pending.isEmpty) return;
+    final keys = pending.map((e) => routineNameKey(e.exerciseName)).toSet();
+    final replaces =
+        _draftSets.any((s) => keys.contains(routineNameKey(s.exerciseName)));
+    final en = strings.isEnglish;
+    _loadingRoutine = true;
+    try {
+      if (replaces) {
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => WorkoutEditorDialog(
+            title: en ? 'Use weekly routine' : 'Usar rutina semanal',
+            content: Text(en
+                ? 'For matching exercises, the routine will replace the current sets and their completion marks. Extra exercises will stay.'
+                : 'En los ejercicios que coincidan, la rutina reemplazará las series actuales y sus marcas de completado. Los ejercicios adicionales se conservan.'),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(strings.cancelButton)),
+              FilledButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: Text(en ? 'Load routine' : 'Cargar rutina')),
+            ],
+          ),
+        );
+        if (!mounted || confirmed != true) return;
+      }
+      setState(() {
+        final kept = <GymSetEntry>[];
+        final completed = <int>{};
+        for (final (index, set) in _draftSets.indexed) {
+          if (keys.contains(routineNameKey(set.exerciseName))) continue;
+          if (_completed.contains(index)) completed.add(kept.length);
+          kept.add(set);
+        }
+        _completed
+          ..clear()
+          ..addAll(completed);
+        _draftSets
+          ..clear()
+          ..addAll(kept);
+        for (final exercise in pending) {
+          _appliedRoutineTargets[routineNameKey(exercise.exerciseName)] =
+              exercise;
           for (var set = 0; set < exercise.sets; set++) {
-            _draftSets.add(
-              GymSetEntry(
-                exerciseName: exercise.exerciseName,
-                muscleGroup: exercise.muscleGroup,
-                setNumber: _draftSets.length + 1,
-                reps: exercise.reps,
-                weightKg: exercise.weightKg,
-              ),
-            );
+            _draftSets.add(GymSetEntry(
+              exerciseName: exercise.exerciseName.trim(),
+              muscleGroup: exercise.muscleGroup,
+              setNumber: _draftSets.length + 1,
+              reps: exercise.reps,
+              weightKg: exercise.weightKg,
+            ));
           }
         }
-      }
-      _reindexSets();
-    });
+        _stepRevision++;
+        _reindexSets();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content:
+            Text(en ? 'Daily routine loaded.' : 'Se cargó la rutina del día.'),
+      ));
+    } finally {
+      _loadingRoutine = false;
+      if (mounted) setState(() {});
+    }
   }
 
   Map<String, List<MapEntry<int, GymSetEntry>>> _groupDraftSets() {
     final grouped = <String, List<MapEntry<int, GymSetEntry>>>{};
+    final displayNames = <String, String>{};
     for (var index = 0; index < _draftSets.length; index++) {
       final set = _draftSets[index];
-      grouped.putIfAbsent(set.exerciseName, () => []).add(MapEntry(index, set));
+      final label = displayNames.putIfAbsent(
+          routineNameKey(set.exerciseName), () => set.exerciseName);
+      grouped.putIfAbsent(label, () => []).add(MapEntry(index, set));
     }
     return grouped;
   }
@@ -1364,6 +1308,7 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
   }
 
   Future<void> _saveWorkout() async {
+    if (_savingWorkout || _setEditorOpen || _loadingRoutine) return;
     final strings = stringsFor(ref);
     final title = _titleController.text.trim();
     final duration = int.tryParse(_durationController.text.trim()) ?? 0;
@@ -1400,48 +1345,160 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
     final notes = _notesController.text.trim().isEmpty
         ? null
         : _notesController.text.trim();
+    final routine = _isEditing
+        ? null
+        : ref.read(weeklyWorkoutRoutineProvider).activeRoutine;
+    final date = _selectedDate;
+    final sets = List<GymSetEntry>.of(_draftSets);
 
-    if (_isEditing) {
-      await notifier.updateSession(
-        id: widget.session!.id,
-        title: title,
-        date: _selectedDate,
-        durationMinutes: effectiveDurationMinutes,
-        totalDurationSeconds: effectiveTotalDuration.inSeconds,
-        activeDurationSeconds: effectiveActiveDuration.inSeconds,
-        restDurationSeconds: effectiveRestDuration.inSeconds,
-        estimatedActiveCalories: calories,
-        sets: List<GymSetEntry>.from(_draftSets),
-        notes: notes,
-      );
-    } else {
-      await notifier.addSession(
-        title: title,
-        date: _selectedDate,
-        durationMinutes: effectiveDurationMinutes,
-        totalDurationSeconds: effectiveTotalDuration.inSeconds,
-        activeDurationSeconds: effectiveActiveDuration.inSeconds,
-        restDurationSeconds: effectiveRestDuration.inSeconds,
-        estimatedActiveCalories: calories,
-        sets: List<GymSetEntry>.from(_draftSets),
-        notes: notes,
-      );
+    setState(() => _savingWorkout = true);
+    try {
+      if (_isEditing) {
+        await notifier.updateSession(
+          id: widget.session!.id,
+          title: title,
+          date: date,
+          durationMinutes: effectiveDurationMinutes,
+          totalDurationSeconds: effectiveTotalDuration.inSeconds,
+          activeDurationSeconds: effectiveActiveDuration.inSeconds,
+          restDurationSeconds: effectiveRestDuration.inSeconds,
+          estimatedActiveCalories: calories,
+          sets: sets,
+          notes: notes,
+        );
+      } else {
+        await notifier.addSession(
+          submissionId: _submissionId ??= newSubmissionId(),
+          title: title,
+          date: date,
+          durationMinutes: effectiveDurationMinutes,
+          totalDurationSeconds: effectiveTotalDuration.inSeconds,
+          activeDurationSeconds: effectiveActiveDuration.inSeconds,
+          restDurationSeconds: effectiveRestDuration.inSeconds,
+          estimatedActiveCalories: calories,
+          sets: sets,
+          notes: notes,
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _savingWorkout = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(strings.remoteSaveFailedMessage)));
+      }
+      return;
     }
-
     if (!mounted) {
       return;
     }
 
+    final templateMessage = routine == null
+        ? null
+        : await _offerExtraExercises(routine, date, sets, strings);
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          _isEditing
-              ? strings.workoutUpdatedMessage
-              : strings.workoutSavedMessage,
+          templateMessage ??
+              (_isEditing
+                  ? strings.workoutUpdatedMessage
+                  : strings.workoutSavedMessage),
         ),
       ),
     );
     context.go('/dashboard');
+  }
+
+  Future<String?> _offerExtraExercises(WeeklyWorkoutRoutine routine,
+      DateTime date, List<GymSetEntry> sets, AppStrings strings) async {
+    final existing = {
+      ..._appliedRoutineTargets.keys,
+      for (final block in routine.blocksFor(date))
+        for (final exercise in block.exercises)
+          routineNameKey(exercise.exerciseName),
+    };
+    final groups = <String, List<GymSetEntry>>{};
+    for (final set in sets) {
+      final key = routineNameKey(set.exerciseName);
+      if (!existing.contains(key)) groups.putIfAbsent(key, () => []).add(set);
+    }
+    if (groups.isEmpty) return null;
+    final en = strings.isEnglish;
+    final extras = [
+      for (final group in groups.values)
+        WorkoutRoutineExercise(
+          exerciseName: group.first.exerciseName,
+          muscleGroup: group.first.muscleGroup,
+          sets: group.length,
+          reps: group.first.reps,
+          weightKg: group.first.weightKg,
+        ),
+    ];
+    final selected = <int>{};
+    final day = strings.weekdayLabel(date.weekday);
+    final add = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => WorkoutEditorDialog(
+          title: en ? 'Add to $day routine?' : '¿Añadir a la rutina de $day?',
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(en
+                  ? 'Workout saved. All exercises count toward Progress. Select any extras to add to ${routine.name}. The plan uses the first set’s reps and weight as targets.'
+                  : 'Entrenamiento guardado. Todos los ejercicios cuentan para Progreso. Elegí cuáles añadir a ${routine.name}. La plantilla usa las repeticiones y el peso de la primera serie como objetivo.'),
+              for (final (index, exercise) in extras.indexed)
+                CheckboxListTile(
+                  value: selected.contains(index),
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(exercise.exerciseName),
+                  subtitle: Text(
+                      '${exercise.sets} × ${exercise.reps} · ${exercise.weightKg} kg'),
+                  onChanged: (checked) => setDialogState(() {
+                    if (checked == true) {
+                      selected.add(index);
+                    } else {
+                      selected.remove(index);
+                    }
+                  }),
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(en ? 'Workout only' : 'Solo entrenamiento'),
+            ),
+            FilledButton(
+              onPressed:
+                  selected.isEmpty ? null : () => Navigator.pop(context, true),
+              child: Text(en ? 'Add to routine' : 'Añadir a rutina'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || add != true) return null;
+    try {
+      final added = await ref
+          .read(weeklyWorkoutRoutineProvider.notifier)
+          .appendDayExercises(routine.id, date.weekday, [
+        for (final (index, exercise) in extras.indexed)
+          if (selected.contains(index)) exercise,
+      ]);
+      if (added) {
+        return en
+            ? 'Workout saved and weekly routine updated.'
+            : 'Entrenamiento guardado y rutina semanal actualizada.';
+      }
+      return en
+          ? 'Workout saved. No new exercises were added to the routine.'
+          : 'Entrenamiento guardado. No se añadieron ejercicios nuevos a la rutina.';
+    } catch (_) {
+      return en
+          ? 'Workout saved. Could not update the weekly routine.'
+          : 'Entrenamiento guardado. No se pudo actualizar la rutina semanal.';
+    }
   }
 
   void _startSessionTimer() {
@@ -1733,10 +1790,12 @@ class _SetDialogResult {
   const _SetDialogResult({
     required this.set,
     required this.setsCount,
+    this.startRest = false,
   });
 
   final GymSetEntry set;
   final int setsCount;
+  final bool startRest;
 }
 
 enum _RestAlertSoundProfile {
@@ -1851,7 +1910,7 @@ class _ExerciseSetCard extends StatelessWidget {
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(sets.first.value.muscleGroup,
               style: theme.textTheme.labelSmall
-                  ?.copyWith(color: DashboardTheme.primary)),
+                  ?.copyWith(color: AppTheme.primary)),
           Text(exerciseName, style: theme.textTheme.titleLarge)
         ]),
         subtitle: Text(
@@ -1905,7 +1964,7 @@ class _ExerciseSetCard extends StatelessWidget {
             Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                    color: DashboardTheme.surfaceMuted,
+                    color: AppTheme.surfaceMuted,
                     borderRadius: BorderRadius.circular(12)),
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2002,7 +2061,7 @@ class _Stepper extends StatelessWidget {
   Widget build(BuildContext context) => Container(
       padding: const EdgeInsets.symmetric(vertical: 6),
       decoration: BoxDecoration(
-          color: DashboardTheme.backgroundSecondary,
+          color: AppTheme.backgroundSecondary,
           borderRadius: BorderRadius.circular(12)),
       child: Column(children: [
         Text(label, style: Theme.of(context).textTheme.labelSmall),
@@ -2059,7 +2118,7 @@ class _QuickSetRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 6, 4, 6),
       decoration: BoxDecoration(
-        color: DashboardTheme.backgroundSecondary,
+        color: AppTheme.backgroundSecondary,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -2121,7 +2180,7 @@ class _QuickSetRow extends StatelessWidget {
                       logged
                           ? Icons.check_circle
                           : Icons.radio_button_unchecked,
-                      color: logged ? DashboardTheme.primary : null,
+                      color: logged ? AppTheme.primary : null,
                       size: 20))),
         ],
       ),

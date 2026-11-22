@@ -106,6 +106,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String?>(
+                    isExpanded: true,
                     value: _sex,
                     decoration: InputDecoration(labelText: strings.sexLabel),
                     items: [
@@ -122,28 +123,30 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   Text(strings.dailyActivityLabel,
                       style: Theme.of(context).textTheme.titleSmall),
                   const SizedBox(height: 8),
-                  SegmentedButton<String>(
-                    segments: [
-                      ButtonSegment(
-                          value: 'low', label: Text(strings.activityLow)),
-                      ButtonSegment(
-                          value: 'medium', label: Text(strings.activityMedium)),
-                      ButtonSegment(
-                        value: 'medium_high',
-                        label: Text(strings.activityMediumHigh),
-                      ),
-                      ButtonSegment(
-                          value: 'high', label: Text(strings.activityHigh)),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      for (final (value, label) in [
+                        ('low', strings.activityLow),
+                        ('medium', strings.activityMedium),
+                        ('medium_high', strings.activityMediumHigh),
+                        ('high', strings.activityHigh),
+                      ])
+                        ChoiceChip(
+                          label: Text(label),
+                          selected: _activityLevel == value,
+                          onSelected: (_) =>
+                              setState(() => _activityLevel = value),
+                        ),
                     ],
-                    selected: {_activityLevel},
-                    onSelectionChanged: (value) =>
-                        setState(() => _activityLevel = value.first),
                   ),
                   const SizedBox(height: 8),
                   Text(_activityHint(strings),
                       style: Theme.of(context).textTheme.bodySmall),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
+                    isExpanded: true,
                     value: _goal,
                     decoration: InputDecoration(labelText: strings.goalLabel),
                     items: [

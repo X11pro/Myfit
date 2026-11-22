@@ -46,10 +46,10 @@ extension _ReviewPresentation on _ManualFoodEntryScreenState {
     };
     final calories = int.tryParse(_caloriesController.text) ?? 0;
     final macros = [
-      (s.protein, _proteinController, DashboardTheme.primary, 4),
-      (s.carbs, _carbsController, const Color(0xffd4ffec), 4),
-      (s.fat, _fatController, DashboardTheme.warning, 9),
-      (s.fiberLabel, _fiberController, DashboardTheme.mutedText, 0)
+      (s.protein, _proteinController, AppTheme.primary, 4),
+      (s.carbs, _carbsController, AppTheme.secondary, 4),
+      (s.fat, _fatController, AppTheme.tertiary, 9),
+      (s.fiberLabel, _fiberController, AppTheme.mutedText, 0)
     ];
     final energy = macros
         .map((m) => (int.tryParse(m.$2.text) ?? 0) * m.$4)
@@ -164,7 +164,7 @@ extension _ReviewPresentation on _ManualFoodEntryScreenState {
             child: Container(
                 margin: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
-                    color: DashboardTheme.backgroundSecondary,
+                    color: AppTheme.backgroundSecondary,
                     borderRadius: BorderRadius.circular(12)),
                 padding: const EdgeInsets.all(10),
                 child: Column(
@@ -234,8 +234,8 @@ extension _ReviewPresentation on _ManualFoodEntryScreenState {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const CircleAvatar(
-                              backgroundColor: DashboardTheme.surfaceMuted,
-                              foregroundColor: DashboardTheme.primary,
+                              backgroundColor: AppTheme.surfaceMuted,
+                              foregroundColor: AppTheme.primary,
                               child: Icon(Icons.auto_awesome)),
                           const SizedBox(width: 12),
                           Expanded(
@@ -251,14 +251,14 @@ extension _ReviewPresentation on _ManualFoodEntryScreenState {
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 8, vertical: 3),
                                     decoration: BoxDecoration(
-                                        color: DashboardTheme.primary
+                                        color: AppTheme.primary
                                             .withValues(alpha: .12),
                                         borderRadius:
                                             BorderRadius.circular(12)),
                                     child: Text(
                                         '${(_confidence! * 100).round()}% ${s.confidence}',
                                         style: t.labelMedium?.copyWith(
-                                            color: DashboardTheme.primary))),
+                                            color: AppTheme.primary))),
                                 const SizedBox(height: 4),
                                 Text(
                                     en
@@ -319,8 +319,7 @@ extension _ReviewPresentation on _ManualFoodEntryScreenState {
                                         padding: const EdgeInsets.symmetric(
                                             horizontal: 6, vertical: 2),
                                         decoration: BoxDecoration(
-                                            color: DashboardTheme
-                                                .backgroundSecondary,
+                                            color: AppTheme.backgroundSecondary,
                                             borderRadius:
                                                 BorderRadius.circular(8)),
                                         child: Text(item,
@@ -371,7 +370,7 @@ extension _ReviewPresentation on _ManualFoodEntryScreenState {
                     ]),
                     Text('~ $calories kcal',
                         style: t.headlineMedium
-                            ?.copyWith(color: DashboardTheme.primary)),
+                            ?.copyWith(color: AppTheme.primary)),
                     const SizedBox(height: 10),
                     if (energy > 0)
                       Row(children: [
@@ -468,19 +467,7 @@ extension _ReviewPresentation on _ManualFoodEntryScreenState {
                                     SnackBar(content: Text(s.mealWeightLabel)));
                                 return;
                               }
-                              _changeReview(() => _confirming = true);
-                              try {
-                                await _save();
-                              } catch (e) {
-                                if (c.mounted) {
-                                  ScaffoldMessenger.of(c).showSnackBar(SnackBar(
-                                      content: Text(_userFacingError(e, s))));
-                                }
-                              } finally {
-                                if (mounted) {
-                                  _changeReview(() => _confirming = false);
-                                }
-                              }
+                              await _save();
                             },
                       icon: const Icon(Icons.check_circle_outline),
                       label: Text(_confirming

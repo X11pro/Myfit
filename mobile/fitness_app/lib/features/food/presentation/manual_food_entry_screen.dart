@@ -13,6 +13,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/config/app_env.dart';
 import '../../../shared/app_language.dart';
 import '../../../shared/app_state.dart';
+import '../../../shared/submission_id.dart';
 import '../../../shared/ui/widgets/premium_card.dart';
 import '../../../shared/ui/widgets/premium_screen.dart';
 import '../../../shared/ui/widgets/section_header.dart';
@@ -22,7 +23,7 @@ import '../application/manual_food_entries_controller.dart';
 import '../domain/barcode_food_lookup_result.dart';
 import '../domain/manual_food_entry.dart';
 import 'barcode_scanner_screen.dart';
-import '../../dashboard/presentation/dashboard_theme.dart';
+import '../../../shared/ui/theme/app_theme.dart';
 import '../../dashboard/application/daily_targets_calculator.dart';
 import '../../../shared/widgets/myfit_bottom_nav.dart';
 import 'widgets/meal_photo_view.dart';
@@ -52,10 +53,14 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
   final _fiberController = TextEditingController();
   final _mealWeightController = TextEditingController();
   final _ingredientsController = TextEditingController();
+  final _nutritionTotals = ExpansibleController();
+  final _nutritionTotalsAnchor = GlobalKey();
   String _mealType = 'breakfast';
   String? _photoPath;
   bool _review = false;
   bool _confirming = false;
+  String? _submissionId;
+  final _photoSubmissionIds = <String, String>{};
   bool _isAnalyzing = false;
   bool _isLookingUpBarcode = false;
   double? _confidence;
@@ -149,6 +154,7 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
 
   @override
   void dispose() {
+    _nutritionTotals.dispose();
     _nameController.dispose();
     _barcodeController.dispose();
     _caloriesController.dispose();
@@ -169,9 +175,7 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
 
     if (_review && _confidence != null && _photoPath != null) {
       final target = ref.watch(dailyTargetsProvider)?.targetCalories;
-      return Theme(
-          data: DashboardTheme.dark(),
-          child: Builder(builder: (c) => _reviewScreen(c, strings, target)));
+      return _reviewScreen(context, strings, target);
     }
     return Scaffold(
       appBar: AppTopBar(
@@ -249,6 +253,7 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
                   ],
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
+                    isExpanded: true,
                     value: _mealType,
                     decoration:
                         InputDecoration(labelText: strings.mealTypeLabel),
@@ -278,11 +283,18 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
             ),
             const SizedBox(height: 16),
             PremiumCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              padding: EdgeInsets.zero,
+              child: ExpansionTile(
+                key: _nutritionTotalsAnchor,
+                controller: _nutritionTotals,
+                shape: const Border(),
+                collapsedShape: const Border(),
+                leading: const Icon(Icons.monitor_heart_outlined),
+                title: Text(strings.isEnglish
+                    ? 'Nutrition totals'
+                    : 'Totales nutricionales'),
+                childrenPadding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                 children: [
-                  const SectionHeader(title: 'Nutrition totals'),
-                  const SizedBox(height: 16),
                   TextField(
                     controller: _caloriesController,
                     keyboardType: TextInputType.number,
@@ -366,7 +378,7 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
                     runSpacing: 12,
                     children: [
                       FilledButton.tonalIcon(
-                        onPressed: _isAnalyzing
+                        onPressed: _isBusyForExternalActions
                             ? null
                             : () => _pickPhoto(ImageSource.camera),
                         icon: const Icon(Icons.camera_alt_outlined),
@@ -377,7 +389,7 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
                         ),
                       ),
                       FilledButton.tonalIcon(
-                        onPressed: _isAnalyzing
+                        onPressed: _isBusyForExternalActions
                             ? null
                             : () => _pickPhoto(ImageSource.gallery),
                         icon: const Icon(Icons.photo_library_outlined),
@@ -385,7 +397,9 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
                       ),
                       if (_photoPath != null)
                         OutlinedButton(
-                          onPressed: () => setState(() => _photoPath = null),
+                          onPressed: _isBusyForExternalActions
+                              ? null
+                              : () => setState(() => _photoPath = null),
                           child: Text(strings.removePhotoButton),
                         ),
                     ],
@@ -394,7 +408,8 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      onPressed: _isAnalyzing ? null : _analyzeWithAi,
+                      onPressed:
+                          _isBusyForExternalActions ? null : _analyzeWithAi,
                       icon: const Icon(Icons.auto_awesome_outlined),
                       label: Text(
                         _isAnalyzing
@@ -410,7 +425,7 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
             SizedBox(
               width: double.infinity,
               child: FilledButton(
-                onPressed: _save,
+                onPressed: _isBusyForExternalActions ? null : _save,
                 child: Text(
                   _isEditing
                       ? strings.updateMealButton
@@ -425,6 +440,7 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
   }
 
   Future<void> _save() async {
+    if (_isBusyForExternalActions) return;
     final strings = stringsFor(ref);
     final name = _nameController.text.trim();
     final calories = int.tryParse(_caloriesController.text.trim());
@@ -438,7 +454,19 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
         ? null
         : _ingredientsController.text.trim();
 
-    if (name.isEmpty || calories == null || protein == null) {
+    if (name.isEmpty ||
+        calories == null ||
+        calories < 0 ||
+        protein == null ||
+        protein < 0) {
+      if (!_review && name.isNotEmpty) {
+        _nutritionTotals.expand();
+        final anchor = _nutritionTotalsAnchor.currentContext;
+        if (anchor != null) {
+          Scrollable.ensureVisible(anchor,
+              duration: const Duration(milliseconds: 250));
+        }
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(strings.invalidMealMessage)),
       );
@@ -446,54 +474,70 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
     }
 
     final notifier = ref.read(manualFoodEntriesProvider.notifier);
-    final remotePhoto = await _prepareRemotePhotoForSave();
+    setState(() => _confirming = true);
+    try {
+      final remotePhoto = await _prepareRemotePhotoForSave();
+      if (!mounted) return;
 
-    if (_isEditing) {
-      await notifier.updateEntry(
-        id: widget.entry!.id,
-        name: name,
-        mealType: _mealType,
-        calories: calories,
-        proteinGrams: protein,
-        carbsGrams: carbs,
-        fatGrams: fat,
-        sugarGrams: sugar,
-        fiberGrams: fiber,
-        estimatedGrams: estimatedGrams,
-        ingredientsText: ingredientsText,
-        confidence: _confidence,
-        photoPath: remotePhoto.photoPath,
-        remotePhotoId: remotePhoto.remotePhotoId,
-        remotePhotoStoragePath: remotePhoto.remotePhotoStoragePath,
-      );
-    } else {
-      await notifier.addEntry(
-        name: name,
-        mealType: _mealType,
-        calories: calories,
-        proteinGrams: protein,
-        carbsGrams: carbs,
-        fatGrams: fat,
-        sugarGrams: sugar,
-        fiberGrams: fiber,
-        estimatedGrams: estimatedGrams,
-        ingredientsText: ingredientsText,
-        confidence: _confidence,
-        photoPath: remotePhoto.photoPath,
-        remotePhotoId: remotePhoto.remotePhotoId,
-        remotePhotoStoragePath: remotePhoto.remotePhotoStoragePath,
-      );
-    }
+      if (_isEditing) {
+        await notifier.updateEntry(
+          id: widget.entry!.id,
+          name: name,
+          mealType: _mealType,
+          calories: calories,
+          proteinGrams: protein,
+          carbsGrams: carbs,
+          fatGrams: fat,
+          sugarGrams: sugar,
+          fiberGrams: fiber,
+          estimatedGrams: estimatedGrams,
+          ingredientsText: ingredientsText,
+          confidence: _confidence,
+          photoPath: remotePhoto.photoPath,
+          remotePhotoId: remotePhoto.remotePhotoId,
+          remotePhotoStoragePath: remotePhoto.remotePhotoStoragePath,
+        );
+      } else {
+        await notifier.addEntry(
+          submissionId: _submissionId ??= newSubmissionId(),
+          name: name,
+          mealType: _mealType,
+          calories: calories,
+          proteinGrams: protein,
+          carbsGrams: carbs,
+          fatGrams: fat,
+          sugarGrams: sugar,
+          fiberGrams: fiber,
+          estimatedGrams: estimatedGrams,
+          ingredientsText: ingredientsText,
+          confidence: _confidence,
+          photoPath: remotePhoto.photoPath,
+          remotePhotoId: remotePhoto.remotePhotoId,
+          remotePhotoStoragePath: remotePhoto.remotePhotoStoragePath,
+        );
+      }
 
-    if (!mounted) {
-      return;
-    }
+      if (widget.entry?.remotePhotoId != remotePhoto.remotePhotoId) {
+        await _deleteExistingRemotePhoto();
+      }
+      if (!mounted) {
+        return;
+      }
 
-    if (GoRouterState.of(context).uri.queryParameters['from'] == 'nutrition' &&
-        context.canPop()) {
-      context.pop();
-    } else {
-      context.go('/dashboard');
+      if (GoRouterState.of(context).uri.queryParameters['from'] ==
+              'nutrition' &&
+          context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/dashboard');
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(_userFacingError(error, strings))));
+      }
+    } finally {
+      if (mounted) setState(() => _confirming = false);
     }
   }
 
@@ -512,7 +556,6 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
     }
 
     if (_photoPath == null) {
-      await _deleteExistingRemotePhoto();
       return const _PreparedRemotePhoto();
     }
 
@@ -531,12 +574,12 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
       );
     }
 
-    await _deleteExistingRemotePhoto();
-
-    final bytes = await _loadPhotoBytes(currentPhotoPath);
+    final notifier = ref.read(manualFoodEntriesProvider.notifier);
     final user = Supabase.instance.client.auth.currentUser!;
-    final storagePath =
-        '${user.id}/meal_${DateTime.now().microsecondsSinceEpoch}.jpg';
+    final photoId = _photoSubmissionIds.putIfAbsent(
+        '${user.id}:$currentPhotoPath', newSubmissionId);
+    final storagePath = '${user.id}/meal_$photoId.jpg';
+    final bytes = await _loadPhotoBytes(currentPhotoPath);
 
     await Supabase.instance.client.storage.from('meal-photos').uploadBinary(
           storagePath,
@@ -547,17 +590,16 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
 
     final photoRecord = await Supabase.instance.client
         .from('meal_photos')
-        .insert({
+        .upsert({
+          'id': photoId,
           'user_id': user.id,
           'storage_path': storagePath,
           'confidence': _confidence,
-        })
+        }, onConflict: 'id')
         .select('id, storage_path')
         .single();
 
-    final signedUrl = await ref
-        .read(manualFoodEntriesProvider.notifier)
-        .createSignedMealPhotoUrl(storagePath);
+    final signedUrl = await notifier.createSignedMealPhotoUrl(storagePath);
 
     return _PreparedRemotePhoto(
       photoPath: signedUrl,
@@ -783,7 +825,8 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
   bool get _supportsBarcodeScan =>
       !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
-  bool get _isBusyForExternalActions => _isAnalyzing || _isLookingUpBarcode;
+  bool get _isBusyForExternalActions =>
+      _confirming || _isAnalyzing || _isLookingUpBarcode;
 
   Future<void> _scanBarcode() async {
     final strings = stringsFor(ref);

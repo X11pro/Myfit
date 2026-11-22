@@ -7,8 +7,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/app_env.dart';
 import '../../../shared/app_state.dart';
+import '../../../shared/submission_id.dart';
 import '../domain/gym_set_entry.dart';
 import '../domain/manual_workout_session.dart';
+import '../domain/weekly_workout_routine.dart' show routineNameKey;
 
 final manualWorkoutSessionsProvider =
     NotifierProvider<ManualWorkoutSessionsNotifier, List<ManualWorkoutSession>>(
@@ -73,7 +75,7 @@ final recentWorkoutExerciseNamesProvider = Provider<List<String>>((ref) {
   for (final session in sessions) {
     for (final set in session.sets) {
       final name = set.exerciseName.trim();
-      final normalized = name.toLowerCase();
+      final normalized = routineNameKey(name);
       if (name.isEmpty || !seen.add(normalized)) {
         continue;
       }
@@ -91,6 +93,7 @@ class ManualWorkoutSessionsNotifier
   String? _lastScopeKey;
   int _loadToken = 0;
   bool _didSetupScopeListener = false;
+  final _remoteDraftSaves = <String, Future<void>>{};
 
   @override
   List<ManualWorkoutSession> build() {
@@ -134,6 +137,7 @@ class ManualWorkoutSessionsNotifier
   }
 
   Future<void> addSession({
+    String? submissionId,
     required String title,
     required DateTime date,
     required int durationMinutes,
@@ -154,9 +158,8 @@ class ManualWorkoutSessionsNotifier
             ? resolvedTotalDurationSeconds - resolvedRestDurationSeconds
             : 0);
 
-    state = [
-      ManualWorkoutSession(
-        id: DateTime.now().microsecondsSinceEpoch.toString(),
+    final draft = ManualWorkoutSession(
+        id: submissionId ?? newSubmissionId(),
         title: title,
         dateKey: dateKeyFor(date),
         durationMinutes: durationMinutes,
@@ -166,19 +169,24 @@ class ManualWorkoutSessionsNotifier
         estimatedActiveCalories: estimatedActiveCalories,
         createdAt: date,
         sets: sets,
-        notes: notes,
-      ),
-      ...state,
-    ]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-
+        notes: notes);
+    final token = _loadToken;
     if (_isAuthenticated) {
-      await _insertRemoteSession(state.first);
-      await _loadRemoteEntries(
-        token: _loadToken,
-        seedFromGuestIfEmpty: false,
-      );
+      final key = '${_currentScopeKey()}:${draft.id}';
+      final pending = _remoteDraftSaves.putIfAbsent(
+          key, () => _insertRemoteSession(draft, stableId: true));
+      try {
+        await pending;
+      } finally {
+        if (identical(_remoteDraftSaves[key], pending)) {
+          _remoteDraftSaves.remove(key);
+        }
+      }
+      await _loadRemoteEntries(token: token, seedFromGuestIfEmpty: false);
       return;
     }
+    state = [draft, ...state.where((s) => s.id != draft.id)]
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
     await _persistEntries(_guestStorageKey);
   }
@@ -314,7 +322,8 @@ class ManualWorkoutSessionsNotifier
     }
   }
 
-  Future<void> _insertRemoteSession(ManualWorkoutSession session) async {
+  Future<void> _insertRemoteSession(ManualWorkoutSession session,
+      {bool stableId = false}) async {
     final client = Supabase.instance.client;
     final user = client.auth.currentUser;
     if (user == null) {
@@ -328,22 +337,25 @@ class ManualWorkoutSessionsNotifier
     final endedAt =
         startedAt.add(Duration(seconds: totalSeconds <= 0 ? 60 : totalSeconds));
 
-    final inserted = await client
-        .from('workout_sessions')
-        .insert({
-          'user_id': user.id,
-          'source': 'manual',
-          'started_at': startedAt.toIso8601String(),
-          'ended_at': endedAt.toIso8601String(),
-          'activity_type': 'strength_training',
-          'title': session.title,
-          'duration_minutes': session.durationMinutes,
-          'active_calories': session.estimatedActiveCalories,
-          'notes': session.notes,
-          'total_duration_seconds': session.totalDurationSeconds,
-          'active_duration_seconds': session.activeDurationSeconds,
-          'rest_duration_seconds': session.restDurationSeconds,
-        })
+    final values = <String, dynamic>{
+      if (stableId) 'id': session.id,
+      'user_id': user.id,
+      'source': 'manual',
+      'started_at': startedAt.toIso8601String(),
+      'ended_at': endedAt.toIso8601String(),
+      'activity_type': 'strength_training',
+      'title': session.title,
+      'duration_minutes': session.durationMinutes,
+      'active_calories': session.estimatedActiveCalories,
+      'notes': session.notes,
+      'total_duration_seconds': session.totalDurationSeconds,
+      'active_duration_seconds': session.activeDurationSeconds,
+      'rest_duration_seconds': session.restDurationSeconds,
+    };
+    final table = client.from('workout_sessions');
+    final inserted = await (stableId
+            ? table.upsert(values, onConflict: 'id')
+            : table.insert(values))
         .select('id')
         .single();
 

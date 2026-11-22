@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/app_env.dart';
 import '../../../shared/app_state.dart';
+import '../../../shared/submission_id.dart';
 import '../domain/manual_food_entry.dart';
 
 final manualFoodEntriesProvider =
@@ -124,6 +125,7 @@ class ManualFoodEntriesNotifier extends Notifier<List<ManualFoodEntry>> {
   }
 
   Future<void> addEntry({
+    String? submissionId,
     required String name,
     required String mealType,
     required int calories,
@@ -143,7 +145,7 @@ class ManualFoodEntriesNotifier extends Notifier<List<ManualFoodEntry>> {
     _loadToken++;
 
     final draft = ManualFoodEntry(
-      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      id: submissionId ?? newSubmissionId(),
       name: name,
       mealType: mealType,
       calories: calories,
@@ -162,8 +164,8 @@ class ManualFoodEntriesNotifier extends Notifier<List<ManualFoodEntry>> {
     );
 
     if (_isAuthenticated) {
-      final inserted = await _insertRemoteEntry(draft);
-      state = [inserted, ...state]
+      final inserted = await _insertRemoteEntry(draft, stableId: true);
+      state = [inserted, ...state.where((entry) => entry.id != inserted.id)]
         ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
       await _persistEntries(_authCacheStorageKey);
       return;
@@ -171,7 +173,7 @@ class ManualFoodEntriesNotifier extends Notifier<List<ManualFoodEntry>> {
 
     state = [
       draft,
-      ...state,
+      ...state.where((entry) => entry.id != draft.id),
     ];
 
     await _persistEntries(_guestStorageKey);
@@ -319,31 +321,35 @@ class ManualFoodEntriesNotifier extends Notifier<List<ManualFoodEntry>> {
     }
   }
 
-  Future<ManualFoodEntry> _insertRemoteEntry(ManualFoodEntry entry) async {
+  Future<ManualFoodEntry> _insertRemoteEntry(ManualFoodEntry entry,
+      {bool stableId = false}) async {
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) {
       return entry;
     }
 
-    final inserted = await Supabase.instance.client
-        .from('meal_entries')
-        .insert({
-          'user_id': user.id,
-          'meal_date': _dateKey(entry.createdAt),
-          'meal_type': entry.mealType,
-          'name': entry.name,
-          'calories': entry.calories,
-          'protein_g': entry.proteinGrams,
-          'carbs_g': entry.carbsGrams,
-          'fat_g': entry.fatGrams,
-          'sugar_g': entry.sugarGrams,
-          'fiber_g': entry.fiberGrams,
-          'estimated_grams': entry.estimatedGrams,
-          'ingredients_text': entry.ingredientsText,
-          'source': 'manual',
-          'confidence': entry.confidence,
-          'photo_id': entry.remotePhotoId,
-        })
+    final values = <String, dynamic>{
+      if (stableId) 'id': entry.id,
+      'user_id': user.id,
+      'meal_date': _dateKey(entry.createdAt),
+      'meal_type': entry.mealType,
+      'name': entry.name,
+      'calories': entry.calories,
+      'protein_g': entry.proteinGrams,
+      'carbs_g': entry.carbsGrams,
+      'fat_g': entry.fatGrams,
+      'sugar_g': entry.sugarGrams,
+      'fiber_g': entry.fiberGrams,
+      'estimated_grams': entry.estimatedGrams,
+      'ingredients_text': entry.ingredientsText,
+      'source': 'manual',
+      'confidence': entry.confidence,
+      'photo_id': entry.remotePhotoId,
+    };
+    final table = Supabase.instance.client.from('meal_entries');
+    final inserted = await (stableId
+            ? table.upsert(values, onConflict: 'id')
+            : table.insert(values))
         .select(
           'id, meal_date, meal_type, name, calories, protein_g, carbs_g, fat_g, sugar_g, fiber_g, estimated_grams, ingredients_text, confidence, created_at, photo_id, meal_photos(storage_path)',
         )

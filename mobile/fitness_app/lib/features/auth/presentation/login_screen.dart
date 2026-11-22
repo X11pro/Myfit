@@ -410,10 +410,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           },
                     style: FilledButton.styleFrom(
                       backgroundColor: AppTheme.primary,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppTheme.onPrimary,
                       disabledBackgroundColor:
                           AppTheme.primary.withValues(alpha: 0.32),
-                      disabledForegroundColor: Colors.white70,
+                      disabledForegroundColor: AppTheme.charcoal,
                     ),
                     child: isBusy
                         ? const SizedBox(
@@ -421,7 +421,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Colors.white,
+                              color: AppTheme.onPrimary,
                             ),
                           )
                         : Text(strings.verifyCodeButton),

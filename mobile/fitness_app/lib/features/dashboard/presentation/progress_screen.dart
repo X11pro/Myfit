@@ -11,9 +11,10 @@ import '../../workout/application/manual_workout_controller.dart';
 import '../application/daily_targets_calculator.dart';
 import '../application/daily_weight_controller.dart';
 import '../domain/daily_targets.dart';
-import 'dashboard_theme.dart';
+import '../../../shared/ui/theme/app_theme.dart';
 import 'progress_detail_screen.dart';
 import 'widgets/progress_chart_widgets.dart';
+import 'widgets/log_weight_dialog.dart';
 
 class ProgressScreen extends ConsumerStatefulWidget {
   const ProgressScreen({super.key});
@@ -33,9 +34,7 @@ class _ProgressState extends ConsumerState<ProgressScreen> {
   }
 
   @override
-  Widget build(BuildContext context) =>
-      Theme(data: DashboardTheme.dark(), child: Builder(builder: _screen));
-  Widget _screen(BuildContext c) {
+  Widget build(BuildContext c) {
     final s = stringsFor(ref), en = s.isEnglish, t = Theme.of(c).textTheme;
     final today = DateUtils.dateOnly(DateTime.now());
     final start = DateTime(today.year, today.month, today.day - days + 1);
@@ -124,7 +123,7 @@ class _ProgressState extends ConsumerState<ProgressScreen> {
     Widget note(String v) => Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-            color: DashboardTheme.surfaceMuted,
+            color: AppTheme.surfaceMuted,
             borderRadius: BorderRadius.circular(12)),
         child: Text(v, style: t.bodySmall));
     Future<void> export() async {
@@ -157,7 +156,15 @@ class _ProgressState extends ConsumerState<ProgressScreen> {
           builder: (ctx) => AlertDialog(
                   title: Text(
                       en ? 'Export progress (CSV)' : 'Exportar progreso (CSV)'),
-                  content: SingleChildScrollView(child: SelectableText(csv)),
+                  content: SizedBox(
+                    width: 440,
+                    child: SingleChildScrollView(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: SelectableText(csv),
+                      ),
+                    ),
+                  ),
                   actions: [
                     TextButton(
                         onPressed: () => Navigator.pop(ctx),
@@ -170,37 +177,6 @@ class _ProgressState extends ConsumerState<ProgressScreen> {
                         },
                         child: Text(en ? 'Copy CSV' : 'Copiar CSV'))
                   ]));
-    }
-
-    Future<void> log() async {
-      var value = '';
-      final v = await showDialog<double>(
-          context: c,
-          builder: (ctx) => AlertDialog(
-                  title: Text(s.logWeightTitle),
-                  content: TextField(
-                      autofocus: true,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      decoration:
-                          InputDecoration(labelText: s.weightInputLabel),
-                      onChanged: (v) => value = v),
-                  actions: [
-                    TextButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        child: Text(s.cancelButton)),
-                    FilledButton(
-                        onPressed: () => Navigator.pop(ctx,
-                            double.tryParse(value.replaceAll(',', '.')) ?? 0),
-                        child: Text(s.saveWeightButton))
-                  ]));
-      if (v == null || !c.mounted) return;
-      if (!v.isFinite || v <= 0) {
-        ScaffoldMessenger.of(c)
-            .showSnackBar(SnackBar(content: Text(s.invalidWeightMessage)));
-        return;
-      }
-      await ref.read(dailyWeightEntriesProvider.notifier).upsertTodayWeight(v);
     }
 
     final labels = [
@@ -257,7 +233,7 @@ class _ProgressState extends ConsumerState<ProgressScreen> {
                               child: TextButton(
                                   style: TextButton.styleFrom(
                                       backgroundColor: n == days
-                                          ? DashboardTheme.surfaceMuted
+                                          ? AppTheme.surfaceMuted
                                           : null),
                                   onPressed: () => setState(() => days = n),
                                   child: Text(
@@ -307,7 +283,7 @@ class _ProgressState extends ConsumerState<ProgressScreen> {
                           ],
                           key: anchors[0],
                           action: FilledButton.icon(
-                              onPressed: log,
+                              onPressed: () => showLogWeightDialog(c, ref, s),
                               icon: const Icon(Icons.add, size: 16),
                               label: Text(en ? 'Log' : 'Registrar'))),
                       const SizedBox(height: 16),
@@ -354,21 +330,21 @@ class _ProgressState extends ConsumerState<ProgressScreen> {
                                   meals.fold<int>(
                                       0, (n, m) => n + m.totalProteinGrams),
                                   targets?.targetProteinGrams,
-                                  DashboardTheme.primary
+                                  AppTheme.primary
                                 ),
                                 (
                                   s.carbs,
                                   meals.fold<int>(
                                       0, (n, m) => n + m.totalCarbsGrams),
                                   targets?.targetCarbsGrams,
-                                  DashboardTheme.charcoal
+                                  AppTheme.charcoal
                                 ),
                                 (
                                   s.fat,
                                   meals.fold<int>(
                                       0, (n, m) => n + m.totalFatGrams),
                                   targets?.targetFatGrams,
-                                  DashboardTheme.warning
+                                  AppTheme.warning
                                 )
                               ])
                                 Padding(
@@ -442,12 +418,6 @@ class _ProgressState extends ConsumerState<ProgressScreen> {
                       note(ref.watch(appStateProvider).isAuthenticated
                           ? (en ? 'Account history' : 'Historial de la cuenta')
                           : (en ? 'Local guest history' : 'Historial local')),
-                      OutlinedButton.icon(
-                          onPressed: export,
-                          icon: const Icon(Icons.download_outlined),
-                          label: Text(en
-                              ? 'Export Progress History (CSV)'
-                              : 'Exportar historial (CSV)')),
                       TextButton(
                           onPressed: () => Navigator.push(
                               c,
@@ -489,15 +459,14 @@ class _EnergyBars extends StatelessWidget {
                             label: '${e.$1}: ${e.$2} kcal',
                             child: Container(
                                 height: 98 * e.$2 / max,
-                                color: DashboardTheme.primary))))
+                                color: AppTheme.primary))))
             ])),
             if (goal != null)
               Positioned(
                   left: 0,
                   right: 0,
                   bottom: 98 * goal! / max,
-                  child:
-                      const Divider(height: 1, color: DashboardTheme.warning))
+                  child: const Divider(height: 1, color: AppTheme.warning))
           ])),
       Row(children: [
         for (final e in values)

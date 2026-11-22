@@ -6,14 +6,17 @@
     <title>Myfit Routine Builder</title>
     <link rel="stylesheet" href="styles.css">
   </head>
-  <body>
+  <body class="popup-page">
     <main class="app-shell">
       <header class="topbar">
-        <div>
-          <p class="eyebrow">MYFIT / TRAINING</p>
-          <h1>Routine builder</h1>
+        <h1><span class="brand-mark" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22l1.43-1.43 1.43 1.43 2.14-2.14 1.43 1.43 1.43-1.43-1.43-1.43L22 16.29z"/>
+        </svg></span> Myfit <span class="builder-tag">Builder</span></h1>
+        <div class="top-actions">
+          <span id="cloud-state" class="pill" hidden></span>
+          <button id="open-settings" class="icon-button" type="button" aria-label="Connection settings" title="Connection settings">⚙</button>
+          <button id="sign-out" class="icon-button" type="button" aria-label="Sign out" title="Sign out" hidden>⇥</button>
         </div>
-        <button id="sign-out" class="text-button" type="button" hidden>Sign out</button>
       </header>
 
       <p id="status" class="status" role="status" aria-live="polite"></p>
@@ -43,32 +46,42 @@
       </section>
 
       <section id="builder-view" hidden>
-        <div class="sync-row">
-          <span id="account-email"></span>
-          <button id="save-library" class="primary-button" type="button">Save changes</button>
-        </div>
-        <section class="card routine-toolbar" aria-label="Routine selection">
-          <label for="routine-select">Active routine</label>
+        <section class="routine-toolbar" aria-label="Routine selection">
           <div class="routine-select-row">
-            <select id="routine-select"></select>
-            <button id="delete-routine" class="danger-button" type="button">Delete</button>
+            <select id="routine-select" aria-label="Active routine"></select>
+            <button id="new-routine" class="secondary-button" type="button">＋ New</button>
           </div>
-          <label for="routine-name">Routine name</label>
-          <input id="routine-name" type="text" maxlength="80">
-          <button id="new-routine" class="secondary-button" type="button">New routine</button>
+          <nav id="day-tabs" class="day-tabs" aria-label="Training day"></nav>
         </section>
-
-        <nav id="day-tabs" class="day-tabs" aria-label="Training day"></nav>
         <section class="day-heading">
-          <div>
-            <p class="eyebrow">SCHEDULE</p>
-            <h2 id="day-title">Monday</h2>
-          </div>
-          <button id="add-block" class="secondary-button" type="button">Add exercise block</button>
+          <h2 id="day-title">Monday</h2>
+          <span id="day-stats" class="day-stats"></span>
         </section>
-        <div id="blocks" class="blocks"></div>
-        <p id="empty-day" class="empty-state">No exercises for this day yet.</p>
+        <div class="editor-scroll">
+          <div id="blocks" class="blocks"></div>
+          <p id="empty-day" class="empty-state">No blocks planned for this day.</p>
+          <button id="add-block" class="secondary-button" type="button">＋ Add exercise block</button>
+        </div>
+        <footer class="builder-footer">
+          <div class="footer-actions">
+            <button id="save-library" class="primary-button" type="button">☁ Push Routine to Mobile</button>
+            <button id="routine-settings" class="secondary-button" type="button">Routine</button>
+          </div>
+          <div class="footer-meta"><span><kbd id="save-shortcut">Ctrl S</kbd> Save · <kbd>Tab</kbd> Next field</span><span id="account-email"></span></div>
+        </footer>
       </section>
+      <dialog id="routine-dialog" aria-labelledby="routine-dialog-title">
+        <form method="dialog">
+          <h2 id="routine-dialog-title">Routine settings</h2>
+          <label for="routine-name">Routine name</label>
+          <input id="routine-name" type="text" maxlength="80" required>
+          <div class="dialog-actions">
+            <button id="delete-routine" class="danger-button" type="button">Delete routine</button>
+            <button class="secondary-button" value="cancel" formnovalidate>Cancel</button>
+            <button class="primary-button" value="apply">Apply</button>
+          </div>
+        </form>
+      </dialog>
     </main>
     <script src="popup.js"></script>
   </body>

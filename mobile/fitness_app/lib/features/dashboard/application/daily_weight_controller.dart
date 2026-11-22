@@ -79,18 +79,9 @@ class DailyWeightEntriesNotifier extends Notifier<List<DailyWeightEntry>> {
     _lastScopeKey ??= _currentScopeKey();
     _loadToken++;
     final todayKey = _dateKey(DateTime.now());
-    var replaced = false;
-
     state = [
-      for (final entry in state)
-        if (entry.dateKey == todayKey)
-          () {
-            replaced = true;
-            return DailyWeightEntry(dateKey: todayKey, weightKg: weightKg);
-          }()
-        else
-          entry,
-      if (!replaced) DailyWeightEntry(dateKey: todayKey, weightKg: weightKg),
+      DailyWeightEntry(dateKey: todayKey, weightKg: weightKg),
+      ...state.where((entry) => entry.dateKey != todayKey),
     ]..sort((a, b) => b.dateKey.compareTo(a.dateKey));
 
     if (_isAuthenticated) {

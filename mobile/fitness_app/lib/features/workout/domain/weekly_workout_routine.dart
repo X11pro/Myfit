@@ -198,3 +198,31 @@ class WorkoutRoutineLibrary {
     );
   }
 }
+
+// Compare names without case or spacing, not by numerical load or repetitions.
+String routineNameKey(String value) =>
+    value.trim().replaceAll(RegExp(r'\s+'), ' ').toLowerCase();
+Map<String, int> _movementCounts(Iterable<WorkoutRoutineBlock> blocks) {
+  final counts = <String, int>{};
+  for (final e in blocks.expand((b) => b.exercises)) {
+    final name = routineNameKey(e.exerciseName);
+    if (name.isNotEmpty) counts.update(name, (n) => n + 1, ifAbsent: () => 1);
+  }
+  return counts;
+}
+
+Set<String> duplicateRoutineMovements(Iterable<WorkoutRoutineBlock> blocks) =>
+    _movementCounts(blocks)
+        .entries
+        .where((e) => e.value > 1)
+        .map((e) => e.key)
+        .toSet();
+bool increasesRoutineMovementDuplicates(
+    Iterable<WorkoutRoutineBlock> before, Iterable<WorkoutRoutineBlock> after) {
+  final previous = _movementCounts(before);
+  return _movementCounts(after)
+      .entries
+      .any((e) => e.value > 1 && e.value > (previous[e.key] ?? 0));
+}
+
+typedef WeeklyRoutineRequest = ({DateTime date, bool canApply});

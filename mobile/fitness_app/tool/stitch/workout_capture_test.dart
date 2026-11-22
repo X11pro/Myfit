@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:fitness_app/shared/ui/theme/app_theme.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -105,6 +106,7 @@ void main() {
         child: RepaintBoundary(
             key: key,
             child: MaterialApp(
+                theme: AppTheme.dark(),
                 debugShowCheckedModeBanner: false,
                 home: ManualWorkoutScreen(session: session)))));
     await t.pumpAndSettle();

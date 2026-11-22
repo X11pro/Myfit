@@ -6,7 +6,7 @@ import '../../../shared/app_state.dart';
 import '../../../shared/date_format.dart';
 import '../../../shared/widgets/myfit_bottom_nav.dart';
 import '../../dashboard/application/daily_targets_calculator.dart';
-import '../../dashboard/presentation/dashboard_theme.dart';
+import '../../../shared/ui/theme/app_theme.dart';
 import '../application/manual_food_entries_controller.dart';
 import '../domain/manual_food_entry.dart';
 import 'widgets/meal_photo_view.dart';
@@ -20,12 +20,11 @@ class NutritionScreen extends ConsumerStatefulWidget {
 class _NutritionState extends ConsumerState<NutritionScreen> {
   DateTime date = DateUtils.dateOnly(DateTime.now());
   String query = '';
+  String? mealType;
   int sum(List<ManualFoodEntry> rows, int Function(ManualFoodEntry) field) =>
       rows.fold(0, (v, e) => v + field(e));
   @override
-  Widget build(BuildContext context) =>
-      Theme(data: DashboardTheme.dark(), child: Builder(builder: _body));
-  Widget _body(BuildContext c) {
+  Widget build(BuildContext c) {
     final s = stringsFor(ref), en = s.isEnglish, t = Theme.of(c).textTheme;
     final all = ref.watch(manualFoodEntriesProvider),
         targets = ref.watch(dailyTargetsProvider);
@@ -50,6 +49,15 @@ class _NutritionState extends ConsumerState<NutritionScreen> {
             e.name.toLowerCase().contains(normalized) ||
             (e.ingredientsText ?? '').toLowerCase().contains(normalized))
         .toList();
+    final selectableGroups = groups.entries
+        .where((group) =>
+            normalized.isEmpty || matched.any((e) => e.mealType == group.key))
+        .toList();
+    final selectedGroup =
+        selectableGroups.where((group) => group.key == mealType).firstOrNull ??
+            (normalized.isEmpty ? null : selectableGroups.firstOrNull);
+    final selectedRows =
+        matched.where((entry) => entry.mealType == selectedGroup?.key).toList();
     void day(int d) =>
         setState(() => date = DateTime(date.year, date.month, date.day + d));
     void log([String? type, String? action]) =>
@@ -64,13 +72,12 @@ class _NutritionState extends ConsumerState<NutritionScreen> {
           Expanded(child: Text(title, style: t.titleLarge)),
           trailing
         ]);
-    Widget badge(String text) => Container(
+    Widget badge(String text, [Color accent = AppTheme.charcoal]) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-            color: DashboardTheme.surfaceMuted,
+            color: AppTheme.surfaceMuted,
             borderRadius: BorderRadius.circular(8)),
-        child: Text(text,
-            style: t.labelSmall?.copyWith(color: DashboardTheme.primary)));
+        child: Text(text, style: t.labelSmall?.copyWith(color: accent)));
     Widget thumb(ManualFoodEntry e, double w, double h) => e.photoPath == null
         ? SizedBox(
             width: w,
@@ -87,10 +94,6 @@ class _NutritionState extends ConsumerState<NutritionScreen> {
                       .read(appLanguageProvider.notifier)
                       .state = en ? AppLanguage.es : AppLanguage.en,
                   child: const Text('EN / ES')),
-              IconButton(
-                  tooltip: s.progressScreenTitle,
-                  onPressed: () => c.push('/dashboard/progress'),
-                  icon: const Icon(Icons.trending_up)),
               IconButton(
                   tooltip: s.accountTabLabel,
                   onPressed: () => c.push('/auth'),
@@ -138,11 +141,7 @@ class _NutritionState extends ConsumerState<NutritionScreen> {
                           prefixIcon: const Icon(Icons.search),
                           hintText: en
                               ? 'Search food in this diary'
-                              : 'Buscar en el diario',
-                          suffixIcon: IconButton(
-                              tooltip: s.lookupBarcodeButton,
-                              icon: const Icon(Icons.qr_code),
-                              onPressed: () => log(null, 'barcode')))),
+                              : 'Buscar en el diario')),
                   const SizedBox(height: 16),
                   card(Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -175,8 +174,7 @@ class _NutritionState extends ConsumerState<NutritionScreen> {
                                         ? 0
                                         : (kcal / goal).clamp(0, 1),
                                     strokeWidth: 5,
-                                    backgroundColor:
-                                        DashboardTheme.surfaceMuted),
+                                    backgroundColor: AppTheme.surfaceMuted),
                                 Center(
                                     child: Text(
                                         goal == null || goal <= 0
@@ -192,19 +190,19 @@ class _NutritionState extends ConsumerState<NutritionScreen> {
                               s.protein,
                               sum(entries, (e) => e.proteinGrams),
                               targets?.targetProteinGrams,
-                              DashboardTheme.primary
+                              AppTheme.primary
                             ),
                             (
                               s.carbs,
                               sum(entries, (e) => e.carbsGrams),
                               targets?.targetCarbsGrams,
-                              DashboardTheme.warning
+                              AppTheme.warning
                             ),
                             (
                               s.fat,
                               sum(entries, (e) => e.fatGrams),
                               targets?.targetFatGrams,
-                              DashboardTheme.danger
+                              AppTheme.danger
                             )
                           ])
                             Expanded(
@@ -231,7 +229,7 @@ class _NutritionState extends ConsumerState<NutritionScreen> {
                                                   : 0,
                                               color: m.$4,
                                               backgroundColor:
-                                                  DashboardTheme.surfaceMuted),
+                                                  AppTheme.surfaceMuted),
                                           const SizedBox(height: 6),
                                           Text('${m.$2}g / ${m.$3 ?? '—'}g',
                                               style: t.labelSmall)
@@ -240,9 +238,11 @@ class _NutritionState extends ConsumerState<NutritionScreen> {
                         const Divider(height: 24),
                         Wrap(spacing: 12, children: [
                           badge(
-                              '${en ? 'Fiber' : 'Fibra'}: ${sum(entries, (e) => e.fiberGrams)} g'),
+                              '${en ? 'Fiber' : 'Fibra'}: ${sum(entries, (e) => e.fiberGrams)} g',
+                              AppTheme.charcoal),
                           badge(
-                              '${en ? 'Sugar' : 'Azúcar'}: ${sum(entries, (e) => e.sugarGrams)} g')
+                              '${en ? 'Sugar' : 'Azúcar'}: ${sum(entries, (e) => e.sugarGrams)} g',
+                              AppTheme.secondary)
                         ])
                       ])),
                   const SizedBox(height: 20),
@@ -260,19 +260,19 @@ class _NutritionState extends ConsumerState<NutritionScreen> {
                         'photo',
                         en ? 'AI Photo' : 'Foto IA',
                         Icons.camera_alt_outlined,
-                        DashboardTheme.primary
+                        AppTheme.primary
                       ),
                       (
                         'barcode',
                         en ? 'Barcode' : 'Código',
                         Icons.qr_code_scanner,
-                        DashboardTheme.warning
+                        AppTheme.warning
                       ),
                       (
                         'manual',
                         en ? 'Manual' : 'Manual',
                         Icons.edit_note,
-                        DashboardTheme.charcoal
+                        AppTheme.charcoal
                       )
                     ])
                       Expanded(
@@ -302,69 +302,70 @@ class _NutritionState extends ConsumerState<NutritionScreen> {
                     Text(en
                         ? 'No matching meals for this day.'
                         : 'Sin coincidencias para este día.'),
-                  for (final group in groups.entries)
-                    if (normalized.isEmpty ||
-                        matched.any((e) => e.mealType == group.key))
-                      Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Builder(builder: (_) {
-                            final rows = matched
-                                .where((m) => m.mealType == group.key)
-                                .toList();
-                            return Card(
-                                child: ExpansionTile(
-                                    key: ValueKey(
-                                        '${date.toIso8601String()}-${group.key}-${normalized.isNotEmpty}'),
-                                    shape: const Border(),
-                                    collapsedShape: const Border(),
-                                    initiallyExpanded: true,
-                                    leading: Icon(switch (group.key) {
-                                      'breakfast' => Icons.breakfast_dining,
-                                      'lunch' => Icons.lunch_dining,
-                                      'dinner' => Icons.dinner_dining,
-                                      _ => Icons.local_cafe_outlined
-                                    }),
-                                    title: Text(group.value),
-                                    subtitle: Text(
-                                        rows.isEmpty
-                                            ? (en
-                                                ? 'Not logged'
-                                                : 'Sin registrar')
-                                            : '${sum(rows, (e) => e.calories)} kcal · ${sum(rows, (e) => e.proteinGrams)}g P · ${sum(rows, (e) => e.carbsGrams)}g C · ${sum(rows, (e) => e.fatGrams)}g F',
-                                        style: t.labelSmall),
-                                    childrenPadding:
-                                        const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                                    children: [
-                                  for (final e in rows)
-                                    Card(
-                                        color: DashboardTheme.surfaceMuted,
-                                        child: ListTile(
-                                            leading: thumb(e, 44, 44),
-                                            title: Text(e.name,
-                                                maxLines: 1,
-                                                overflow:
-                                                    TextOverflow.ellipsis),
-                                            subtitle: Text(
-                                                '${e.calories} kcal · ${e.proteinGrams}g ${s.protein}',
-                                                style: t.labelSmall),
-                                            onTap: () => c.push(
-                                                '/food/manual?from=nutrition',
-                                                extra: e))),
-                                  if (today && rows.isEmpty)
-                                    SizedBox(
-                                        width: double.infinity,
-                                        child: FilledButton(
-                                            onPressed: () => log(group.key),
-                                            child: Text(
-                                                '${en ? 'Log' : 'Registrar'} ${group.value}')))
-                                  else if (today)
-                                    TextButton.icon(
-                                        onPressed: () => log(group.key),
-                                        icon: const Icon(Icons.add, size: 16),
-                                        label: Text(
-                                            '${en ? 'Add to' : 'Añadir a'} ${group.value}'))
-                                ]));
-                          })),
+                  if (selectableGroups.isNotEmpty)
+                    InputDecorator(
+                      decoration: const InputDecoration(),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          key: const Key('daily-meal-selector'),
+                          isExpanded: true,
+                          isDense: true,
+                          value: selectedGroup?.key,
+                          hint: Text(en ? 'Select a meal' : 'Elegí una comida'),
+                          items: [
+                            for (final option in selectableGroups)
+                              DropdownMenuItem(
+                                value: option.key,
+                                child: Text(option.value),
+                              ),
+                          ],
+                          onChanged: (value) =>
+                              setState(() => mealType = value),
+                        ),
+                      ),
+                    ),
+                  if (selectedGroup case final group?)
+                    Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Card(
+                            key: const Key('selected-daily-meal'),
+                            child: Column(children: [
+                              ListTile(
+                                leading: Icon(switch (group.key) {
+                                  'breakfast' => Icons.breakfast_dining,
+                                  'lunch' => Icons.lunch_dining,
+                                  'dinner' => Icons.dinner_dining,
+                                  _ => Icons.local_cafe_outlined
+                                }),
+                                title: Text(
+                                    selectedRows.isEmpty
+                                        ? (en ? 'Not logged' : 'Sin registrar')
+                                        : '${sum(selectedRows, (e) => e.calories)} kcal · ${sum(selectedRows, (e) => e.proteinGrams)}g P · ${sum(selectedRows, (e) => e.carbsGrams)}g C · ${sum(selectedRows, (e) => e.fatGrams)}g F',
+                                    style: t.labelSmall),
+                              ),
+                              for (final e in selectedRows)
+                                Card(
+                                    color: AppTheme.surfaceMuted,
+                                    child: ListTile(
+                                        leading: thumb(e, 44, 44),
+                                        title: Text(e.name,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis),
+                                        subtitle: Text(
+                                            '${e.calories} kcal · ${e.proteinGrams}g ${s.protein}',
+                                            style: t.labelSmall),
+                                        onTap: () => c.push(
+                                            '/food/manual?from=nutrition',
+                                            extra: e))),
+                              if (today)
+                                TextButton.icon(
+                                    onPressed: () => log(group.key),
+                                    icon: const Icon(Icons.add, size: 16),
+                                    label: Text(selectedRows.isEmpty
+                                        ? '${en ? 'Log' : 'Registrar'} ${group.value}'
+                                        : '${en ? 'Add to' : 'Añadir a'} ${group.value}'))
+                            ]))),
+                  const SizedBox(height: 16),
                   header(
                       en ? 'Visual Food Gallery' : 'Galería de comidas',
                       TextButton(

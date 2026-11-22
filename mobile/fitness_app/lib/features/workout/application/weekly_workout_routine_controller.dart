@@ -44,6 +44,12 @@ class WeeklyWorkoutRoutineNotifier extends Notifier<WorkoutRoutineLibrary> {
     int weekday,
     List<WorkoutRoutineBlock> blocks,
   ) async {
+    final existing = state.routines.where((r) => r.id == routineId).firstOrNull;
+    if (existing == null) return;
+    if (increasesRoutineMovementDuplicates(
+        existing.blocksByWeekday[weekday] ?? const [], blocks)) {
+      return;
+    }
     state = state.copyWith(
       routines: [
         for (final routine in state.routines)
@@ -56,7 +62,35 @@ class WeeklyWorkoutRoutineNotifier extends Notifier<WorkoutRoutineLibrary> {
     await _persistAndSync();
   }
 
+  Future<bool> appendDayExercises(String routineId, int weekday,
+      List<WorkoutRoutineExercise> exercises) async {
+    final routine = state.routines.where((r) => r.id == routineId).firstOrNull;
+    if (routine == null) return false;
+    final blocks = routine.blocksByWeekday[weekday] ?? const [];
+    final names = {
+      for (final block in blocks)
+        for (final exercise in block.exercises)
+          routineNameKey(exercise.exerciseName),
+    };
+    final extraBlocks = [
+      for (final exercise in exercises)
+        if (names.add(routineNameKey(exercise.exerciseName)))
+          WorkoutRoutineBlock(
+            type: WorkoutRoutineBlockType.normal,
+            exercises: [exercise],
+          ),
+    ];
+    if (extraBlocks.isEmpty) return false;
+    await setDayBlocks(routineId, weekday, [...blocks, ...extraBlocks]);
+    return true;
+  }
+
+  bool routineNameInUse(String name, {String? exceptId}) =>
+      state.routines.any((r) =>
+          r.id != exceptId && routineNameKey(r.name) == routineNameKey(name));
+
   Future<void> createRoutine(String name) async {
+    if (name.trim().isEmpty || routineNameInUse(name)) return;
     final routine = WeeklyWorkoutRoutine(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       name: name.trim(),
@@ -75,7 +109,8 @@ class WeeklyWorkoutRoutineNotifier extends Notifier<WorkoutRoutineLibrary> {
 
   Future<void> renameRoutine(String routineId, String name) async {
     final trimmedName = name.trim();
-    if (trimmedName.isEmpty) {
+    if (trimmedName.isEmpty ||
+        routineNameInUse(trimmedName, exceptId: routineId)) {
       return;
     }
     state = state.copyWith(

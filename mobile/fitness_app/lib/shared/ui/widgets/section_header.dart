@@ -16,33 +16,44 @@ class SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Row(
+    final heading = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: theme.textTheme.titleLarge
-                    ?.copyWith(fontWeight: FontWeight.w700),
-              ),
-              if (subtitle != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  subtitle!,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ],
-          ),
+        Text(
+          title,
+          style:
+              theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
-        if (trailing != null) trailing!,
+        if (subtitle != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            subtitle!,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              height: 1.4,
+            ),
+          ),
+        ],
       ],
     );
+    final action = trailing;
+    if (action == null) return heading;
+    return LayoutBuilder(builder: (context, constraints) {
+      if (constraints.maxWidth < 420 ||
+          MediaQuery.textScalerOf(context).scale(16) > 20) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [heading, const SizedBox(height: 8), action],
+        );
+      }
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: heading),
+          const SizedBox(width: 12),
+          Flexible(child: action),
+        ],
+      );
+    });
   }
 }

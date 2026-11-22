@@ -22,7 +22,7 @@ The extension lets an authenticated Myfit user build weekly gym routines from a 
 2. Enter the same `SUPABASE_URL` and `SUPABASE_ANON_KEY` used by Flutter. The anonymous key is safe for a client application; never use a `service_role` key.
 3. Enter the same email used in Myfit and request a code.
 4. Paste the email OTP in the extension. Pasting is intentionally allowed for accessibility and password-manager support.
-5. Create/edit routines and select **Save changes**.
+5. Create/edit routines and select **Push Routine to Mobile** (`Ctrl+S` or `⌘S`). **Cloud saved** means Supabase accepted the save; in the mobile app, use **Reload routines** to fetch it.
 
 If the popup was already open before this update, reload the extension from `chrome://extensions`. Version `0.1.1` renews a valid saved session automatically; if it cannot be renewed, it shows the OTP sign-in form again.
 

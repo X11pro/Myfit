@@ -12,6 +12,7 @@ import '../features/food/presentation/shared_food_catalog_screen.dart';
 import '../features/onboarding/presentation/onboarding_screen.dart';
 import '../features/splash/presentation/splash_screen.dart';
 import '../features/workout/domain/manual_workout_session.dart';
+import '../features/workout/domain/weekly_workout_routine.dart';
 import '../features/workout/presentation/manual_workout_screen.dart';
 import '../features/workout/presentation/weekly_workout_routine_screen.dart';
 import '../shared/app_state.dart';
@@ -70,7 +71,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/workout/routine',
-        builder: (context, state) => const WeeklyWorkoutRoutineScreen(),
+        builder: (context, state) => WeeklyWorkoutRoutineScreen(
+            request: state.extra is WeeklyRoutineRequest
+                ? state.extra as WeeklyRoutineRequest
+                : null),
       ),
       GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
     ],

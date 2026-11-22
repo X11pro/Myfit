@@ -74,13 +74,20 @@ La firma Release usa el equipo Xcode `33SY9X526C`. Mantener el teléfono desbloq
 
 ## Sincronizar desde CachyOS
 
-El repositorio local debe estar limpio y los cambios deben estar committeados. Desde CachyOS:
+La rama de referencia es `main`. Para Git, usar la copia real
+`/Volumes/HDD/Github/Myfit` de la Mac mini. Las copias sin `.git` en
+`/Users/macmini/Projects/` no se actualizan con `git pull`. Revisar ambas copias
+Git antes de sincronizar para no tocar cambios locales.
+
+Desde CachyOS, después de publicar el commit:
 
 ```bash
-./scripts/git/sync_to_macmini.sh Mariano@192.168.0.105 /Users/macmini/Projects/Myfit
+ssh -i ~/.ssh/id_ed25519_macmini Mariano@192.168.1.244 \
+  'git -C /Volumes/HDD/Github/Myfit pull --ff-only origin main'
 ```
 
-El script sube el branch actual a `origin` y ejecuta un `git pull --ff-only` en la Mac mini por SSH. No agrega, guarda ni commitea cambios locales automaticamente.
+Para compilar esta revisión en la Mac, usar
+`/Volumes/HDD/Github/Myfit/mobile/fitness_app` y su configuración local.
 
 ## Sincronizacion continua desde CachyOS
 

@@ -74,6 +74,7 @@ class _ProgressDetailScreenState extends ConsumerState<ProgressDetailScreen> {
             if (_mode == ProgressMode.strength) ...[
               const SizedBox(height: 16),
               DropdownButtonFormField<String?>(
+                isExpanded: true,
                 value: selectedExercise,
                 decoration:
                     InputDecoration(labelText: strings.exerciseFilterLabel),
