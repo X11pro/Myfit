@@ -1,0 +1,280 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../shared/app_language.dart';
+import '../../../shared/ui/widgets/premium_card.dart';
+import '../../../shared/ui/widgets/premium_screen.dart';
+import '../../../shared/ui/widgets/section_header.dart';
+import '../../../shared/widgets/app_top_bar.dart';
+import '../application/daily_targets_calculator.dart';
+import '../domain/daily_targets.dart';
+import 'widgets/progress_chart_widgets.dart';
+
+class ProgressDetailScreen extends ConsumerStatefulWidget {
+  const ProgressDetailScreen({super.key});
+
+  @override
+  ConsumerState<ProgressDetailScreen> createState() =>
+      _ProgressDetailScreenState();
+}
+
+class _ProgressDetailScreenState extends ConsumerState<ProgressDetailScreen> {
+  ProgressMode _mode = ProgressMode.strength;
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = stringsFor(ref);
+    final strengthMetric = ref.watch(strengthProgressMetricProvider);
+    final points = switch (_mode) {
+      ProgressMode.strength => ref.watch(progressStrengthProvider),
+      ProgressMode.bodyWeight => ref.watch(progressBodyWeightProvider),
+      ProgressMode.calories => ref.watch(progressCaloriesProvider),
+      ProgressMode.combined => ref.watch(progressCombinedProvider),
+    };
+    final exerciseOptions = ref.watch(strengthExerciseOptionsProvider);
+    final selectedExercise = ref.watch(strengthExerciseFilterProvider);
+
+    return Scaffold(
+      appBar: AppTopBar(title: strings.progressScreenTitle, strings: strings),
+      body: PremiumScreen(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SectionHeader(
+              title: strings.progressScreenTitle,
+              subtitle: strings.progressScreenSubtitle,
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _ModeChip(
+                  label: strings.progressStrength,
+                  selected: _mode == ProgressMode.strength,
+                  onTap: () => setState(() => _mode = ProgressMode.strength),
+                ),
+                _ModeChip(
+                  label: strings.progressBodyWeight,
+                  selected: _mode == ProgressMode.bodyWeight,
+                  onTap: () => setState(() => _mode = ProgressMode.bodyWeight),
+                ),
+                _ModeChip(
+                  label: strings.progressCaloriesBurned,
+                  selected: _mode == ProgressMode.calories,
+                  onTap: () => setState(() => _mode = ProgressMode.calories),
+                ),
+                _ModeChip(
+                  label: strings.progressCombined,
+                  selected: _mode == ProgressMode.combined,
+                  onTap: () => setState(() => _mode = ProgressMode.combined),
+                ),
+              ],
+            ),
+            if (_mode == ProgressMode.strength) ...[
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String?>(
+                value: selectedExercise,
+                decoration:
+                    InputDecoration(labelText: strings.exerciseFilterLabel),
+                items: [
+                  DropdownMenuItem<String?>(
+                    value: null,
+                    child: Text(strings.allExercisesOption),
+                  ),
+                  ...exerciseOptions.map(
+                    (exercise) => DropdownMenuItem<String?>(
+                      value: exercise,
+                      child: Text(exercise),
+                    ),
+                  ),
+                ],
+                onChanged: (value) => ref
+                    .read(strengthExerciseFilterProvider.notifier)
+                    .state = value,
+              ),
+              if (selectedExercise != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  strings.filteredExerciseLabel(selectedExercise),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+              const SizedBox(height: 16),
+              Text(
+                strings.strengthMetricLabel,
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _ModeChip(
+                    label: strings.progressHeaviestWeight,
+                    selected:
+                        strengthMetric == StrengthProgressMetric.heaviestWeight,
+                    onTap: () => ref
+                        .read(strengthProgressMetricProvider.notifier)
+                        .state = StrengthProgressMetric.heaviestWeight,
+                  ),
+                  _ModeChip(
+                    label: strings.progressTrainingVolume,
+                    selected:
+                        strengthMetric == StrengthProgressMetric.totalVolume,
+                    onTap: () => ref
+                        .read(strengthProgressMetricProvider.notifier)
+                        .state = StrengthProgressMetric.totalVolume,
+                  ),
+                  _ModeChip(
+                    label: strings.progressEstimatedOneRepMax,
+                    selected: strengthMetric ==
+                        StrengthProgressMetric.estimatedOneRepMax,
+                    onTap: () => ref
+                        .read(strengthProgressMetricProvider.notifier)
+                        .state = StrengthProgressMetric.estimatedOneRepMax,
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 20),
+            PremiumCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(strings.progressDiagramTitle,
+                      style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  Text(strings.workoutProgressHint),
+                  const SizedBox(height: 16),
+                  if (points.isEmpty)
+                    Text(strings.noProgressDataYet)
+                  else ...[
+                    if (_mode == ProgressMode.bodyWeight)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Text(strings.bodyWeightTrendDown),
+                      ),
+                    ProgressLineAreaChart(points: points, height: 240),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            _ProgressSummaryCard(
+              points: points,
+              strings: strings,
+              mode: _mode,
+              strengthMetric: strengthMetric,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ModeChip extends StatelessWidget {
+  const _ModeChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) => onTap(),
+    );
+  }
+}
+
+class _ProgressSummaryCard extends StatelessWidget {
+  const _ProgressSummaryCard({
+    required this.points,
+    required this.strings,
+    required this.mode,
+    required this.strengthMetric,
+  });
+
+  final List<ProgressPoint> points;
+  final AppStrings strings;
+  final ProgressMode mode;
+  final StrengthProgressMetric strengthMetric;
+
+  @override
+  Widget build(BuildContext context) {
+    if (points.length < 2) {
+      return const SizedBox.shrink();
+    }
+
+    final first = points.first.value;
+    final last = points.last.value;
+    final delta = last - first;
+    final best = points
+        .map((point) => point.value)
+        .reduce((current, next) => current > next ? current : next);
+
+    return PremiumCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(strings.progressDeltaTitle,
+              style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          Text(
+            _formatDelta(delta),
+          ),
+          const SizedBox(height: 8),
+          Text(_summaryText(delta)),
+          const SizedBox(height: 16),
+          Text('${strings.latestValueLabel}: ${_formatValue(last)}'),
+          const SizedBox(height: 4),
+          Text('${strings.bestValueLabel}: ${_formatValue(best)}'),
+        ],
+      ),
+    );
+  }
+
+  String _summaryText(double delta) {
+    if (mode == ProgressMode.bodyWeight) {
+      return strings.bodyWeightDeltaMessage(delta);
+    }
+
+    return strings.trendDirectionMessage(delta);
+  }
+
+  String _formatDelta(double delta) {
+    final prefix = delta > 0 ? '+' : '';
+    return '$prefix${_formatValue(delta)}';
+  }
+
+  String _formatValue(double value) {
+    final decimals = value.abs() >= 10 ? 0 : 1;
+    final formatted = value.toStringAsFixed(decimals);
+
+    switch (mode) {
+      case ProgressMode.bodyWeight:
+        return '$formatted kg';
+      case ProgressMode.calories:
+        return '$formatted kcal';
+      case ProgressMode.combined:
+        return formatted;
+      case ProgressMode.strength:
+        switch (strengthMetric) {
+          case StrengthProgressMetric.heaviestWeight:
+            return '$formatted kg';
+          case StrengthProgressMetric.totalVolume:
+            return '$formatted kg';
+          case StrengthProgressMetric.estimatedOneRepMax:
+            return '$formatted kg e1RM';
+        }
+    }
+  }
+}

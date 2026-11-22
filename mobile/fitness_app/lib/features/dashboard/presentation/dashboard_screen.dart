@@ -9,7 +9,9 @@ import 'package:go_router/go_router.dart';
 import '../../../shared/app_language.dart';
 import '../../../shared/date_format.dart';
 import '../../../shared/app_state.dart';
-import '../../../shared/ui/theme/app_theme.dart';
+import '../../../shared/widgets/myfit_bottom_nav.dart';
+import 'dashboard_theme.dart';
+import 'widgets/stitch_daily_cards.dart';
 import '../../../shared/ui/widgets/crystal_progress_ring.dart';
 import '../../food/application/manual_food_entries_controller.dart';
 import '../../food/domain/manual_food_entry.dart';
@@ -22,34 +24,39 @@ import '../domain/daily_targets.dart';
 import '../domain/daily_weight_entry.dart';
 import 'widgets/progress_chart_widgets.dart';
 
-class DashboardScreen extends ConsumerWidget {
+class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
+  @override
+  Widget build(BuildContext context) =>
+      Theme(data: DashboardTheme.dark(), child: const _DashboardBody());
+}
+
+class _DashboardBody extends ConsumerWidget {
+  const _DashboardBody();
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(appStateProvider);
     final strings = stringsFor(ref);
     final displayName = state.displayName ?? strings.defaultUserName;
-    final summary = ref.watch(manualFoodSummaryProvider);
+    final summary = ref.watch(todayNutritionSummaryProvider) ??
+        const DailyNutritionSummary(
+            dateKey: '',
+            totalCalories: 0,
+            totalProteinGrams: 0,
+            totalCarbsGrams: 0,
+            totalFatGrams: 0,
+            entryCount: 0);
     final entries = ref.watch(manualFoodEntriesProvider);
     final dailySummaries = ref.watch(dailyNutritionSummariesProvider);
     final todayWeight = ref.watch(todayWeightEntryProvider);
     final dailyTargets = ref.watch(dailyTargetsProvider);
     final todayWorkouts = ref.watch(todayWorkoutSessionsProvider);
     final todayWorkoutCalories = ref.watch(todayWorkoutCaloriesProvider);
-    final todayWorkoutDurations =
-        ref.watch(todayWorkoutDurationSummaryProvider);
+
     final currentWeightKg = todayWeight?.weightKg ?? state.currentWeightKg;
-    final totalSetsToday = todayWorkouts.fold<int>(
-        0, (value, session) => value + session.totalSets);
-    final totalRepsToday = todayWorkouts.fold<int>(
-        0, (value, session) => value + session.totalReps);
-    final estimatedBalance = dailyTargets == null
-        ? null
-        : summary.totalCalories - dailyTargets.estimatedBurnCalories;
-    final primaryBalance = estimatedBalance ?? 0;
     final latestWorkout = todayWorkouts.isNotEmpty ? todayWorkouts.first : null;
-    final recentMeal = entries.isNotEmpty ? entries.first : null;
+    final en = strings.isEnglish;
     final targetCalories = dailyTargets?.targetCalories ?? 2200;
     final calorieProgress = targetCalories <= 0
         ? 0.0
@@ -60,26 +67,40 @@ class DashboardScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'myfit',
+          'Myfit',
           style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.8),
         ),
         centerTitle: false,
-        leading: IconButton(
-          onPressed: () => context.go('/auth'),
-          icon: const Icon(Icons.account_circle_outlined),
-          tooltip: strings.accountTabLabel,
-        ),
+        automaticallyImplyLeading: false,
         actions: [
+          TextButton(
+              onPressed: () => ref.read(appLanguageProvider.notifier).state =
+                  strings.isEnglish ? AppLanguage.es : AppLanguage.en,
+              child: const Text('EN / ES')),
           IconButton(
-            onPressed: () => context.push('/dashboard/progress'),
-            icon: const Icon(Icons.insights_outlined),
-            tooltip: strings.progressScreenTitle,
-          ),
+              onPressed: () => context.push('/dashboard/progress'),
+              icon: const Icon(Icons.trending_up),
+              tooltip: strings.progressScreenTitle),
+          IconButton(
+              onPressed: () => context.go('/auth'),
+              icon: const Icon(Icons.account_circle),
+              tooltip: strings.accountTabLabel)
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
         children: [
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Text(formatDisplayDate(DateTime.now()),
+                style: Theme.of(context).textTheme.labelSmall),
+            Text(
+                state.isAuthenticated
+                    ? strings.accountTabLabel
+                    : (strings.isEnglish
+                        ? '●  Local profile'
+                        : '●  Perfil local'),
+                style: Theme.of(context).textTheme.labelSmall)
+          ]),
           Text(
             strings.goodMorningUser(displayName),
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -89,29 +110,46 @@ class DashboardScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            strings.energyBalanceSubtitle,
+            strings.isEnglish
+                ? 'You have ~$remainingCalories kcal remaining to reach today’s energy target.'
+                : 'Te quedan ~$remainingCalories kcal para alcanzar tu objetivo diario.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
           ),
           const SizedBox(height: 20),
-          _PremiumBalanceCard(
-            strings: strings,
-            balanceCalories: primaryBalance,
-            isOnTarget: primaryBalance <= 0,
-            remainingCalories: remainingCalories,
-            consumedProgress: calorieProgress,
-          ),
-          const SizedBox(height: 16),
-          _CompactNutritionCard(
-            strings: strings,
-            eatenCalories: summary.totalCalories,
-            targetCalories: targetCalories,
-            progress: calorieProgress,
-            proteinGrams: summary.totalProteinGrams,
-            carbsGrams: summary.totalCarbsGrams,
-            fatGrams: summary.totalFatGrams,
-          ),
+          _Snapshot(
+              strings: strings,
+              personalized:
+                  dailyTargets?.usesPersonalizedEnergyEstimate ?? false,
+              target: targetCalories,
+              eaten: summary.totalCalories,
+              burn: todayWorkoutCalories,
+              remaining: remainingCalories,
+              balance: dailyTargets == null
+                  ? null
+                  : summary.totalCalories - dailyTargets.estimatedBurnCalories,
+              progress: calorieProgress,
+              macros: [
+                (
+                  strings.protein,
+                  summary.totalProteinGrams.toDouble(),
+                  dailyTargets?.targetProteinGrams,
+                  DashboardTheme.primary
+                ),
+                (
+                  strings.carbs,
+                  summary.totalCarbsGrams.toDouble(),
+                  dailyTargets?.targetCarbsGrams,
+                  const Color(0xffd4ffec)
+                ),
+                (
+                  strings.fat,
+                  summary.totalFatGrams.toDouble(),
+                  dailyTargets?.targetFatGrams,
+                  DashboardTheme.warning
+                )
+              ]),
           const SizedBox(height: 20),
           _QuickActions(
             addMealLabel: strings.addMealTitle,
@@ -119,62 +157,105 @@ class DashboardScreen extends ConsumerWidget {
             onAddMeal: () => context.go('/food/manual'),
             onWorkout: () => context.go('/workout/manual'),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+          TrainingPanel(
+              strings: strings,
+              session: latestWorkout,
+              open: () =>
+                  context.push('/workout/manual', extra: latestWorkout)),
+          const SizedBox(height: 16),
+          DailyPanel(
+              label: en ? 'Metabolism' : 'Metabolismo',
+              title: strings.estimatedDailyBurnTitle,
+              icon: Icons.local_fire_department_outlined,
+              accent: DashboardTheme.warning,
+              children: [
+                Text(
+                    dailyTargets == null
+                        ? '—'
+                        : '~${dailyTargets.estimatedBurnCalories} kcal/${en ? 'day' : 'día'}',
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineMedium
+                        ?.copyWith(color: DashboardTheme.warning)),
+                Text(dailyTargets?.usesPersonalizedEnergyEstimate == true
+                    ? (en
+                        ? 'Calculated using the Mifflin–St Jeor equation and your activity profile.'
+                        : 'Calculado con la ecuación de Mifflin–St Jeor y tu nivel de actividad.')
+                    : strings.energyEstimateMethod(personalized: false)),
+                Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                        color: DashboardTheme.surfaceMuted,
+                        borderRadius: BorderRadius.circular(12)),
+                    child: Row(children: [
+                      const Icon(Icons.info_outline, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                          child: Text(
+                              en
+                                  ? 'Calculated estimate · Not a medical diagnosis or sensor measurement.'
+                                  : 'Estimación calculada · No es un diagnóstico ni una medición por sensor.',
+                              style: Theme.of(context).textTheme.bodySmall))
+                    ])),
+                FilledButton.tonalIcon(
+                    style: FilledButton.styleFrom(
+                        backgroundColor: DashboardTheme.surfaceMuted,
+                        foregroundColor: DashboardTheme.charcoal),
+                    onPressed: () => context.push('/profile'),
+                    icon: const Icon(Icons.tune),
+                    label: Text(en
+                        ? 'Adjust Energy Profile & Targets'
+                        : 'Ajustar perfil y objetivos'))
+              ]),
+          const SizedBox(height: 16),
+          DailyPanel(
+              label: en ? 'Body composition' : 'Composición corporal',
+              title: en ? 'Body Weight' : 'Peso corporal',
+              icon: Icons.monitor_weight_outlined,
+              action: TextButton.icon(
+                  onPressed: () => _showWeightDialog(context, ref, strings),
+                  icon: const Icon(Icons.add, size: 16),
+                  label: Text(strings.logWeightTitle)),
+              children: [
+                Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                        color: DashboardTheme.backgroundSecondary,
+                        borderRadius: BorderRadius.circular(12)),
+                    child: Row(children: [
+                      Expanded(
+                          child: Text(
+                              currentWeightKg == null
+                                  ? '—'
+                                  : '${currentWeightKg.toStringAsFixed(1)} kg',
+                              style:
+                                  Theme.of(context).textTheme.headlineMedium)),
+                      if (todayWeight != null)
+                        Text(en ? 'Logged today' : 'Registrado hoy',
+                            style: Theme.of(context).textTheme.labelSmall)
+                    ])),
+                Text(
+                    en
+                        ? 'Consistent weigh-ins help you see trends beyond day-to-day fluctuations.'
+                        : 'El registro regular permite ver tendencias más allá de las fluctuaciones diarias.',
+                    style: Theme.of(context).textTheme.bodySmall)
+              ]),
+          const SizedBox(height: 16),
+          DailyLogsPanel(
+              strings: strings,
+              meals: entries
+                  .where((m) => DateUtils.isSameDay(
+                      m.createdAt.toLocal(), DateTime.now()))
+                  .toList(),
+              workouts: todayWorkouts,
+              progress: () => context.push('/dashboard/progress')),
+          const SizedBox(height: 12),
           Text(
-            strings.todaysActivityTitle,
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 10),
-          _ActivitySummaryTile(
-              strings: strings,
-              latestWorkout: latestWorkout,
-              durations: todayWorkoutDurations),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _MetricInfoCard(
-                  title: strings.estimatedDailyBurnTitle,
-                  value: dailyTargets == null
-                      ? '$todayWorkoutCalories kcal'
-                      : '${dailyTargets.estimatedBurnCalories} kcal',
-                  subtitle: strings.energyEstimateMethod(
-                    personalized:
-                        dailyTargets?.usesPersonalizedEnergyEstimate ?? false,
-                  ),
-                  icon: Icons.local_fire_department_outlined,
-                  accent: AppTheme.warning,
-                  onTap: () => context.push('/profile'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _MetricInfoCard(
-                  title: strings.currentWeightCardTitle,
-                  value: currentWeightKg == null
-                      ? '--'
-                      : '${currentWeightKg.toStringAsFixed(1)} kg',
-                  subtitle: strings.logWeightTitle,
-                  icon: Icons.monitor_weight_outlined,
-                  accent: AppTheme.success,
-                  onTap: () => _showWeightDialog(context, ref, strings),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _RecentLogsPanel(
-              strings: strings,
-              recentMeal: recentMeal,
-              totalSets: totalSetsToday,
-              totalReps: totalRepsToday),
-          const SizedBox(height: 12),
-          _PremiumInsightsCard(
-              strings: strings,
-              onPressed: () => context.push('/dashboard/progress')),
+              en
+                  ? 'Myfit provides calculated estimates. Not intended for clinical or medical decision making.'
+                  : 'Myfit proporciona estimaciones. No está destinado a decisiones clínicas o médicas.',
+              style: Theme.of(context).textTheme.bodySmall),
           if (dailySummaries.isNotEmpty) ...[
             const SizedBox(height: 16),
             _CollapsibleSection(
@@ -198,7 +279,7 @@ class DashboardScreen extends ConsumerWidget {
           ],
         ],
       ),
-      bottomNavigationBar: _DashboardBottomNav(strings: strings),
+      bottomNavigationBar: MyfitBottomNav(strings: strings, index: 0),
     );
   }
 
@@ -325,14 +406,14 @@ class _PremiumBalanceCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: (isOnTarget ? AppTheme.success : colors.tertiary)
+                color: (isOnTarget ? DashboardTheme.success : colors.tertiary)
                     .withValues(alpha: 0.16),
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
                 strings.energyBalanceStatus(balanceCalories),
                 style: TextStyle(
-                  color: isOnTarget ? AppTheme.success : colors.tertiary,
+                  color: isOnTarget ? DashboardTheme.success : colors.tertiary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -639,46 +720,43 @@ class _ActivitySummaryTile extends StatelessWidget {
     }
 
     return Card(
-      child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-        leading: Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            color:
-                Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
-          ),
-          child: Icon(Icons.fitness_center_outlined,
-              color: Theme.of(context).colorScheme.primary),
-        ),
-        title: Text(workout.title),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              strings.workoutActivitySummary(
-                minutes: workout.durationMinutes,
-                calories: workout.estimatedActiveCalories,
-              ),
-            ),
-            if (durations.totalSeconds > 0) ...[
-              const SizedBox(height: 4),
-              Text(
-                strings.workoutTimeSummary(
-                  total: _formatWorkoutDuration(durations.totalSeconds),
-                  active: _formatWorkoutDuration(durations.activeSeconds),
-                  rest: _formatWorkoutDuration(durations.restSeconds),
-                ),
-              ),
-            ],
-          ],
-        ),
-        trailing:
-            const Icon(Icons.check_circle_outline, color: Color(0xFF8DC3F2)),
-      ),
-    );
+        clipBehavior: Clip.antiAlias,
+        child:
+            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          ListTile(
+              leading: const Icon(Icons.fitness_center),
+              title: Text(workout.title),
+              trailing: const Icon(Icons.check_circle_outline,
+                  color: DashboardTheme.primary)),
+          SizedBox(
+              height: 105,
+              child:
+                  Image.asset('assets/stitch/training.jpg', fit: BoxFit.cover)),
+          Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(strings.workoutActivitySummary(
+                        minutes: workout.durationMinutes,
+                        calories: workout.estimatedActiveCalories)),
+                    Text(strings.workoutTimeSummary(
+                        total: _formatWorkoutDuration(durations.totalSeconds),
+                        active: _formatWorkoutDuration(durations.activeSeconds),
+                        rest: _formatWorkoutDuration(durations.restSeconds))),
+                    const SizedBox(height: 8),
+                    Wrap(spacing: 6, children: [
+                      for (final name
+                          in workout.sets.map((s) => s.exerciseName).toSet())
+                        Chip(label: Text(name))
+                    ]),
+                    OutlinedButton.icon(
+                        onPressed: () =>
+                            context.push('/workout/manual', extra: workout),
+                        icon: const Icon(Icons.edit_outlined),
+                        label: Text(strings.editWorkoutButton))
+                  ]))
+        ]));
   }
 }
 
@@ -804,7 +882,7 @@ class _QuickActions extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: FilledButton.icon(
+          child: OutlinedButton.icon(
             onPressed: onAddMeal,
             icon: const Icon(Icons.add_rounded),
             label: Text(addMealLabel),
@@ -812,7 +890,7 @@ class _QuickActions extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: OutlinedButton.icon(
+          child: FilledButton.icon(
             onPressed: onWorkout,
             icon: const Icon(Icons.fitness_center_outlined),
             label: Text(workoutLabel),
@@ -1136,60 +1214,6 @@ class _PremiumInsightsCard extends StatelessWidget {
         trailing: const Icon(Icons.chevron_right_outlined),
         onTap: onPressed,
       ),
-    );
-  }
-}
-
-class _DashboardBottomNav extends StatelessWidget {
-  const _DashboardBottomNav({required this.strings});
-
-  final AppStrings strings;
-
-  @override
-  Widget build(BuildContext context) {
-    return NavigationBar(
-      selectedIndex: 0,
-      onDestinationSelected: (index) {
-        switch (index) {
-          case 0:
-            context.go('/dashboard');
-            break;
-          case 1:
-            context.go('/workout/manual');
-            break;
-          case 2:
-            context.go('/food/manual');
-            break;
-          case 3:
-            context.push('/dashboard/progress');
-            break;
-          case 4:
-            context.go('/auth');
-            break;
-        }
-      },
-      destinations: [
-        NavigationDestination(
-          icon: const Icon(Icons.dashboard_outlined),
-          selectedIcon: const Icon(Icons.dashboard_rounded),
-          label: strings.dashboardTitle,
-        ),
-        NavigationDestination(
-          icon: const Icon(Icons.fitness_center_outlined),
-          selectedIcon: const Icon(Icons.fitness_center),
-          label: strings.quickActionWorkout,
-        ),
-        NavigationDestination(
-          icon: const Icon(Icons.restaurant_outlined),
-          selectedIcon: const Icon(Icons.restaurant),
-          label: strings.nutritionTabLabel,
-        ),
-        NavigationDestination(
-          icon: const Icon(Icons.show_chart_outlined),
-          selectedIcon: const Icon(Icons.show_chart),
-          label: strings.progressScreenTitle,
-        ),
-      ],
     );
   }
 }
@@ -2091,4 +2115,160 @@ class _MealEntryCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _Snapshot extends StatelessWidget {
+  const _Snapshot(
+      {required this.strings,
+      required this.personalized,
+      required this.target,
+      required this.eaten,
+      required this.burn,
+      required this.balance,
+      required this.remaining,
+      required this.progress,
+      required this.macros});
+  final int? balance;
+  final bool personalized;
+  final AppStrings strings;
+  final int target, eaten, burn, remaining;
+  final double progress;
+  final List<(String, double, int?, Color)> macros;
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    return Card(
+        child: Padding(
+            padding: const EdgeInsets.all(20),
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(
+                  strings.isEnglish
+                      ? 'METABOLIC SNAPSHOT'
+                      : 'RESUMEN METABÓLICO',
+                  style: t.labelSmall),
+              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Expanded(
+                    child: Text(
+                        strings.isEnglish
+                            ? 'Daily Energy Balance'
+                            : strings.dailyEnergyBalanceTitle,
+                        style: t.titleLarge)),
+                const SizedBox(width: 12),
+                _Pill(personalized ? 'Est. (Mifflin–St Jeor)' : 'Est.')
+              ]),
+              const SizedBox(height: 16),
+              Row(children: [
+                Expanded(
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                      Text.rich(TextSpan(children: [
+                        TextSpan(
+                            text: '$remaining',
+                            style: const TextStyle(
+                                fontSize: 36,
+                                height: 40 / 36,
+                                fontWeight: FontWeight.w700,
+                                color: DashboardTheme.primary)),
+                        TextSpan(text: ' kcal', style: t.labelMedium)
+                      ])),
+                      Text(strings.caloriesRemainingLabel, style: t.labelMedium)
+                    ])),
+                SizedBox.square(
+                    dimension: 88,
+                    child: Stack(fit: StackFit.expand, children: [
+                      CircularProgressIndicator(
+                          value: progress,
+                          strokeWidth: 7,
+                          backgroundColor: DashboardTheme.surfaceMuted),
+                      Center(
+                          child:
+                              Column(mainAxisSize: MainAxisSize.min, children: [
+                        Text('${(100 * progress).round()}%',
+                            style: t.titleMedium),
+                        Text(strings.isEnglish ? 'Target' : 'Objetivo',
+                            style: t.labelSmall)
+                      ]))
+                    ]))
+              ]),
+              if (balance != null)
+                Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(strings.energyBalanceStatus(balance!),
+                        style: t.bodySmall)),
+              const SizedBox(height: 18),
+              Container(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                      color: DashboardTheme.surfaceMuted,
+                      borderRadius: BorderRadius.circular(12)),
+                  child: Row(children: [
+                    for (final x in [
+                      (strings.isEnglish ? 'Base target' : 'Objetivo', target),
+                      (strings.isEnglish ? 'Food intake' : 'Consumo', eaten),
+                      (strings.isEnglish ? 'Active burn' : 'Actividad', burn)
+                    ])
+                      Expanded(
+                          child: Column(children: [
+                        Text(x.$1, style: t.labelSmall),
+                        Text('${x.$2}', style: t.titleMedium),
+                        Text('kcal', style: t.bodySmall)
+                      ]))
+                  ])),
+              const SizedBox(height: 16),
+              Text(
+                  strings.isEnglish
+                      ? 'Macronutrient distribution'
+                      : 'Distribución de macros',
+                  style: t.titleSmall),
+              for (final m in macros)
+                Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Column(children: [
+                      Row(children: [
+                        Expanded(child: Text(m.$1, style: t.labelMedium)),
+                        Text('${m.$2.round()}g / ${m.$3 ?? '—'}g',
+                            style: t.labelSmall)
+                      ]),
+                      const SizedBox(height: 4),
+                      LinearProgressIndicator(
+                          value: m.$3 == null || m.$3 == 0
+                              ? 0
+                              : (m.$2 / m.$3!).clamp(0, 1).toDouble(),
+                          minHeight: 8,
+                          borderRadius: BorderRadius.circular(8),
+                          color: m.$4,
+                          backgroundColor: DashboardTheme.surfaceMuted)
+                    ])),
+              if (macros.first.$3 != null)
+                Container(
+                    margin: const EdgeInsets.only(top: 16),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                        color: DashboardTheme.backgroundSecondary,
+                        borderRadius: BorderRadius.circular(12)),
+                    child: Row(children: [
+                      const Icon(Icons.insights,
+                          size: 18, color: DashboardTheme.primary),
+                      const SizedBox(width: 8),
+                      Expanded(
+                          child: Text(
+                              '${strings.protein}: ${macros.first.$2.round()} / ${macros.first.$3} g',
+                              style: t.bodySmall))
+                    ])),
+            ])));
+  }
+}
+
+class _Pill extends StatelessWidget {
+  const _Pill(this.text);
+  final String text;
+  @override
+  Widget build(BuildContext context) => Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+          color: DashboardTheme.surfaceMuted,
+          borderRadius: BorderRadius.circular(16)),
+      child: Text(text, style: Theme.of(context).textTheme.labelSmall));
 }

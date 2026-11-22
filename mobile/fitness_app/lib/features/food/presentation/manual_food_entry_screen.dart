@@ -22,10 +22,17 @@ import '../application/manual_food_entries_controller.dart';
 import '../domain/barcode_food_lookup_result.dart';
 import '../domain/manual_food_entry.dart';
 import 'barcode_scanner_screen.dart';
+import '../../dashboard/presentation/dashboard_theme.dart';
+import '../../dashboard/application/daily_targets_calculator.dart';
+import '../../../shared/widgets/myfit_bottom_nav.dart';
 import 'widgets/meal_photo_view.dart';
 
+part 'meal_analysis_review.dart';
+
 class ManualFoodEntryScreen extends ConsumerStatefulWidget {
-  const ManualFoodEntryScreen({super.key, this.entry});
+  const ManualFoodEntryScreen(
+      {super.key, this.entry, this.initialMealType, this.initialAction});
+  final String? initialMealType, initialAction;
 
   final ManualFoodEntry? entry;
 
@@ -47,6 +54,8 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
   final _ingredientsController = TextEditingController();
   String _mealType = 'breakfast';
   String? _photoPath;
+  bool _review = false;
+  bool _confirming = false;
   bool _isAnalyzing = false;
   bool _isLookingUpBarcode = false;
   double? _confidence;
@@ -54,6 +63,18 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
   _NutritionSnapshot? _analysisBaselineNutrition;
   int? _analysisBaselineWeightGrams;
   bool _isApplyingAutoNutritionScale = false;
+
+  void _changeReview(VoidCallback change) => setState(change);
+  void _resetReviewBaseline() {
+    _analysisBaselineWeightGrams = int.tryParse(_mealWeightController.text);
+    _analysisBaselineNutrition = _NutritionSnapshot(
+        calories: int.tryParse(_caloriesController.text) ?? 0,
+        proteinGrams: int.tryParse(_proteinController.text) ?? 0,
+        carbsGrams: int.tryParse(_carbsController.text) ?? 0,
+        fatGrams: int.tryParse(_fatController.text) ?? 0,
+        sugarGrams: int.tryParse(_sugarController.text) ?? 0,
+        fiberGrams: int.tryParse(_fiberController.text) ?? 0);
+  }
 
   bool get _isEditing => widget.entry != null;
 
@@ -64,6 +85,39 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
 
     final entry = widget.entry;
     if (entry == null) {
+      if (['breakfast', 'lunch', 'dinner', 'snack']
+          .contains(widget.initialMealType)) {
+        _mealType = widget.initialMealType!;
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        if (widget.initialAction == 'barcode' && _supportsBarcodeScan) {
+          await _scanBarcode();
+        } else if (widget.initialAction == 'photo') {
+          final src = await showModalBottomSheet<ImageSource>(
+              context: context,
+              builder: (c) => SafeArea(
+                      child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    for (final choice in [
+                      (
+                        ImageSource.camera,
+                        stringsFor(ref).addPhotoButton,
+                        Icons.camera_alt_outlined
+                      ),
+                      (
+                        ImageSource.gallery,
+                        stringsFor(ref).choosePhotoButton,
+                        Icons.photo_library_outlined
+                      )
+                    ])
+                      ListTile(
+                          leading: Icon(choice.$3),
+                          title: Text(choice.$2),
+                          onTap: () => Navigator.pop(c, choice.$1))
+                  ])));
+          if (mounted && src != null) await _pickPhoto(src);
+        }
+      });
       return;
     }
 
@@ -79,6 +133,7 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
     _mealType = entry.mealType;
     _photoPath = entry.photoPath;
     _confidence = entry.confidence;
+    _review = entry.photoPath != null && entry.confidence != null;
     _analysisBaselineWeightGrams = entry.estimatedGrams;
     if ((entry.estimatedGrams ?? 0) > 0) {
       _analysisBaselineNutrition = _NutritionSnapshot(
@@ -112,6 +167,12 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
   Widget build(BuildContext context) {
     final strings = stringsFor(ref);
 
+    if (_review && _confidence != null && _photoPath != null) {
+      final target = ref.watch(dailyTargetsProvider)?.targetCalories;
+      return Theme(
+          data: DashboardTheme.dark(),
+          child: Builder(builder: (c) => _reviewScreen(c, strings, target)));
+    }
     return Scaffold(
       appBar: AppTopBar(
         title: _isEditing ? strings.editMealTitle : strings.addMealTitle,
@@ -121,6 +182,15 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (_photoPath != null &&
+                _confidence != null &&
+                _barcodeResult == null)
+              OutlinedButton.icon(
+                  onPressed: () => setState(() => _review = true),
+                  icon: const Icon(Icons.auto_awesome),
+                  label: Text(strings.isEnglish
+                      ? 'Review Meal Analysis'
+                      : 'Revisar análisis')),
             const SizedBox(height: 4),
             SectionHeader(
               title: strings.addMealTitle,
@@ -419,7 +489,12 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
       return;
     }
 
-    context.go('/dashboard');
+    if (GoRouterState.of(context).uri.queryParameters['from'] == 'nutrition' &&
+        context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/dashboard');
+    }
   }
 
   Future<_PreparedRemotePhoto> _prepareRemotePhotoForSave() async {
@@ -530,7 +605,13 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
       return;
     }
 
-    setState(() => _photoPath = savedPath);
+    setState(() {
+      _photoPath = savedPath;
+      _confidence = null;
+      _review = false;
+      _analysisBaselineNutrition = null;
+      _analysisBaselineWeightGrams = null;
+    });
   }
 
   Future<String> _copyImageToAppStorage(XFile image) async {
@@ -600,6 +681,7 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
         },
       );
 
+      if (!mounted) return;
       final payload = _responseMap(response.data);
       _throwIfFunctionError(payload);
       final analysis =
@@ -667,7 +749,11 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
           fiberGrams: int.tryParse(_fiberController.text.trim()) ?? 0,
         );
       }
-      setState(() => _confidence = confidence);
+      setState(() {
+        _confidence = confidence;
+        _review = true;
+        _barcodeResult = null;
+      });
 
       if (!mounted) {
         return;
@@ -976,9 +1062,7 @@ class _ManualFoodEntryScreenState extends ConsumerState<ManualFoodEntryScreen> {
     }
 
     final targetWeight = int.tryParse(_mealWeightController.text.trim());
-    if (targetWeight == null ||
-        targetWeight <= 0 ||
-        targetWeight == baselineWeight) {
+    if (targetWeight == null || targetWeight <= 0) {
       return;
     }
 

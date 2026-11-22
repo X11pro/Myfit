@@ -13,9 +13,9 @@ import 'package:vibration/vibration.dart';
 import '../../../shared/app_language.dart';
 import '../../../shared/date_format.dart';
 import '../../../shared/ui/widgets/premium_card.dart';
-import '../../../shared/ui/widgets/premium_screen.dart';
-import '../../../shared/ui/widgets/section_header.dart';
-import '../../../shared/widgets/app_top_bar.dart';
+import '../../dashboard/presentation/dashboard_theme.dart';
+import '../../../shared/widgets/myfit_bottom_nav.dart';
+
 import '../application/manual_workout_controller.dart';
 import '../application/weekly_workout_routine_controller.dart';
 import '../domain/gym_set_entry.dart';
@@ -77,7 +77,8 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
   Duration _sessionElapsed = Duration.zero;
   Duration _restAccumulated = Duration.zero;
   Duration _restCurrentElapsed = Duration.zero;
-  bool _restBlinkOn = false;
+  final Set<int> _completed = {};
+  int _stepRevision = 0;
   bool _restAlertEnabled = false;
   bool _restVibrationEnabled = false;
   double _restAlertVolume = 0.7;
@@ -140,8 +141,12 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      Theme(data: DashboardTheme.dark(), child: Builder(builder: _logger));
+
+  Widget _logger(BuildContext context) {
     final strings = stringsFor(ref);
+    final en = strings.isEnglish;
     final sessions = ref.watch(manualWorkoutSessionsProvider);
     final recentExercises = ref.watch(recentWorkoutExerciseNamesProvider);
     final weeklyRoutineLibrary = ref.watch(weeklyWorkoutRoutineProvider);
@@ -151,318 +156,512 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
             const [];
 
     return Scaffold(
-      appBar: AppTopBar(
-        title: _isEditing ? strings.editWorkoutTitle : strings.gymTitle,
-        strings: strings,
-      ),
-      body: PremiumScreen(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SectionHeader(
-              title: _isEditing
-                  ? strings.editWorkoutTitle
-                  : strings.logWorkoutTitle,
-              subtitle: strings.gymSubtitle,
-            ),
-            const SizedBox(height: 12),
-            PremiumCard(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.fitness_center_outlined),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: TextField(
-                          key: const Key('workout-title-field'),
-                          controller: _titleController,
-                          decoration: InputDecoration(
-                            labelText: strings.workoutNameLabel,
-                            isDense: true,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        tooltip: strings.workoutDateLabel,
-                        onPressed: _pickDate,
-                        icon: const Icon(Icons.calendar_today_outlined),
-                      ),
-                    ],
-                  ),
-                  Text(
-                    '${strings.workoutDateLabel}: ${formatDisplayDate(_selectedDate)}',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _CompactTimerCard(
-                          title: strings.workoutSessionTimerTitle,
-                          timeText: _formatSessionDuration(_sessionElapsed),
-                          accentColor: Theme.of(context).colorScheme.primary,
-                          primaryKey: const Key('workout-session-button'),
-                          primaryLabel: _isSessionRunning
-                              ? strings.stopTimerButton
-                              : strings.startTimerButton,
-                          onPrimaryPressed: _isSessionRunning
-                              ? _stopSessionTimer
-                              : _startSessionTimer,
-                          onReset: _sessionElapsed > Duration.zero
-                              ? _resetSessionTimer
-                              : null,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _CompactTimerCard(
-                          title: strings.restTimerTitle,
-                          timeText: _formatRestCycleDuration(),
-                          accentColor: _restPrimaryColor(context),
-                          primaryKey: const Key('rest-toggle-button'),
-                          primaryLabel: strings.restButton,
-                          onPrimaryPressed: _toggleRestTimer,
-                          onReset: _totalRestElapsed > Duration.zero
-                              ? _resetRestTimer
-                              : null,
-                          blink: _isRestRunning,
-                          visible: !_isRestRunning || _restBlinkOn,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  _WorkoutTimeSummary(
-                    total: _formatSessionDuration(_sessionElapsed),
-                    active: _formatSessionDuration(_activeTrainingElapsed),
-                    rest: _formatSessionDuration(_totalRestElapsed),
-                    strings: strings,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    _restStateLabel(strings),
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 4),
-                  ExpansionTile(
-                    tilePadding: EdgeInsets.zero,
-                    title: Text(strings.restTimerSettings),
-                    children: [
-                      const SizedBox(height: 8),
-                      TextField(
-                        key: const Key('rest-goal-seconds-field'),
-                        controller: _restGoalController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: strings.restGoalSecondsLabel,
-                        ),
-                      ),
-                      SwitchListTile(
-                        key: const Key('rest-alert-toggle'),
-                        contentPadding: EdgeInsets.zero,
-                        value: _restAlertEnabled,
-                        onChanged: _setRestAlertEnabled,
-                        title: Text(strings.restSoundToggleLabel),
-                      ),
-                      SwitchListTile(
-                        key: const Key('rest-vibration-toggle'),
-                        contentPadding: EdgeInsets.zero,
-                        value: _restVibrationEnabled,
-                        onChanged: _setRestVibrationEnabled,
-                        title: Text(strings.restVibrationToggleLabel),
-                      ),
-                      DropdownButtonFormField<_RestAlertSoundProfile>(
-                        key: const Key('rest-sound-dropdown'),
-                        value: _restAlertSound,
-                        decoration: InputDecoration(
-                          labelText: strings.restSoundProfileLabel,
-                        ),
-                        items: _RestAlertSoundProfile.values
-                            .map(
-                              (profile) => DropdownMenuItem(
-                                value: profile,
-                                child: Text(
-                                  _labelForRestSound(profile, strings),
-                                ),
+      appBar: AppBar(
+          automaticallyImplyLeading: false,
+          title: const Text('Myfit',
+              style: TextStyle(
+                  fontFamily: 'Plus Jakarta Sans',
+                  fontWeight: FontWeight.w800)),
+          actions: [
+            TextButton(
+                onPressed: () => ref.read(appLanguageProvider.notifier).state =
+                    en ? AppLanguage.es : AppLanguage.en,
+                child: const Text('EN / ES')),
+            IconButton(
+                tooltip: strings.progressScreenTitle,
+                onPressed: () => context.push('/dashboard/progress'),
+                icon: const Icon(Icons.trending_up)),
+            IconButton(
+                tooltip: strings.accountTabLabel,
+                onPressed: () => context.push('/auth'),
+                icon: const Icon(Icons.account_circle_outlined))
+          ]),
+      bottomNavigationBar: MyfitBottomNav(strings: strings, index: 1),
+      body: SafeArea(
+          top: false,
+          child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+              children: [
+                Row(children: [
+                  Expanded(
+                      child: Text(en ? '●  ACTIVE SESSION' : '●  SESIÓN ACTIVA',
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelSmall
+                              ?.copyWith(color: DashboardTheme.primary))),
+                  TextButton(
+                      onPressed: _pickDate,
+                      child: Text(formatDisplayDate(_selectedDate))),
+                  FilledButton.icon(
+                      key: const Key('save-workout-button'),
+                      onPressed: _saveWorkout,
+                      icon: const Icon(Icons.check_circle_outline, size: 16),
+                      label: Text(en ? 'Finish' : 'Finalizar'))
+                ]),
+                TextField(
+                    key: const Key('workout-title-field'),
+                    maxLines: 2,
+                    minLines: 1,
+                    controller: _titleController,
+                    style: Theme.of(context).textTheme.titleLarge,
+                    decoration: InputDecoration(
+                        hintText: strings.workoutNameLabel,
+                        suffixIcon: const Icon(Icons.edit_outlined, size: 16),
+                        filled: false,
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        contentPadding: EdgeInsets.zero)),
+                Text(
+                    '${strings.weeklyRoutineTitle}: ${weeklyRoutineLibrary.activeRoutine?.name ?? (en ? "Manual session" : "Sesión manual")}',
+                    style: Theme.of(context).textTheme.bodySmall),
+                const SizedBox(height: 16),
+                Card(
+                    child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Row(children: [
+                                Expanded(
+                                    child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                      Text(en ? 'ELAPSED TIME' : 'TIEMPO TOTAL',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelSmall),
+                                      Text(
+                                          _formatSessionDuration(
+                                              _sessionElapsed),
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .headlineMedium)
+                                    ])),
+                                Column(children: [
+                                  Text(en ? '● Work' : '● Activo',
+                                      style: const TextStyle(
+                                          color: DashboardTheme.primary)),
+                                  Text(_formatRestDuration(
+                                      _activeTrainingElapsed))
+                                ]),
+                                const SizedBox(width: 12),
+                                Column(children: [
+                                  Text(en ? '● Rest' : '● Pausa',
+                                      style: const TextStyle(
+                                          color: DashboardTheme.warning)),
+                                  Text(_formatRestDuration(_totalRestElapsed))
+                                ]),
+                                IconButton(
+                                    key: const Key('workout-session-button'),
+                                    tooltip: _isSessionRunning
+                                        ? strings.stopTimerButton
+                                        : strings.startTimerButton,
+                                    onPressed: _isSessionRunning
+                                        ? _stopSessionTimer
+                                        : _startSessionTimer,
+                                    icon: Icon(_isSessionRunning
+                                        ? Icons.pause
+                                        : Icons.play_arrow))
+                              ]),
+                              const SizedBox(height: 12),
+                              DecoratedBox(
+                                  decoration: BoxDecoration(
+                                      color: DashboardTheme.surfaceMuted,
+                                      borderRadius: BorderRadius.circular(16)),
+                                  child: Padding(
+                                      padding: const EdgeInsets.all(12),
+                                      child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(children: [
+                                              const Icon(Icons.timer_outlined,
+                                                  color: DashboardTheme.primary,
+                                                  size: 18),
+                                              const SizedBox(width: 6),
+                                              Expanded(
+                                                  child: Text(en
+                                                      ? 'Auto-Rest Countdown'
+                                                      : 'Cuenta atrás de descanso')),
+                                              Text(_restStateLabel(strings),
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .labelSmall)
+                                            ]),
+                                            const SizedBox(height: 10),
+                                            Row(children: [
+                                              SizedBox.square(
+                                                  dimension: 44,
+                                                  child: Stack(
+                                                      fit: StackFit.expand,
+                                                      children: [
+                                                        CircularProgressIndicator(
+                                                            strokeWidth: 3,
+                                                            value: _isRestRunning &&
+                                                                    _restTargetDuration
+                                                                            .inMilliseconds >
+                                                                        0
+                                                                ? (1 -
+                                                                        _restCurrentElapsed.inMilliseconds /
+                                                                            _restTargetDuration
+                                                                                .inMilliseconds)
+                                                                    .clamp(0.0,
+                                                                        1.0)
+                                                                : 0,
+                                                            backgroundColor:
+                                                                DashboardTheme
+                                                                    .border),
+                                                        const Icon(
+                                                            Icons
+                                                                .bedtime_outlined,
+                                                            size: 18)
+                                                      ])),
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                  child: FittedBox(
+                                                      alignment:
+                                                          Alignment.centerLeft,
+                                                      fit: BoxFit.scaleDown,
+                                                      child: Text(
+                                                          _formatRestCycleDuration(),
+                                                          style: Theme.of(
+                                                                  context)
+                                                              .textTheme
+                                                              .headlineMedium))),
+                                              TextButton(
+                                                  onPressed: () => setState(
+                                                      () => _restGoalController
+                                                              .text =
+                                                          '${_restTargetDuration.inSeconds + 30}'),
+                                                  child: const Text('+30s')),
+                                              TextButton(
+                                                  key: const Key(
+                                                      'rest-toggle-button'),
+                                                  onPressed: _toggleRestTimer,
+                                                  child: Text(_isRestRunning
+                                                      ? (en ? 'Skip' : 'Omitir')
+                                                      : strings.restButton))
+                                            ]),
+                                            Wrap(spacing: 4, children: [
+                                              for (final sec in [
+                                                45,
+                                                60,
+                                                90,
+                                                120,
+                                                180
+                                              ])
+                                                ChoiceChip(
+                                                    visualDensity:
+                                                        VisualDensity.compact,
+                                                    labelPadding:
+                                                        EdgeInsets.zero,
+                                                    showCheckmark: false,
+                                                    label: Text('${sec}s'),
+                                                    selected:
+                                                        _restTargetDuration
+                                                                .inSeconds ==
+                                                            sec,
+                                                    onSelected: (_) => setState(
+                                                        () =>
+                                                            _restGoalController
+                                                                .text = '$sec'))
+                                            ]),
+                                            Wrap(children: [
+                                              TextButton.icon(
+                                                  onPressed: () =>
+                                                      _setRestAlertEnabled(
+                                                          !_restAlertEnabled),
+                                                  icon: Icon(
+                                                      _restAlertEnabled
+                                                          ? Icons.volume_up
+                                                          : Icons.volume_off,
+                                                      size: 16),
+                                                  label: Text(
+                                                      en ? 'Audio' : 'Sonido')),
+                                              TextButton.icon(
+                                                  onPressed: () =>
+                                                      _setRestVibrationEnabled(
+                                                          !_restVibrationEnabled),
+                                                  icon: Icon(Icons.vibration,
+                                                      size: 16,
+                                                      color:
+                                                          _restVibrationEnabled
+                                                              ? DashboardTheme
+                                                                  .primary
+                                                              : DashboardTheme
+                                                                  .mutedText),
+                                                  label: Text(en
+                                                      ? 'Haptics'
+                                                      : 'Vibración'))
+                                            ])
+                                          ]))),
+                              ExpansionTile(
+                                tilePadding: EdgeInsets.zero,
+                                title: Text(strings.restTimerSettings),
+                                children: [
+                                  const SizedBox(height: 8),
+                                  TextField(
+                                    key: const Key('rest-goal-seconds-field'),
+                                    controller: _restGoalController,
+                                    keyboardType: TextInputType.number,
+                                    decoration: InputDecoration(
+                                      labelText: strings.restGoalSecondsLabel,
+                                    ),
+                                  ),
+                                  SwitchListTile(
+                                    key: const Key('rest-alert-toggle'),
+                                    contentPadding: EdgeInsets.zero,
+                                    value: _restAlertEnabled,
+                                    onChanged: _setRestAlertEnabled,
+                                    title: Text(strings.restSoundToggleLabel),
+                                  ),
+                                  SwitchListTile(
+                                    key: const Key('rest-vibration-toggle'),
+                                    contentPadding: EdgeInsets.zero,
+                                    value: _restVibrationEnabled,
+                                    onChanged: _setRestVibrationEnabled,
+                                    title:
+                                        Text(strings.restVibrationToggleLabel),
+                                  ),
+                                  DropdownButtonFormField<
+                                      _RestAlertSoundProfile>(
+                                    key: const Key('rest-sound-dropdown'),
+                                    value: _restAlertSound,
+                                    decoration: InputDecoration(
+                                      labelText: strings.restSoundProfileLabel,
+                                    ),
+                                    items: _RestAlertSoundProfile.values
+                                        .map(
+                                          (profile) => DropdownMenuItem(
+                                            value: profile,
+                                            child: Text(
+                                              _labelForRestSound(
+                                                  profile, strings),
+                                            ),
+                                          ),
+                                        )
+                                        .toList(),
+                                    onChanged: (value) {
+                                      if (value != null) {
+                                        _setRestAlertSound(value,
+                                            preview: true);
+                                      }
+                                    },
+                                  ),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                          child: Text(
+                                              strings.restAlertVolumeLabel)),
+                                      Expanded(
+                                        child: Slider(
+                                          key: const Key('rest-volume-slider'),
+                                          value: _restAlertVolume,
+                                          onChanged: _setRestAlertVolume,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
-                            )
-                            .toList(),
-                        onChanged: (value) {
-                          if (value != null) {
-                            _setRestAlertSound(value, preview: true);
-                          }
-                        },
-                      ),
-                      Row(
-                        children: [
-                          Expanded(child: Text(strings.restAlertVolumeLabel)),
-                          Expanded(
-                            child: Slider(
-                              key: const Key('rest-volume-slider'),
-                              value: _restAlertVolume,
-                              onChanged: _setRestAlertVolume,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  ExpansionTile(
-                    tilePadding: EdgeInsets.zero,
-                    title: Text(strings.notesLabel),
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _durationController,
-                              focusNode: _durationFocusNode,
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                              ],
-                              decoration: InputDecoration(
-                                labelText: strings.durationMinutesLabel,
+                              ExpansionTile(
+                                tilePadding: EdgeInsets.zero,
+                                title: Text(strings.notesLabel),
+                                children: [
+                                  if (_sessionElapsed > Duration.zero)
+                                    TextButton(
+                                        onPressed: _resetSessionTimer,
+                                        child: Text(en
+                                            ? "Reset session timer"
+                                            : "Reiniciar tiempo total")),
+                                  if (_totalRestElapsed > Duration.zero)
+                                    TextButton(
+                                        onPressed: _resetRestTimer,
+                                        child: Text(en
+                                            ? "Reset rest time"
+                                            : "Reiniciar descanso")),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: TextField(
+                                          controller: _durationController,
+                                          focusNode: _durationFocusNode,
+                                          keyboardType: TextInputType.number,
+                                          inputFormatters: [
+                                            FilteringTextInputFormatter
+                                                .digitsOnly,
+                                          ],
+                                          decoration: InputDecoration(
+                                            labelText:
+                                                strings.durationMinutesLabel,
+                                          ),
+                                          onChanged:
+                                              _handleManualDurationChanged,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: TextField(
+                                          controller: _caloriesController,
+                                          keyboardType: TextInputType.number,
+                                          decoration: InputDecoration(
+                                            labelText:
+                                                strings.workoutCaloriesLabel,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  TextField(
+                                    controller: _notesController,
+                                    minLines: 2,
+                                    maxLines: 4,
+                                    decoration: InputDecoration(
+                                        labelText: strings.notesLabel),
+                                  ),
+                                ],
                               ),
-                              onChanged: _handleManualDurationChanged,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TextField(
-                              controller: _caloriesController,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                labelText: strings.workoutCaloriesLabel,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: _notesController,
-                        minLines: 2,
-                        maxLines: 4,
-                        decoration:
-                            InputDecoration(labelText: strings.notesLabel),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            PremiumCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SectionHeader(title: strings.loggedSetsTitle),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: FilledButton.icon(
-                          onPressed: () => _openQuickSetDialog(
-                            recentExercises: recentExercises,
-                          ),
-                          icon: const Icon(Icons.add),
-                          label: Text(strings.addSetButton),
-                        ),
-                      ),
-                      if (_draftSets.isNotEmpty) ...[
-                        const SizedBox(width: 8),
-                        IconButton.filledTonal(
-                          tooltip: strings.repeatLastSetButton,
-                          onPressed: _duplicateLastSet,
-                          icon: const Icon(Icons.content_copy_outlined),
-                        ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      key: const Key('edit-weekly-routine-button'),
-                      onPressed: () => context.push('/workout/routine'),
-                      icon: const Icon(Icons.calendar_month_outlined),
-                      label: Text(strings.editWeeklyRoutineButton),
-                    ),
-                  ),
-                  if (!_isEditing &&
-                      _draftSets.isEmpty &&
-                      routineBlocks.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        key: const Key('load-routine-button'),
-                        onPressed: () => _loadRoutine(routineBlocks),
-                        icon: const Icon(Icons.playlist_add_outlined),
-                        label: Text(
-                          strings.loadRoutineForDay(
-                            strings.weekdayLabel(_selectedDate.weekday),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 12),
-                  if (_draftSets.isEmpty)
-                    Text(strings.noSetsAddedYet)
-                  else
-                    ...groupedDraftSets.entries.map(
-                      (group) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _ExerciseSetCard(
+                            ]))),
+                const SizedBox(height: 16),
+                for (final group in groupedDraftSets.entries)
+                  Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _ExerciseSetCard(
                           exerciseName: group.key,
                           sets: group.value,
+                          strings: strings,
+                          completed: _completed,
+                          revision: _stepRevision,
+                          restSeconds: _restTargetDuration.inSeconds,
+                          expandedInitially: _isEditing &&
+                              group.key == groupedDraftSets.keys.first,
+                          previous: sessions
+                              .where((s) =>
+                                  s.id != widget.session?.id &&
+                                  !s.createdAt.isAfter(_selectedDate))
+                              .expand((s) => s.sets)
+                              .where((s) => s.exerciseName == group.key)
+                              .firstOrNull,
+                          onStep: (i, {reps, weightKg}) {
+                            _stepRevision++;
+                            _updateSet(i, reps: reps, weightKg: weightKg);
+                          },
+                          onToggle: (i) => setState(() {
+                                if (!_completed.remove(i)) _completed.add(i);
+                              }),
+                          onAdd: () => _openQuickSetDialog(
+                              recentExercises: recentExercises),
+                          onComplete: (i) {
+                            setState(() => _completed.add(i));
+                            if (_isRestRunning) _finishRestCycle();
+                            if (_restTargetDuration.inSeconds > 0) {
+                              _startRestTimer();
+                            }
+                          },
+                          onRepeat: () =>
+                              _duplicateLastSet(group.value.last.value),
+                          onNote: (i, label) => _addSetNote(i, label),
                           onSetChanged: _updateSet,
-                          onEdit: (index) => _openQuickSetDialog(
-                            index: index,
-                            recentExercises: recentExercises,
-                          ),
-                          onRemove: _removeSet,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                key: const Key('save-workout-button'),
-                onPressed: _saveWorkout,
-                child: Text(
-                  _isEditing
-                      ? strings.updateWorkoutButton
-                      : strings.saveWorkoutButton,
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            SectionHeader(title: strings.workoutHistoryTitle),
-            const SizedBox(height: 12),
-            if (sessions.isEmpty)
-              PremiumCard(child: Text(strings.noWorkoutsYet))
-            else
-              ...sessions.take(10).map(
-                    (session) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _WorkoutHistoryCard(session: session),
-                    ),
-                  ),
-          ],
-        ),
-      ),
+                          onEdit: (i) => _openQuickSetDialog(
+                              index: i, recentExercises: recentExercises),
+                          onRemove: _removeSet)),
+                for (final block in routineBlocks
+                    .where((b) => b.type != WorkoutRoutineBlockType.normal))
+                  Card(
+                      child: ExpansionTile(
+                          initiallyExpanded: true,
+                          leading: const Icon(Icons.link),
+                          title: Text(
+                              block.type == WorkoutRoutineBlockType.superset
+                                  ? strings.supersetBlockLabel
+                                  : strings.trisetBlockLabel),
+                          subtitle: Text(block.exercises
+                              .map((e) => e.exerciseName)
+                              .join(' + ')),
+                          children: [
+                        for (final ex in block.exercises)
+                          ListTile(
+                              title: Text(ex.exerciseName),
+                              trailing: Text(
+                                  '${ex.sets} × ${ex.reps} · ${ex.weightKg} kg'))
+                      ])),
+                OutlinedButton.icon(
+                    onPressed: () =>
+                        _openQuickSetDialog(recentExercises: recentExercises),
+                    icon: const Icon(Icons.add_circle_outline),
+                    label: Text(_draftSets.isEmpty
+                        ? strings.addSetButton
+                        : (en ? 'Add exercise' : 'Añadir ejercicio'))),
+                const SizedBox(height: 12),
+                Card(
+                    child: ListTile(
+                        key: const Key('edit-weekly-routine-button'),
+                        onTap: () => context.push('/workout/routine'),
+                        leading: const Icon(Icons.calendar_month_outlined,
+                            color: DashboardTheme.warning),
+                        title: Text(strings.editWeeklyRoutineButton),
+                        subtitle: Text(
+                            '${strings.weekdayLabel(_selectedDate.weekday)} · ${weeklyRoutineLibrary.activeRoutine?.name ?? strings.noRoutineForDay}'),
+                        trailing: const Icon(Icons.chevron_right))),
+                if (!_isEditing &&
+                    _draftSets.isEmpty &&
+                    routineBlocks.isNotEmpty)
+                  OutlinedButton(
+                      key: const Key('load-routine-button'),
+                      onPressed: () => _loadRoutine(routineBlocks),
+                      child: Text(strings.loadRoutineForDay(
+                          strings.weekdayLabel(_selectedDate.weekday)))),
+                const SizedBox(height: 24),
+                ExpansionTile(
+                    title: Text(strings.workoutHistoryTitle),
+                    children: [
+                      if (sessions.isEmpty)
+                        PremiumCard(child: Text(strings.noWorkoutsYet))
+                      else
+                        ...sessions.take(10).map(
+                              (session) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: _WorkoutHistoryCard(session: session),
+                              ),
+                            ),
+                    ]),
+              ])),
     );
+  }
+
+  Future<void> _addSetNote(int index, String label) async {
+    final s = _draftSets[index];
+    final prefix = '${s.exerciseName} · Set ${s.setNumber}';
+    String text = label;
+    if (label.isEmpty) {
+      final en = stringsFor(ref).isEnglish;
+      var draft = '';
+      final result = await showDialog<String>(
+          context: context,
+          builder: (c) => AlertDialog(
+                  title: Text(en ? 'Set note' : 'Nota de serie'),
+                  content:
+                      TextField(autofocus: true, onChanged: (v) => draft = v),
+                  actions: [
+                    TextButton(
+                        onPressed: () => Navigator.pop(c),
+                        child: Text(
+                            MaterialLocalizations.of(c).cancelButtonLabel)),
+                    FilledButton(
+                        onPressed: () => Navigator.pop(c, draft.trim()),
+                        child: Text(en ? 'Save' : 'Guardar'))
+                  ]));
+      if (!mounted || result == null || result.isEmpty) return;
+      text = result;
+    }
+    _notesController.text = [
+      if (_notesController.text.isNotEmpty) _notesController.text,
+      '$prefix: $text'
+    ].join('\n');
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text('$prefix: $text')));
   }
 
   Future<void> _pickDate() async {
@@ -1054,6 +1253,13 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
 
   void _removeSet(int index) {
     setState(() {
+      final shifted = _completed
+          .where((i) => i != index)
+          .map((i) => i > index ? i - 1 : i)
+          .toList();
+      _completed
+        ..clear()
+        ..addAll(shifted);
       _draftSets.removeAt(index);
       _reindexSets();
     });
@@ -1110,13 +1316,13 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
     return grouped;
   }
 
-  void _duplicateLastSet() {
+  void _duplicateLastSet(GymSetEntry last) {
     final strings = stringsFor(ref);
     if (_draftSets.isEmpty) {
       return;
     }
 
-    final lastSet = _draftSets.last;
+    final lastSet = last;
     setState(() {
       _draftSets.add(
         GymSetEntry(
@@ -1269,7 +1475,6 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
       _sessionElapsed = Duration.zero;
       _restAccumulated = Duration.zero;
       _restCurrentElapsed = Duration.zero;
-      _restBlinkOn = false;
       _durationController.clear();
     });
   }
@@ -1294,7 +1499,6 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
 
       setState(() {
         _restCurrentElapsed += const Duration(milliseconds: 500);
-        _restBlinkOn = !_restBlinkOn;
       });
 
       if (_restTargetDuration > Duration.zero &&
@@ -1306,9 +1510,7 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
 
       _maybePlayRestAlert();
     });
-    setState(() {
-      _restBlinkOn = true;
-    });
+    setState(() {});
   }
 
   void _finishRestCycle() {
@@ -1317,7 +1519,6 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
     setState(() {
       _restAccumulated += _restCurrentElapsed;
       _restCurrentElapsed = Duration.zero;
-      _restBlinkOn = false;
     });
   }
 
@@ -1327,7 +1528,6 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
     setState(() {
       _restAccumulated = Duration.zero;
       _restCurrentElapsed = Duration.zero;
-      _restBlinkOn = false;
       _restAlertPlayedForCurrentCycle = false;
     });
   }
@@ -1502,14 +1702,6 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
     return strings.restIdleState;
   }
 
-  Color _restPrimaryColor(BuildContext context) {
-    if (!_isRestRunning) {
-      return Theme.of(context).colorScheme.primary;
-    }
-
-    return _isRestOverTarget ? Colors.green : Colors.red;
-  }
-
   String _formatSessionDuration(Duration value) {
     final hours = value.inHours;
     final minutes = value.inMinutes.remainder(60).toString().padLeft(2, '0');
@@ -1531,6 +1723,7 @@ class _ManualWorkoutScreenState extends ConsumerState<ManualWorkoutScreen> {
     final delta = _isRestOverTarget
         ? _restCurrentElapsed - target
         : target - _restCurrentElapsed;
+    if (_isRestRunning && !_isRestOverTarget) return _formatRestDuration(delta);
     final sign = _isRestOverTarget ? '+' : '-';
     return '$sign${_formatRestDuration(delta)}';
   }
@@ -1544,157 +1737,6 @@ class _SetDialogResult {
 
   final GymSetEntry set;
   final int setsCount;
-}
-
-class _CompactTimerCard extends StatelessWidget {
-  const _CompactTimerCard({
-    required this.title,
-    required this.timeText,
-    this.primaryKey,
-    required this.primaryLabel,
-    required this.onPrimaryPressed,
-    required this.accentColor,
-    this.blink = false,
-    this.visible = true,
-    this.onReset,
-  });
-
-  final String title;
-  final String timeText;
-  final Key? primaryKey;
-  final String primaryLabel;
-  final VoidCallback onPrimaryPressed;
-  final Color accentColor;
-  final bool blink;
-  final bool visible;
-  final VoidCallback? onReset;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: accentColor.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: accentColor.withValues(alpha: 0.35)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: Theme.of(context).textTheme.labelMedium),
-          const SizedBox(height: 4),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(timeText,
-                style: Theme.of(context).textTheme.headlineSmall),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 200),
-                  opacity: blink ? (visible ? 1 : 0.35) : 1,
-                  child: FilledButton(
-                    key: primaryKey,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: accentColor,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                    ),
-                    onPressed: onPrimaryPressed,
-                    child: Text(primaryLabel, overflow: TextOverflow.ellipsis),
-                  ),
-                ),
-              ),
-              if (onReset != null) ...[
-                const SizedBox(width: 4),
-                IconButton(
-                  tooltip: 'Reset',
-                  onPressed: onReset,
-                  icon: const Icon(Icons.restart_alt),
-                ),
-              ],
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _WorkoutTimeSummary extends StatelessWidget {
-  const _WorkoutTimeSummary({
-    required this.total,
-    required this.active,
-    required this.rest,
-    required this.strings,
-  });
-
-  final String total;
-  final String active;
-  final String rest;
-  final AppStrings strings;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Row(
-      children: [
-        _TimeMetric(
-            label: strings.totalGymTimeLabel,
-            value: total,
-            color: scheme.primary),
-        _TimeMetric(
-            label: strings.activeTrainingTimeLabel,
-            value: active,
-            color: Colors.green),
-        _TimeMetric(
-            label: strings.totalRestTimeLabel,
-            value: rest,
-            color: Colors.orange),
-      ],
-    );
-  }
-}
-
-class _TimeMetric extends StatelessWidget {
-  const _TimeMetric(
-      {required this.label, required this.value, required this.color});
-
-  final String label;
-  final String value;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 2),
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(value,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleSmall
-                    ?.copyWith(color: color)),
-            const SizedBox(height: 2),
-            Text(label,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelSmall),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 enum _RestAlertSoundProfile {
@@ -1755,11 +1797,33 @@ class _ExerciseSetCard extends StatelessWidget {
   const _ExerciseSetCard({
     required this.exerciseName,
     required this.sets,
+    required this.strings,
+    required this.completed,
+    required this.revision,
+    required this.restSeconds,
+    required this.expandedInitially,
+    required this.previous,
+    required this.onStep,
+    required this.onComplete,
+    required this.onToggle,
+    required this.onAdd,
+    required this.onRepeat,
+    required this.onNote,
     required this.onSetChanged,
     required this.onEdit,
     required this.onRemove,
   });
 
+  final AppStrings strings;
+  final Set<int> completed;
+  final int revision, restSeconds;
+  final bool expandedInitially;
+  final GymSetEntry? previous;
+  final void Function(int, {int? reps, double? weightKg}) onStep;
+  final ValueChanged<int> onComplete, onToggle;
+  final VoidCallback onAdd;
+  final VoidCallback onRepeat;
+  final void Function(int, String) onNote;
   final String exerciseName;
   final List<MapEntry<int, GymSetEntry>> sets;
   final void Function(int index, {int? reps, double? weightKg}) onSetChanged;
@@ -1769,6 +1833,8 @@ class _ExerciseSetCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final en = strings.isEnglish;
+    final working = sets.where((e) => !completed.contains(e.key)).firstOrNull;
     return Container(
       key: ValueKey('exercise-group-$exerciseName'),
       decoration: BoxDecoration(
@@ -1777,22 +1843,54 @@ class _ExerciseSetCard extends StatelessWidget {
         border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: ExpansionTile(
+        initiallyExpanded: expandedInitially,
         tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
         childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
         shape: const RoundedRectangleBorder(),
         collapsedShape: const RoundedRectangleBorder(),
-        title: Text(exerciseName, style: theme.textTheme.titleMedium),
+        title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(sets.first.value.muscleGroup,
+              style: theme.textTheme.labelSmall
+                  ?.copyWith(color: DashboardTheme.primary)),
+          Text(exerciseName, style: theme.textTheme.titleLarge)
+        ]),
         subtitle: Text(
           _setSummary(),
           style: theme.textTheme.bodySmall,
         ),
         children: [
+          if (previous != null)
+            Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                    '${en ? "Last session" : "Sesión anterior"}: ${previous!.weightKg} kg × ${previous!.reps}',
+                    style: theme.textTheme.bodySmall)),
           const Divider(height: 1),
           const SizedBox(height: 8),
+          Row(children: [
+            for (final label in [
+              'SET',
+              en ? 'PREV.' : 'ANT.',
+              'KG',
+              'REPS',
+              'RPE',
+              en ? 'LOG' : 'REG.'
+            ])
+              Expanded(
+                  child: Text(label,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.labelSmall))
+          ]),
           ...sets.map(
             (entry) => Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: _QuickSetRow(
+                key: ValueKey('${entry.key}-$revision'),
+                ordinal: sets.indexOf(entry) + 1,
+                previous: previous,
+                logged: completed.contains(entry.key),
+                toggle: () => onToggle(entry.key),
+                en: en,
                 set: entry.value,
                 onRepsChanged: (value) =>
                     onSetChanged(entry.key, reps: value.toInt()),
@@ -1803,6 +1901,71 @@ class _ExerciseSetCard extends StatelessWidget {
               ),
             ),
           ),
+          if (working != null)
+            Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                    color: DashboardTheme.surfaceMuted,
+                    borderRadius: BorderRadius.circular(12)),
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                          '${en ? 'Working set' : 'Serie activa'} · ${sets.indexOf(working) + 1}',
+                          style: theme.textTheme.titleMedium),
+                      const SizedBox(height: 8),
+                      Row(children: [
+                        Expanded(
+                            child: _Stepper(
+                                label: 'KG',
+                                value: _formatWeight(working.value.weightKg),
+                                less: () => onStep(working.key,
+                                    weightKg: math.max(
+                                        0, working.value.weightKg - 2.5)),
+                                more: () => onStep(working.key,
+                                    weightKg: working.value.weightKg + 2.5))),
+                        const SizedBox(width: 6),
+                        Expanded(
+                            child: _Stepper(
+                                label: 'REPS',
+                                value: '${working.value.reps}',
+                                less: () => onStep(working.key,
+                                    reps: math.max(1, working.value.reps - 1)),
+                                more: () => onStep(working.key,
+                                    reps: working.value.reps + 1)))
+                      ]),
+                      const SizedBox(height: 8),
+                      FilledButton.icon(
+                          onPressed: () => onComplete(working.key),
+                          icon: const Icon(Icons.check),
+                          label: Text(restSeconds == 0
+                              ? (en ? 'Complete set' : 'Completar serie')
+                              : (en
+                                  ? 'Complete set & start ${restSeconds}s rest'
+                                  : 'Completar serie y descansar ${restSeconds}s'))),
+                      Wrap(children: [
+                        for (final tag in [
+                          en ? 'Warm-up' : 'Calentamiento',
+                          en ? 'Drop set' : 'Descendente',
+                          ''
+                        ])
+                          TextButton(
+                              onPressed: () => onNote(working.key, tag),
+                              child: Text(tag.isEmpty
+                                  ? (en ? 'Set note' : 'Nota')
+                                  : tag))
+                      ])
+                    ])),
+          Wrap(alignment: WrapAlignment.spaceBetween, children: [
+            TextButton.icon(
+                onPressed: onAdd,
+                icon: const Icon(Icons.add),
+                label: Text(strings.addSetButton)),
+            TextButton.icon(
+                onPressed: onRepeat,
+                icon: const Icon(Icons.replay),
+                label: Text(strings.repeatLastSetButton))
+          ]),
         ],
       ),
     );
@@ -1827,8 +1990,52 @@ class _ExerciseSetCard extends StatelessWidget {
   }
 }
 
+class _Stepper extends StatelessWidget {
+  const _Stepper(
+      {required this.label,
+      required this.value,
+      required this.less,
+      required this.more});
+  final String label, value;
+  final VoidCallback less, more;
+  @override
+  Widget build(BuildContext context) => Container(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      decoration: BoxDecoration(
+          color: DashboardTheme.backgroundSecondary,
+          borderRadius: BorderRadius.circular(12)),
+      child: Column(children: [
+        Text(label, style: Theme.of(context).textTheme.labelSmall),
+        Row(children: [
+          IconButton(
+              tooltip: '− $label',
+              onPressed: less,
+              icon: const Icon(Icons.remove, size: 16),
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 36),
+              padding: EdgeInsets.zero),
+          Expanded(
+              child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(value,
+                      style: Theme.of(context).textTheme.titleMedium))),
+          IconButton(
+              tooltip: '+ $label',
+              onPressed: more,
+              icon: const Icon(Icons.add, size: 16),
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 36),
+              padding: EdgeInsets.zero)
+        ])
+      ]));
+}
+
 class _QuickSetRow extends StatelessWidget {
   const _QuickSetRow({
+    super.key,
+    required this.ordinal,
+    required this.previous,
+    required this.logged,
+    required this.toggle,
+    required this.en,
     required this.set,
     required this.onRepsChanged,
     required this.onWeightChanged,
@@ -1836,6 +2043,10 @@ class _QuickSetRow extends StatelessWidget {
     required this.onRemove,
   });
 
+  final int ordinal;
+  final GymSetEntry? previous;
+  final bool logged, en;
+  final VoidCallback toggle;
   final GymSetEntry set;
   final ValueChanged<int> onRepsChanged;
   final ValueChanged<double> onWeightChanged;
@@ -1848,46 +2059,17 @@ class _QuickSetRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 6, 4, 6),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
+        color: DashboardTheme.backgroundSecondary,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          SizedBox(
-            width: 30,
-            child: Text(
-              '${set.setNumber}',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.titleSmall,
-            ),
-          ),
-          const SizedBox(width: 6),
           Expanded(
-            child: _InlineNumberField(
-              label: 'KG',
-              setNumber: set.setNumber,
-              initialValue: _formatWeight(set.weightKg),
-              decimal: true,
-              onChanged: (value) => onWeightChanged(value.toDouble()),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _InlineNumberField(
-              label: 'REPS',
-              setNumber: set.setNumber,
-              initialValue: '${set.reps}',
-              onChanged: (value) => onRepsChanged(value.toInt()),
-            ),
-          ),
-          if (set.rpe != null)
-            Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: Text('RPE ${set.rpe}'),
-            ),
-          PopupMenuButton<_SetAction>(
+              child: PopupMenuButton<_SetAction>(
+            padding: EdgeInsets.zero,
             tooltip: 'Set options',
-            icon: const Icon(Icons.more_horiz),
+            child: Center(
+                child: Text('$ordinal ⋮', style: theme.textTheme.titleSmall)),
             onSelected: (action) {
               if (action == _SetAction.edit) {
                 onEdit();
@@ -1901,7 +2083,46 @@ class _QuickSetRow extends StatelessWidget {
               PopupMenuItem(
                   value: _SetAction.remove, child: Text('Delete set')),
             ],
+          )),
+          Expanded(
+              child: Text(
+                  previous == null
+                      ? '—'
+                      : '${_formatWeight(previous!.weightKg)} × ${previous!.reps}',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall)),
+          Expanded(
+            child: _InlineNumberField(
+              label: 'KG',
+              setNumber: set.setNumber,
+              initialValue: _formatWeight(set.weightKg),
+              decimal: true,
+              onChanged: (value) => onWeightChanged(value.toDouble()),
+            ),
           ),
+          Expanded(
+            child: _InlineNumberField(
+              label: 'REPS',
+              setNumber: set.setNumber,
+              initialValue: '${set.reps}',
+              onChanged: (value) => onRepsChanged(value.toInt()),
+            ),
+          ),
+          Expanded(
+              child: Text(set.rpe?.toString() ?? '—',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.labelSmall)),
+          Expanded(
+              child: IconButton(
+                  key: ValueKey('log-set-${set.setNumber}'),
+                  tooltip: en ? 'Toggle set completion' : 'Marcar serie',
+                  onPressed: toggle,
+                  icon: Icon(
+                      logged
+                          ? Icons.check_circle
+                          : Icons.radio_button_unchecked,
+                      color: logged ? DashboardTheme.primary : null,
+                      size: 20))),
         ],
       ),
     );
@@ -1938,7 +2159,7 @@ class _InlineNumberField extends StatelessWidget {
       decoration: InputDecoration(
         labelText: label,
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
       ),
       onChanged: (value) {
         final parsed = decimal

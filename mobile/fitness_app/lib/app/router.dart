@@ -7,6 +7,7 @@ import '../features/dashboard/presentation/progress_screen.dart';
 import '../features/food/domain/manual_food_entry.dart';
 import '../features/food/presentation/food_gallery_screen.dart';
 import '../features/food/presentation/manual_food_entry_screen.dart';
+import '../features/food/presentation/nutrition_screen.dart';
 import '../features/food/presentation/shared_food_catalog_screen.dart';
 import '../features/onboarding/presentation/onboarding_screen.dart';
 import '../features/splash/presentation/splash_screen.dart';
@@ -42,9 +43,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
           path: '/dashboard/progress',
           builder: (context, state) => const ProgressScreen()),
+      GoRoute(path: '/nutrition', builder: (_, __) => const NutritionScreen()),
       GoRoute(
         path: '/food/manual',
         builder: (context, state) => ManualFoodEntryScreen(
+          initialMealType: state.uri.queryParameters['meal'],
+          initialAction: state.uri.queryParameters['action'],
           entry: state.extra is ManualFoodEntry
               ? state.extra as ManualFoodEntry
               : null,

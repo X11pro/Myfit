@@ -106,7 +106,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String?>(
-                    initialValue: _sex,
+                    value: _sex,
                     decoration: InputDecoration(labelText: strings.sexLabel),
                     items: [
                       DropdownMenuItem(
@@ -144,7 +144,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       style: Theme.of(context).textTheme.bodySmall),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    initialValue: _goal,
+                    value: _goal,
                     decoration: InputDecoration(labelText: strings.goalLabel),
                     items: [
                       DropdownMenuItem(

@@ -4,6 +4,30 @@
 
 La IP SSH confirmada es `Mariano@192.168.1.244` y la copia Git real es `/Volumes/HDD/Github/Myfit`; `/Users/macmini/Projects/Myfit` es un espejo sin `.git`. Los archivos de UI se copiaron a la copia Git real y pueden aparecer modificados: revisar `git status` antes de hacer pull, sin descartarlos. El simulador iOS ejecutó la nueva UI. La instalación Release en el iPhone físico quedó bloqueada por CocoaPods ausente o fuera del PATH de SSH.
 
+## Hot reload desde CachyOS
+
+La copia aislada `/Users/macmini/Projects/Myfit-live` es exclusivamente para
+desarrollo: `scripts/git/watch_ios_live.sh` copia cada tres segundos solo los
+archivos `.dart` de `lib/`, sin borrar archivos ni copiar secretos. La sesión
+Flutter del simulador corre en `screen` bajo el nombre `myfit-ios-live`.
+La copia no refleja eliminaciones, dependencias, recursos ni cambios nativos;
+esos cambios requieren sincronización y compilación adicionales.
+
+Desde CachyOS, con el watcher iniciado, enviar un hot reload:
+
+```bash
+ssh -i ~/.ssh/id_ed25519_macmini Mariano@192.168.1.244 \
+  "screen -S myfit-ios-live -X stuff 'r'"
+```
+
+El watcher actual corre como unidad transitoria de usuario
+`myfit-ios-live-sync.service`; comprobarlo con `systemctl --user status
+myfit-ios-live-sync.service`. Para iniciarlo nuevamente tras reiniciar:
+`systemd-run --user --unit=myfit-ios-live-sync --property=Restart=on-failure
+/usr/bin/bash /home/x11pro_lnx_up/Documents/Github/Myfit/scripts/git/watch_ios_live.sh`.
+La sesión `screen` y el watcher no se reinician automáticamente.
+La copia Git principal en `/Volumes/HDD/Github/Myfit` permanece independiente.
+
 ## Estado local macOS, 2026-11-18
 
 Este entorno detecta `iPhone 18 Pro` Simulator con ID `A048785F-667B-4FD7-97BD-CB97035601A4`. Myfit compiló, se instaló e inició mediante `xcrun simctl` el 2026-11-17. Confirmar la UI y hot reload antes de tomarlo como QA iOS concluyente.

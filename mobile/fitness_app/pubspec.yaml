@@ -29,3 +29,12 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/stitch/
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/inter.ttf
+    - family: Plus Jakarta Sans
+      fonts:
+        - asset: assets/fonts/plusjakartasans.ttf
